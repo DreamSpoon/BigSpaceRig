@@ -20,9 +20,10 @@
 
 bl_info = {
     "name": "Big Space Rig",
-    "description": "Use 'forced perspective' optical illusion to 'condense space' between objects. Display " \
-        "far away objects at a smaller scale and closer distance than would be realistic. Multi-scale proxy-place" \
-        "model helps with placing objects extreme distances apart (e.g. 1000 km distances between objects).",
+    "description": "'Solar system in a box' addon for Blender, with rig to manage very large spaces (> 10^30 m3), " \
+        "and geometry nodes to create very large procedural objects. Also, a 'forced perspective' effect (optional" \
+        ", per Place) to create 'condensed space' for viewing large objects that are separated by very large " \
+        "distances, at correct scale (e.g. planets, moons, stars).",
     "author": "Dave",
     "version": (0, 2, 0),
     "blender": (2, 80, 0),
@@ -34,18 +35,25 @@ bl_info = {
 import bpy
 from bpy.props import PointerProperty
 
-from .rig import (OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT, OBJ_PROP_BONE_PLACE)
+from .rig import (OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT,
+    OBJ_PROP_BONE_PLACE)
 from .rig import (BSR_CreateBigSpaceRig, is_big_space_rig)
 from .attach import (BSR_AttachCreatePlace, BSR_AttachSinglePlace, BSR_AttachMultiPlace)
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
 from .mat_node_noise import (BSR_Noise9eCreateDuoNode, BSR_Noise6eCreateDuoNode)
-from .mat_node_util import (BSR_WorldCoordsCreateDuoNode, BSR_VecMultiplyCreateDuoNode)
+from .mat_node_util import (BSR_WorldCoordsCreateDuoNode, BSR_VecMultiplyCreateDuoNode, BSR_VecAddCreateDuoNode,
+    BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode)
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
 else:
     Region = "UI"
+
+# May cause problem re: names of objects, i.e. if Big Space Rig object name equals this.
+# This is used as a "NONE" marker for lists (of objects, bones, etc.).
+# Solution: try to make this a string that would never be used, e.g. a blank space for an object's name.
+BLANK_ITEM_STR = " "
 
 class BSR_PT_Rig(bpy.types.Panel):
     bl_label = "Rig"
@@ -112,6 +120,7 @@ class BSR_PT_ActiveRig(bpy.types.Panel):
             return
         layout = self.layout
         box = layout.box()
+        box.label(text="Active Rig: " + active_ob.name)
         box.prop(active_ob, '["'+OBJ_PROP_FP_POWER+'"]')
         box.prop(active_ob, '["'+OBJ_PROP_FP_MIN_DIST+'"]')
         box.prop(active_ob, '["'+OBJ_PROP_FP_MIN_SCALE+'"]')
@@ -147,6 +156,7 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
     bl_category = "BigSpaceRig"
 
     def draw(self, context):
+        scn = context.scene
         layout = self.layout
         box = layout.box()
         box.label(text="Texture - Noise")
@@ -155,20 +165,32 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         box.label(text="Vector")
         box.operator("big_space_rig.world_coords_create_duo_node")
         box.operator("big_space_rig.vec_multiply_create_duo_node")
+        box.operator("big_space_rig.vec_add_create_duo_node")
+        box.label(text="Input")
+        box.prop(scn, "BSR_NodeGetInputFromRig")
+        col = box.column()
+        col.active = (scn.BSR_NodeGetInputFromRig != BLANK_ITEM_STR)
+        col.operator("big_space_rig.observer_input_create_duo_node")
+        col.prop(scn, "BSR_NodeGetInputFromRigPlace")
+        subcol = box.column()
+        subcol.active = (scn.BSR_NodeGetInputFromRigPlace != BLANK_ITEM_STR)
+        subcol.operator("big_space_rig.place_input_create_duo_node")
 
 classes = [
     BSR_PT_Rig,
-    BSR_PT_Attach,
-    BSR_PT_MegaSphere,
-    BSR_PT_CreateDuoNodes,
     BSR_CreateBigSpaceRig,
+    BSR_PT_Attach,
     BSR_AttachCreatePlace,
     BSR_AttachMultiPlace,
     BSR_AttachSinglePlace,
+    BSR_PT_CreateDuoNodes,
     BSR_Noise9eCreateDuoNode,
     BSR_Noise6eCreateDuoNode,
     BSR_WorldCoordsCreateDuoNode,
     BSR_VecMultiplyCreateDuoNode,
+    BSR_VecAddCreateDuoNode,
+    BSR_ObserverInputCreateDuoNode,
+    BSR_PlaceInputCreateDuoNode,
 ]
 # geometry node support is only for Blender v2.9+ (or maybe v3.0+ ...)
 # TODO: check what version is needed for current geometry nodes setup
@@ -176,10 +198,11 @@ if bpy.app.version >= (2,90,0):
     classes.extend([
         BSR_PT_GeoNodes,
         BSR_AddPlaceFP_GeoNodes,
+        BSR_PT_MegaSphere,
+        BSR_MegaSphereCreate,
     ])
 classes.extend([
     BSR_PT_ActiveRig,
-    BSR_MegaSphereCreate,
 ])
 
 def register():
@@ -190,6 +213,9 @@ def register():
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
+    bts = bpy.types.Scene
+    del bts.BSR_NodeGetInputFromRigPlace
+    del bts.BSR_NodeGetInputFromRig
     del bts.BSR_MegaSpherePlaceBoneName
     del bts.BSR_MegaSphereUsePlace
     del bts.BSR_MegaSphereOverrideCreateNG
@@ -210,7 +236,26 @@ def only_geo_node_group_poll(self, object):
 def bone_items(self, context):
     ob = context.active_object
     if not is_big_space_rig(ob):
-        return
+        return [(BLANK_ITEM_STR, "", "")]
+    return [(bone.name, bone.name, "") for bone in ob.data.bones if bone.get(OBJ_PROP_BONE_PLACE) == True]
+
+def obs_input_rig_items(self, context):
+    ob = context.active_object
+    rig_list = []
+    for ob in bpy.data.objects:
+        if is_big_space_rig(ob):
+            rig_list.append(ob)
+    rig_name_items = [(rig.name, rig.name, "") for rig in rig_list]
+    # if list is empty then return "NONE"
+    if len(rig_name_items) < 1:
+        return [(BLANK_ITEM_STR, "", "")]
+    else:
+        return rig_name_items
+
+def place_input_rig_items(self, context):
+    ob = bpy.data.objects.get(context.scene.BSR_NodeGetInputFromRig)
+    if not is_big_space_rig(ob):
+        return [(BLANK_ITEM_STR, "", "")]
     return [(bone.name, bone.name, "") for bone in ob.data.bones if bone.get(OBJ_PROP_BONE_PLACE) == True]
 
 def register_props():
@@ -256,6 +301,11 @@ def register_props():
         "at given Place in Big Space Rig", default=False)
     bts.BSR_MegaSpherePlaceBoneName = bpy.props.EnumProperty(name="Place", description="Sphere center " + \
         "place bone", items=bone_items)
+
+    bts.BSR_NodeGetInputFromRig = bpy.props.EnumProperty(name="Rig", description="Big Space Rig to use with " + \
+        "input nodes", items=obs_input_rig_items)
+    bts.BSR_NodeGetInputFromRigPlace = bpy.props.EnumProperty(name="Place", description="Place to use with input " + \
+        "nodes", items=place_input_rig_items)
 
 if __name__ == "__main__":
     register()

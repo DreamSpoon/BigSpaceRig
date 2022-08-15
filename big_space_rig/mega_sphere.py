@@ -21,6 +21,7 @@ import bpy
 from .rig import is_big_space_rig
 from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME)
 from .attach import (PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
+from .node_other import (get_0e_6e_from_place_bone_name)
 
 MEGASPHERE_SCALE_FOR_DIST_GEO_NG_NAME = "MegaSphere.ScaleForDist.BSR.GeoNG"
 MEGASPHERE_CULL_ANGLE_GEO_NG_NAME = "MegaSphere.CullAngle.BSR.GeoNG"
@@ -1347,34 +1348,13 @@ def add_mega_sphere_geo_nodes_to_object(ob, big_space_rig, proxy_place_bone_name
     geo_nodes_mod = ob.modifiers.new(name="MegaSphere.GeometryNodes", type='NODES')
     create_individual_geo_ng(geo_nodes_mod.node_group, big_space_rig, proxy_place_bone_name_0e, proxy_place_bone_name_6e)
 
-def bone_name_from_datapath(datapath_str):
-    left = datapath_str.find("\"")
-    right = datapath_str.rfind("\"")
-    return datapath_str[left+1:right]
-
-def get_0e_6e_from_place_bone_name(big_space_rig, place_bone_name):
-    if big_space_rig.animation_data is None:
-        return
-    proxy_place_bone_name_0e = None
-    proxy_place_bone_name_6e = None
-    # search all drivers of Big Space Rig object, looking for named variables with bone targets - place proxies
-    for drv in big_space_rig.animation_data.drivers:
-        if bone_name_from_datapath(drv.data_path) != place_bone_name:
-            continue
-        d = drv.driver
-        for v in d.variables:
-            if v.name.startswith(PROXY_PLACE_0E_VAR_NAME_PREPEND):
-                proxy_place_bone_name_0e = v.targets[0].bone_target
-            elif v.name.startswith(PROXY_PLACE_6E_VAR_NAME_PREPEND):
-                proxy_place_bone_name_6e = v.targets[0].bone_target
-    return proxy_place_bone_name_0e, proxy_place_bone_name_6e
-
 def create_mega_sphere(context, big_space_rig, override_create, place_bone_name):
     # ensure that node groups exist that will be used later by the Mega Sphere geometry nodes modifier
     ensure_mega_sphere_geo_nodes(override_create)
     # create mesh object, that will receive Mega Sphere geometry nodes which overwrite geometry
     bpy.ops.mesh.primitive_plane_add(size=1)
     ob = context.active_object
+    ob.parent = big_space_rig
     if place_bone_name != "":
         proxy_place_bone_name_0e, proxy_place_bone_name_6e = get_0e_6e_from_place_bone_name(big_space_rig,
                                                                                             place_bone_name)

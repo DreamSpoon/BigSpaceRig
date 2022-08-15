@@ -18,6 +18,8 @@
 
 import bpy
 
+from .attach import (PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
+
 MAT_NAME_SUFFIX = ".MatNG"
 GEO_NAME_SUFFIX = ".GeoNG"
 
@@ -52,3 +54,25 @@ def get_node_group_for_type(ng_type):
     elif ng_type == 'GeometryNodeTree':
         return 'GeometryNodeGroup'
     return None
+
+def bone_name_from_datapath(datapath_str):
+    left = datapath_str.find("\"")
+    right = datapath_str.rfind("\"")
+    return datapath_str[left+1:right]
+
+def get_0e_6e_from_place_bone_name(big_space_rig, place_bone_name):
+    if big_space_rig.animation_data is None:
+        return None, None
+    proxy_place_bone_name_0e = None
+    proxy_place_bone_name_6e = None
+    # search all drivers of Big Space Rig object, looking for named variables with bone targets - place proxies
+    for drv in big_space_rig.animation_data.drivers:
+        if bone_name_from_datapath(drv.data_path) != place_bone_name:
+            continue
+        d = drv.driver
+        for v in d.variables:
+            if v.name.startswith(PROXY_PLACE_0E_VAR_NAME_PREPEND):
+                proxy_place_bone_name_0e = v.targets[0].bone_target
+            elif v.name.startswith(PROXY_PLACE_6E_VAR_NAME_PREPEND):
+                proxy_place_bone_name_6e = v.targets[0].bone_target
+    return proxy_place_bone_name_0e, proxy_place_bone_name_6e
