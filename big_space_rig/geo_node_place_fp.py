@@ -21,10 +21,10 @@ import bpy
 from .rig import (OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT,
     BSR_CUSTOM_NODE_GROUP_NAME, is_big_space_rig, get_parent_big_space_rig)
 
-def create_megasphere_custom_geo_node_group(node_group_name):
+def create_place_custom_geo_node_group():
     # initialize variables
     new_nodes = {}
-    new_node_group = bpy.data.node_groups.new(name=node_group_name, type='GeometryNodeTree')
+    new_node_group = bpy.data.node_groups.new(name=BSR_CUSTOM_NODE_GROUP_NAME, type='GeometryNodeTree')
     new_node_group.inputs.new(type='NodeSocketGeometry', name="Geometry")
     new_node_group.inputs.new(type='NodeSocketFloat', name="BSR FP Power")
     new_node_group.inputs.new(type='NodeSocketFloat', name="BSR FP Min Dist")
@@ -188,7 +188,7 @@ def create_megasphere_custom_geo_node_group(node_group_name):
     node.operation = "MULTIPLY"
     new_nodes["Math.011"] = node
 
-    # links between nodes
+    # create links
     tree_links = new_node_group.links
     tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Set Position"].inputs[0])
     tree_links.new(new_nodes["Set Position"].outputs[0], new_nodes["Group Output"].inputs[0])
@@ -238,7 +238,7 @@ def create_megasphere_custom_geo_node_group(node_group_name):
 
     return new_node_group
 
-def add_bsr_to_geo_node_group(existing_group_name, clear_node_tree, big_space_rig, big_space_rig_bone, attached_obj):
+def add_place_fp_to_existing_group(existing_group_name, clear_node_tree, big_space_rig, big_space_rig_bone, attached_obj):
     existing_node_group = bpy.data.node_groups.get(existing_group_name)
     tree_nodes = existing_node_group.nodes
     # if needed, delete old nodes (clear tree) before adding new nodes
@@ -610,7 +610,7 @@ def add_bsr_to_geo_node_group(existing_group_name, clear_node_tree, big_space_ri
     node.location = (230, 10)
     new_nodes["Group Output"] = node
 
-    # links between nodes
+    # create links
     tree_links = existing_node_group.links
     tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["BigSpaceRigGeoNodeGroup"].inputs[0])
     tree_links.new(new_nodes["Value"].outputs[0], new_nodes["BigSpaceRigGeoNodeGroup"].inputs[1])
@@ -630,38 +630,36 @@ def add_bsr_to_geo_node_group(existing_group_name, clear_node_tree, big_space_ri
     tree_links.new(new_nodes["Vector.008"].outputs[0], new_nodes["Vector Math.003"].inputs[1])
     tree_links.new(new_nodes["Vector.003"].outputs[0], new_nodes["Vector Math"].inputs[0])
 
-def add_bsr_nodes_to_node_group(existing_group_name, override_create, clear_node_tree, big_space_rig,
-                                      big_space_rig_bone, attached_obj):
+def ensure_place_fp_node_group(override_create):
     # check if custom node group already exists, and create/override if necessary
     node_group = bpy.data.node_groups.get(BSR_CUSTOM_NODE_GROUP_NAME)
     if node_group is None or override_create:
         # create the custom node group
-        new_node_group = create_megasphere_custom_geo_node_group(BSR_CUSTOM_NODE_GROUP_NAME)
+        new_node_group = create_place_custom_geo_node_group()
         # if override create is enabled, then ensure new group name will be "first", meaning:
         #     group name does not have suffix like '.001', '.002', etc.
         if override_create:
             new_node_group.name = BSR_CUSTOM_NODE_GROUP_NAME
 
-    add_bsr_to_geo_node_group(existing_group_name, clear_node_tree, big_space_rig, big_space_rig_bone, attached_obj)
+def add_place_fp_geo_nodes_to_object(ob, override_create, alt_group_name, big_space_rig, big_space_rig_bone):
+    ensure_place_fp_node_group(override_create)
 
-def add_mega_sphere_geo_nodes_to_object(ob, override_create, alt_group_name, big_space_rig, big_space_rig_bone):
     geo_nodes_mod = ob.modifiers.new(name="BigSpaceRig.GeometryNodes", type='NODES')
     # use alternate group, if needed and if available
     if alt_group_name != None:
         if bpy.data.node_groups.get(alt_group_name) is None:
             return  # TODO return error / throw exception
         # create nodes, but don't clear node tree before creating new nodes
-        add_bsr_nodes_to_node_group(alt_group_name, override_create, False, big_space_rig, big_space_rig_bone, ob)
+        add_place_fp_to_existing_group(alt_group_name, False, big_space_rig, big_space_rig_bone, ob)
         geo_nodes_mod.node_group = bpy.data.node_groups.get(alt_group_name)
         return  # success, return
     # create nodes, and clear node tree before creating new nodes
-    add_bsr_nodes_to_node_group(geo_nodes_mod.node_group.name, override_create, True, big_space_rig,
-                                      big_space_rig_bone, ob)
+    add_place_fp_to_existing_group(geo_nodes_mod.node_group.name, True, big_space_rig, big_space_rig_bone, ob)
 
-class BSR_AddGeoNodes(bpy.types.Operator):
+class BSR_AddPlaceFP_GeoNodes(bpy.types.Operator):
     bl_description = "Add Geometry Nodes to selected object(s). Object(s) must already be attached to Big Space Rig "+\
                      "for this to work"
-    bl_idname = "big_space_rig.add_geo_nodes"
+    bl_idname = "big_space_rig.add_place_fp_geo_nodes"
     bl_label = "Add Geometry Nodes"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -681,6 +679,6 @@ class BSR_AddGeoNodes(bpy.types.Operator):
                     self.report({'ERROR'}, "Unable to create geometry nodes because Alternate Group not found.")
                     return {'CANCELLED'}
                 alt_group_name = scn.BSR_GeoNodesCreateAltGroup.name
-            add_mega_sphere_geo_nodes_to_object(ob, scn.BSR_GeoNodesOverrideCreate, alt_group_name, mm_rig,
+            add_place_fp_geo_nodes_to_object(ob, scn.BSR_GeoNodesOverrideCreate, alt_group_name, mm_rig,
                                               mm_rig_bone)
         return {'FINISHED'}

@@ -24,11 +24,11 @@ bl_info = {
         "far away objects at a smaller scale and closer distance than would be realistic. Multi-scale proxy-place" \
         "model helps with placing objects extreme distances apart (e.g. 1000 km distances between objects).",
     "author": "Dave",
-    "version": (0, 1, 0),
+    "version": (0, 2, 0),
     "blender": (2, 80, 0),
     "location": "View 3D -> Tools -> BigSpaceRig",
-    "category": "Other",
-#    "wiki_url": "https://github.com/DreamSpoon/BigSpaceRig#readme",
+    "category": "Shader/Geometry Nodes, Other",
+    "wiki_url": "https://github.com/DreamSpoon/BigSpaceRig#readme",
 }
 
 import bpy
@@ -37,8 +37,10 @@ from bpy.props import PointerProperty
 from .rig import (OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT, OBJ_PROP_BONE_PLACE)
 from .rig import (BSR_CreateBigSpaceRig, is_big_space_rig)
 from .attach import (BSR_AttachCreatePlace, BSR_AttachSinglePlace, BSR_AttachMultiPlace)
-from .geo_nodes import BSR_AddGeoNodes
+from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
+from .mat_node_noise import (BSR_Noise9eCreateDuoNode, BSR_Noise6eCreateDuoNode)
+from .mat_node_util import (BSR_WorldCoordsCreateDuoNode, BSR_VecMultiplyCreateDuoNode)
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -90,7 +92,7 @@ class BSR_PT_GeoNodes(bpy.types.Panel):
         scn = context.scene
         layout = self.layout
         box = layout.box()
-        box.operator("big_space_rig.add_geo_nodes")
+        box.operator("big_space_rig.add_place_fp_geo_nodes")
         box.prop(scn, "BSR_GeoNodesOverrideCreate")
         box.prop(scn, "BSR_GeoNodesCreateUseAltGroup")
         col = box.column()
@@ -137,25 +139,47 @@ class BSR_PT_MegaSphere(bpy.types.Panel):
             subcol.active = scn.BSR_MegaSphereUsePlace
             subcol.prop(scn, "BSR_MegaSpherePlaceBoneName")
 
+class BSR_PT_CreateDuoNodes(bpy.types.Panel):
+    bl_idname = "NODE_PT_BigSpaceRig"
+    bl_label = "BigSpaceRig"
+    bl_space_type = "NODE_EDITOR"
+    bl_region_type = Region
+    bl_category = "BigSpaceRig"
+
+    def draw(self, context):
+        layout = self.layout
+        box = layout.box()
+        box.label(text="Texture - Noise")
+        box.operator("big_space_rig.noise_9e_create_duo_node")
+        box.operator("big_space_rig.noise_6e_create_duo_node")
+        box.label(text="Vector")
+        box.operator("big_space_rig.world_coords_create_duo_node")
+        box.operator("big_space_rig.vec_multiply_create_duo_node")
+
 classes = [
     BSR_PT_Rig,
     BSR_PT_Attach,
     BSR_PT_MegaSphere,
+    BSR_PT_CreateDuoNodes,
     BSR_CreateBigSpaceRig,
     BSR_AttachCreatePlace,
     BSR_AttachMultiPlace,
     BSR_AttachSinglePlace,
-    BSR_MegaSphereCreate,
+    BSR_Noise9eCreateDuoNode,
+    BSR_Noise6eCreateDuoNode,
+    BSR_WorldCoordsCreateDuoNode,
+    BSR_VecMultiplyCreateDuoNode,
 ]
 # geometry node support is only for Blender v2.9+ (or maybe v3.0+ ...)
 # TODO: check what version is needed for current geometry nodes setup
 if bpy.app.version >= (2,90,0):
     classes.extend([
         BSR_PT_GeoNodes,
-        BSR_AddGeoNodes,
+        BSR_AddPlaceFP_GeoNodes,
     ])
 classes.extend([
     BSR_PT_ActiveRig,
+    BSR_MegaSphereCreate,
 ])
 
 def register():
