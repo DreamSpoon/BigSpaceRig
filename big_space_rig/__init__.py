@@ -41,7 +41,7 @@ from .rig import (BSR_CreateBigSpaceRig, is_big_space_rig)
 from .attach import (BSR_AttachCreatePlace, BSR_AttachSinglePlace, BSR_AttachMultiPlace)
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
-from .mat_node_noise import (BSR_Noise9eCreateDuoNode, BSR_Noise6eCreateDuoNode)
+from .mat_node_noise import BSR_Noise6eCreateDuoNode
 from .mat_node_util import (BSR_WorldCoordsCreateDuoNode, BSR_VecMultiplyCreateDuoNode, BSR_VecAddCreateDuoNode,
     BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode)
 
@@ -54,6 +54,24 @@ else:
 # This is used as a "NONE" marker for lists (of objects, bones, etc.).
 # Solution: try to make this a string that would never be used, e.g. a blank space for an object's name.
 BLANK_ITEM_STR = " "
+
+class BSR_PT_ActiveRig(bpy.types.Panel):
+    bl_label = "Active Rig"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = Region
+    bl_category = "BigSpaceRig"
+
+    def draw(self, context):
+        active_ob = context.active_object
+        # display panel only if active object is a Big Space Rig
+        if not is_big_space_rig(active_ob):
+            return
+        layout = self.layout
+        box = layout.box()
+        box.label(text="Active Rig: " + active_ob.name)
+        box.prop(active_ob, '["'+OBJ_PROP_FP_POWER+'"]')
+        box.prop(active_ob, '["'+OBJ_PROP_FP_MIN_DIST+'"]')
+        box.prop(active_ob, '["'+OBJ_PROP_FP_MIN_SCALE+'"]')
 
 class BSR_PT_Rig(bpy.types.Panel):
     bl_label = "Rig"
@@ -107,24 +125,6 @@ class BSR_PT_GeoNodes(bpy.types.Panel):
         col.active = scn.BSR_GeoNodesCreateUseAltGroup
         col.prop(scn, "BSR_GeoNodesCreateAltGroup")
 
-class BSR_PT_ActiveRig(bpy.types.Panel):
-    bl_label = "Active Rig"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = Region
-    bl_category = "BigSpaceRig"
-
-    def draw(self, context):
-        active_ob = context.active_object
-        # display panel only if active object is a Big Space Rig
-        if not is_big_space_rig(active_ob):
-            return
-        layout = self.layout
-        box = layout.box()
-        box.label(text="Active Rig: " + active_ob.name)
-        box.prop(active_ob, '["'+OBJ_PROP_FP_POWER+'"]')
-        box.prop(active_ob, '["'+OBJ_PROP_FP_MIN_DIST+'"]')
-        box.prop(active_ob, '["'+OBJ_PROP_FP_MIN_SCALE+'"]')
-
 class BSR_PT_MegaSphere(bpy.types.Panel):
     bl_label = "Mega Sphere"
     bl_space_type = "VIEW_3D"
@@ -160,7 +160,6 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         layout = self.layout
         box = layout.box()
         box.label(text="Texture - Noise")
-        box.operator("big_space_rig.noise_9e_create_duo_node")
         box.operator("big_space_rig.noise_6e_create_duo_node")
         box.label(text="Vector")
         box.operator("big_space_rig.world_coords_create_duo_node")
@@ -177,6 +176,7 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         subcol.operator("big_space_rig.place_input_create_duo_node")
 
 classes = [
+    BSR_PT_ActiveRig,
     BSR_PT_Rig,
     BSR_CreateBigSpaceRig,
     BSR_PT_Attach,
@@ -184,7 +184,6 @@ classes = [
     BSR_AttachMultiPlace,
     BSR_AttachSinglePlace,
     BSR_PT_CreateDuoNodes,
-    BSR_Noise9eCreateDuoNode,
     BSR_Noise6eCreateDuoNode,
     BSR_WorldCoordsCreateDuoNode,
     BSR_VecMultiplyCreateDuoNode,
@@ -201,9 +200,6 @@ if bpy.app.version >= (2,90,0):
         BSR_PT_MegaSphere,
         BSR_MegaSphereCreate,
     ])
-classes.extend([
-    BSR_PT_ActiveRig,
-])
 
 def register():
     for cls in classes:

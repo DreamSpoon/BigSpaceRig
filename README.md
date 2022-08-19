@@ -36,7 +36,7 @@ Name notes:
     - equals 1
 
 ## Light and Shadow Notes
-Due to automatic changes in object positions and scales, shadows between objects may be "wrong".
+When Forced Perspective scaling is used, shadows between objects may be "wrong".
 Possible solutions include, but are not limited to:
   - use of the "Sun" type of light can help overcome the problem
     - good where objects have common light source, but don't need to shadow each other
