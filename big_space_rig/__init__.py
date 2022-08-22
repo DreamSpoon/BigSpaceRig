@@ -41,7 +41,7 @@ from .rig import (BSR_CreateBigSpaceRig, is_big_space_rig)
 from .attach import (BSR_AttachCreatePlace, BSR_AttachSinglePlace, BSR_AttachMultiPlace)
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
-from .mat_node_noise import BSR_Noise6eCreateDuoNode
+from .mat_node_noise import BSR_Noise3eCreateDuoNode
 from .mat_node_util import (BSR_WorldCoordsCreateDuoNode, BSR_VecMultiplyCreateDuoNode, BSR_VecAddCreateDuoNode,
     BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode)
 
@@ -160,7 +160,7 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         layout = self.layout
         box = layout.box()
         box.label(text="Texture - Noise")
-        box.operator("big_space_rig.noise_6e_create_duo_node")
+        box.operator("big_space_rig.noise_3e_create_duo_node")
         box.label(text="Vector")
         box.operator("big_space_rig.world_coords_create_duo_node")
         box.operator("big_space_rig.vec_multiply_create_duo_node")
@@ -184,7 +184,7 @@ classes = [
     BSR_AttachMultiPlace,
     BSR_AttachSinglePlace,
     BSR_PT_CreateDuoNodes,
-    BSR_Noise6eCreateDuoNode,
+    BSR_Noise3eCreateDuoNode,
     BSR_WorldCoordsCreateDuoNode,
     BSR_VecMultiplyCreateDuoNode,
     BSR_VecAddCreateDuoNode,
