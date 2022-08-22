@@ -148,6 +148,9 @@ def create_geo_ng_scale_for_dist():
     tree_links.new(new_nodes["Vector Math.001"].outputs[0], new_nodes["Vector Math.004"].inputs[0])
     tree_links.new(new_nodes["Vector Math.004"].outputs[1], new_nodes["Math.005"].inputs[0])
 
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
+
     return new_node_group
 
 def create_geo_ng_cull_by_angle():
@@ -239,6 +242,9 @@ def create_geo_ng_cull_by_angle():
     tree_links.new(new_nodes["Math.005"].outputs[0], new_nodes["Map Range.001"].inputs[0])
     tree_links.new(new_nodes["Map Range.001"].outputs[0], new_nodes["Math.006"].inputs[1])
     tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Vector Math.010"].inputs[0])
+
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
 
     return new_node_group
 
@@ -344,6 +350,9 @@ def create_geo_ng_cull_by_dist():
     tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Math.006"].inputs[0])
     tree_links.new(new_nodes["Math.006"].outputs[0], new_nodes["Delete Geometry.001"].inputs[1])
 
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
+
     return new_node_group
 
 def create_geo_ng_level_of_detail():
@@ -420,6 +429,9 @@ def create_geo_ng_level_of_detail():
     tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math"].inputs[1])
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math"].inputs[0])
     tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Math.005"].inputs[1])
+
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
 
     return new_node_group
 
@@ -560,6 +572,9 @@ def create_geo_ng_subdiv():
     tree_links.new(new_nodes["Math.012"].outputs[0], new_nodes["Boolean Math.001"].inputs[0])
     tree_links.new(new_nodes["Math.012"].outputs[0], new_nodes["Math.011"].inputs[1])
 
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
+
     return new_node_group
 
 def create_geo_ng_iterate():
@@ -660,6 +675,9 @@ def create_geo_ng_iterate():
     tree_links.new(new_nodes["Group Input"].outputs[10], new_nodes["Group.046"].inputs[1])
     tree_links.new(new_nodes["Group Input"].outputs[9], new_nodes["Group.043"].inputs[2])
     tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Group.043"].inputs[0])
+
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
 
     return new_node_group
 
@@ -1075,6 +1093,9 @@ def create_geo_ng_megasphere():
     tree_links.new(new_nodes["Group.010"].outputs[1], new_nodes["Group.009"].inputs[1])
     tree_links.new(new_nodes["Merge by Distance"].outputs[0], new_nodes["Group Output.001"].inputs[0])
 
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
+
     return new_node_group
 
 # depending on the name passed to function, create the right set of nodes in a group and pass back
@@ -1347,6 +1368,9 @@ def create_individual_geo_ng(new_node_group, big_space_rig, proxy_place_bone_nam
         tree_links.new(new_nodes["Vector.003"].outputs[0], new_nodes["Vector Math"].inputs[1])
         tree_links.new(new_nodes["Vector Math"].outputs[0], new_nodes["MegaSphere.Group"].inputs[7])
         tree_links.new(new_nodes["Vector Math.001"].outputs[0], new_nodes["MegaSphere.Group"].inputs[6])
+
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
 
     return new_node_group
 

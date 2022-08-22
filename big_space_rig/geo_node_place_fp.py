@@ -236,6 +236,9 @@ def create_place_custom_geo_node_group():
     tree_links.new(new_nodes["Vector Math"].outputs[0], new_nodes["Vector Math.002"].inputs[0])
     tree_links.new(new_nodes["Vector Math.006"].outputs[0], new_nodes["Vector Math.007"].inputs[0])
 
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
+
     return new_node_group
 
 def add_place_fp_to_existing_group(existing_group_name, clear_node_tree, big_space_rig, big_space_rig_bone, attached_obj):
@@ -629,6 +632,9 @@ def add_place_fp_to_existing_group(existing_group_name, clear_node_tree, big_spa
     tree_links.new(new_nodes["Vector.005"].outputs[0], new_nodes["Vector Math.003"].inputs[0])
     tree_links.new(new_nodes["Vector.008"].outputs[0], new_nodes["Vector Math.003"].inputs[1])
     tree_links.new(new_nodes["Vector.003"].outputs[0], new_nodes["Vector Math"].inputs[0])
+
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
 
 def ensure_place_fp_node_group(override_create):
     # check if custom node group already exists, and create/override if necessary

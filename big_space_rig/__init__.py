@@ -25,7 +25,7 @@ bl_info = {
         ", per Place) to create 'condensed space' for viewing large objects that are separated by very large " \
         "distances, at correct scale (e.g. planets, moons, stars).",
     "author": "Dave",
-    "version": (0, 2, 0),
+    "version": (0, 2, 1),
     "blender": (2, 80, 0),
     "location": "View 3D -> Tools -> BigSpaceRig",
     "category": "Shader/Geometry Nodes, Other",
@@ -42,8 +42,8 @@ from .attach import (BSR_AttachCreatePlace, BSR_AttachSinglePlace, BSR_AttachMul
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
 from .mat_node_noise import BSR_Noise3eCreateDuoNode
-from .mat_node_util import (BSR_WorldCoordsCreateDuoNode, BSR_VecMultiplyCreateDuoNode, BSR_VecAddCreateDuoNode,
-    BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode)
+from .mat_node_util import (BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode,
+    BSR_PlaceOffsetInputCreateDuoNode)
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -161,10 +161,7 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         box = layout.box()
         box.label(text="Texture - Noise")
         box.operator("big_space_rig.noise_3e_create_duo_node")
-        box.label(text="Vector")
-        box.operator("big_space_rig.world_coords_create_duo_node")
-        box.operator("big_space_rig.vec_multiply_create_duo_node")
-        box.operator("big_space_rig.vec_add_create_duo_node")
+        box = layout.box()
         box.label(text="Input")
         box.prop(scn, "BSR_NodeGetInputFromRig")
         col = box.column()
@@ -174,6 +171,7 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         subcol = box.column()
         subcol.active = (scn.BSR_NodeGetInputFromRigPlace != BLANK_ITEM_STR)
         subcol.operator("big_space_rig.place_input_create_duo_node")
+        subcol.operator("big_space_rig.place_offset_input_create_duo_node")
 
 classes = [
     BSR_PT_ActiveRig,
@@ -185,11 +183,9 @@ classes = [
     BSR_AttachSinglePlace,
     BSR_PT_CreateDuoNodes,
     BSR_Noise3eCreateDuoNode,
-    BSR_WorldCoordsCreateDuoNode,
-    BSR_VecMultiplyCreateDuoNode,
-    BSR_VecAddCreateDuoNode,
     BSR_ObserverInputCreateDuoNode,
     BSR_PlaceInputCreateDuoNode,
+    BSR_PlaceOffsetInputCreateDuoNode,
 ]
 # geometry node support is only for Blender v2.9+ (or maybe v3.0+ ...)
 # TODO: check what version is needed for current geometry nodes setup
@@ -242,7 +238,7 @@ def obs_input_rig_items(self, context):
         if is_big_space_rig(ob):
             rig_list.append(ob)
     rig_name_items = [(rig.name, rig.name, "") for rig in rig_list]
-    # if list is empty then return "NONE"
+    # if list is empty then return the "blank" list
     if len(rig_name_items) < 1:
         return [(BLANK_ITEM_STR, "", "")]
     else:
@@ -252,7 +248,11 @@ def place_input_rig_items(self, context):
     ob = bpy.data.objects.get(context.scene.BSR_NodeGetInputFromRig)
     if not is_big_space_rig(ob):
         return [(BLANK_ITEM_STR, "", "")]
-    return [(bone.name, bone.name, "") for bone in ob.data.bones if bone.get(OBJ_PROP_BONE_PLACE) == True]
+    place_item_list = [(bone.name, bone.name, "") for bone in ob.data.bones if bone.get(OBJ_PROP_BONE_PLACE) == True]
+    # if zero places found then return the "blank" list
+    if len(place_item_list) < 1:
+        return [(BLANK_ITEM_STR, "", "")]
+    return place_item_list
 
 def register_props():
     bts = bpy.types.Scene

@@ -111,6 +111,9 @@ def create_duo_ng_ping_pong_3e(node_tree_type):
     tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Math.005"].inputs[0])
     tree_links.new(new_nodes["Math.005"].outputs[0], new_nodes["Math.002"].inputs[0])
 
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
+
     return new_node_group
 
 def create_duo_ng_sample_3e(node_tree_type):
@@ -172,10 +175,18 @@ def create_duo_ng_sample_3e(node_tree_type):
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.007"].inputs[0])
     tree_links.new(new_nodes["Math.003"].outputs[0], new_nodes["Group Output"].inputs[0])
 
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
+
     return new_node_group
 
 def create_duo_ng_noise_3e(node_tree_type):
     # initialize variables
+    if node_tree_type == 'GeometryNodeTree':
+        node_group_type = 'GeometryNodeGroup'
+    else:
+        node_group_type = 'ShaderNodeGroup'
+
     new_nodes = {}
     new_node_group = bpy.data.node_groups.new(name=node_group_name_for_name_and_type(NOISE_3E_DUO_NG_NAME,
                                                                                      node_tree_type),
@@ -194,55 +205,55 @@ def create_duo_ng_noise_3e(node_tree_type):
     tree_nodes.clear()
 
     # create nodes
-    node = tree_nodes.new(type="ShaderNodeGroup")
+    node = tree_nodes.new(type=node_group_type)
     node.location = (-560, 600)
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
                                                                                 node_tree_type))
     new_nodes["Group.016"] = node
 
-    node = tree_nodes.new(type="ShaderNodeGroup")
+    node = tree_nodes.new(type=node_group_type)
     node.location = (-560, 740)
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(SAMPLE_3E_DUO_NG_NAME,
                                                                                 node_tree_type))
     new_nodes["Group.005"] = node
 
-    node = tree_nodes.new(type="ShaderNodeGroup")
+    node = tree_nodes.new(type=node_group_type)
     node.location = (-560, 460)
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
                                                                                 node_tree_type))
     new_nodes["Group.003"] = node
 
-    node = tree_nodes.new(type="ShaderNodeGroup")
+    node = tree_nodes.new(type=node_group_type)
     node.location = (-560, -500)
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
                                                                                 node_tree_type))
     new_nodes["Group.008"] = node
 
-    node = tree_nodes.new(type="ShaderNodeGroup")
+    node = tree_nodes.new(type=node_group_type)
     node.location = (-560, -360)
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
                                                                                 node_tree_type))
     new_nodes["Group.019"] = node
 
-    node = tree_nodes.new(type="ShaderNodeGroup")
+    node = tree_nodes.new(type=node_group_type)
     node.location = (-560, -640)
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(SAMPLE_3E_DUO_NG_NAME,
                                                                                 node_tree_type))
     new_nodes["Group.007"] = node
 
-    node = tree_nodes.new(type="ShaderNodeGroup")
+    node = tree_nodes.new(type=node_group_type)
     node.location = (-560, 0)
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(SAMPLE_3E_DUO_NG_NAME,
                                                                                 node_tree_type))
     new_nodes["Group.006"] = node
 
-    node = tree_nodes.new(type="ShaderNodeGroup")
+    node = tree_nodes.new(type=node_group_type)
     node.location = (-560, 140)
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
                                                                                 node_tree_type))
     new_nodes["Group.018"] = node
 
-    node = tree_nodes.new(type="ShaderNodeGroup")
+    node = tree_nodes.new(type=node_group_type)
     node.location = (-560, -140)
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
                                                                                 node_tree_type))
@@ -541,6 +552,9 @@ def create_duo_ng_noise_3e(node_tree_type):
     tree_links.new(new_nodes["Group.005"].outputs[0], new_nodes["Math.024"].inputs[0])
     tree_links.new(new_nodes["Group.005"].outputs[0], new_nodes["Math.026"].inputs[0])
 
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
+
     return new_node_group
 
 def create_duo_node_noise_3e(context, override_create, node_tree_type):
@@ -569,5 +583,6 @@ class BSR_Noise3eCreateDuoNode(bpy.types.Operator):
         return False
 
     def execute(self, context):
+        bpy.ops.node.select_all(action='DESELECT')
         create_duo_node_noise_3e(context, False, context.space_data.edit_tree.bl_idname)
         return {'FINISHED'}
