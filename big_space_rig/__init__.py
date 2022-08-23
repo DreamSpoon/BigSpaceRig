@@ -43,7 +43,7 @@ from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
 from .mat_node_noise import BSR_Noise3eCreateDuoNode
 from .mat_node_util import (BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode,
-    BSR_PlaceOffsetInputCreateDuoNode)
+    BSR_PlaceOffsetInputCreateDuoNode, BSR_VecDiv3eMod3eCreateDuoNode, BSR_VecDiv6eCreateDuoNode)
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -109,7 +109,7 @@ class BSR_PT_Attach(bpy.types.Panel):
         box.prop(scn, "BSR_UsePlaceScaleFP")
 
 class BSR_PT_GeoNodes(bpy.types.Panel):
-    bl_label = "Geometry Nodes"
+    bl_label = "FP Geometry Nodes"
     bl_space_type = "VIEW_3D"
     bl_region_type = Region
     bl_category = "BigSpaceRig"
@@ -118,6 +118,7 @@ class BSR_PT_GeoNodes(bpy.types.Panel):
         scn = context.scene
         layout = self.layout
         box = layout.box()
+        box.label(text="Forced Perspective Geo Nodes")
         box.operator("big_space_rig.add_place_fp_geo_nodes")
         box.prop(scn, "BSR_GeoNodesOverrideCreate")
         box.prop(scn, "BSR_GeoNodesCreateUseAltGroup")
@@ -158,9 +159,7 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
     def draw(self, context):
         scn = context.scene
         layout = self.layout
-        box = layout.box()
-        box.label(text="Texture - Noise")
-        box.operator("big_space_rig.noise_3e_create_duo_node")
+
         box = layout.box()
         box.label(text="Input")
         box.prop(scn, "BSR_NodeGetInputFromRig")
@@ -172,6 +171,15 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         subcol.active = (scn.BSR_NodeGetInputFromRigPlace != BLANK_ITEM_STR)
         subcol.operator("big_space_rig.place_input_create_duo_node")
         subcol.operator("big_space_rig.place_offset_input_create_duo_node")
+
+        box = layout.box()
+        box.label(text="Texture - Noise")
+        box.operator("big_space_rig.noise_3e_create_duo_node")
+
+        box = layout.box()
+        box.label(text="Vector")
+        box.operator("big_space_rig.vec_div_3e_mod_3e_create_duo_node")
+        box.operator("big_space_rig.vec_div_6e_create_duo_node")
 
 classes = [
     BSR_PT_ActiveRig,
@@ -186,6 +194,8 @@ classes = [
     BSR_ObserverInputCreateDuoNode,
     BSR_PlaceInputCreateDuoNode,
     BSR_PlaceOffsetInputCreateDuoNode,
+    BSR_VecDiv3eMod3eCreateDuoNode,
+    BSR_VecDiv6eCreateDuoNode,
 ]
 # geometry node support is only for Blender v2.9+ (or maybe v3.0+ ...)
 # TODO: check what version is needed for current geometry nodes setup
@@ -252,7 +262,7 @@ def place_input_rig_items(self, context):
     # if zero places found then return the "blank" list
     if len(place_item_list) < 1:
         return [(BLANK_ITEM_STR, "", "")]
-    return place_item_list
+    return place_item_list 
 
 def register_props():
     bts = bpy.types.Scene

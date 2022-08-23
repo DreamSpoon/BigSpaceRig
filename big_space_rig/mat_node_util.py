@@ -22,6 +22,20 @@ from .node_other import (ensure_node_groups, node_group_name_for_name_and_type, 
 from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME)
 from .node_other import (get_0e_6e_from_place_bone_name)
 
+VEC_DIV_3E_MOD_3E_DUO_NG_NAME = "VecDiv3eMod3e.BSR"
+VEC_DIV_6E_DUO_NG_NAME = "VecDiv6e.BSR"
+
+# depending on the name passed to function, create the right set of nodes in a group and pass back
+def create_prereq_duo_node_group(node_group_name, node_tree_type):
+    if node_group_name == VEC_DIV_3E_MOD_3E_DUO_NG_NAME:
+        return create_duo_vec_div3e_mod_3e(node_tree_type)
+    elif node_group_name == VEC_DIV_6E_DUO_NG_NAME:
+        return create_duo_vec_div_6e(node_tree_type)
+
+    # error
+    print("Unknown name passed to create_custom_geo_node_group: " + str(node_group_name))
+    return None
+
 def create_duo_node_observer_input(context, node_tree_type, big_space_rig, node_loc_offset):
     tree_nodes = context.space_data.edit_tree.nodes
     new_nodes = []
@@ -456,4 +470,245 @@ class BSR_PlaceOffsetInputCreateDuoNode(bpy.types.Operator):
         place_nodes = create_duo_node_place_input(context, context.space_data.edit_tree.bl_idname, big_space_rig,
                                                   bsr_place, (0, -260))
         create_obs_place_offset_nodes(context, obs_nodes, place_nodes)
+        return {'FINISHED'}
+
+def create_duo_vec_div3e_mod_3e(node_tree_type):
+    # initialize variables
+    new_nodes = {}
+    new_node_group = bpy.data.node_groups.new(name=node_group_name_for_name_and_type(VEC_DIV_3E_MOD_3E_DUO_NG_NAME,
+                                                                                     node_tree_type),
+                                              type=node_tree_type)
+    new_node_group.inputs.new(type='NodeSocketVector', name="Vector 6e")
+    new_node_group.inputs.new(type='NodeSocketVector', name="Vector 0e")
+    new_node_group.inputs.new(type='NodeSocketVector', name="World")
+    new_node_group.outputs.new(type='NodeSocketVector', name="Vector")
+    tree_nodes = new_node_group.nodes
+    # delete old nodes before adding new nodes
+    tree_nodes.clear()
+
+    # create nodes
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-450, 110)
+    node.operation = "DIVIDE"
+    node.inputs[1].default_value = (1e3, 1e3, 1e3)
+    new_nodes["Vector Math.005"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-270, 110)
+    node.operation = "FRACTION"
+    new_nodes["Vector Math.006"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-450, -90)
+    node.operation = "DIVIDE"
+    node.inputs[1].default_value = (1e3, 1e3, 1e3)
+    new_nodes["Vector Math.007"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-270, -90)
+    node.operation = "FRACTION"
+    new_nodes["Vector Math.008"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-90, 30)
+    node.operation = "ADD"
+    new_nodes["Vector Math.009"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (90, 30)
+    node.operation = "FRACTION"
+    new_nodes["Vector Math.010"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (270, 30)
+    node.operation = "ADD"
+    new_nodes["Vector Math.014"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (450, 30)
+    node.operation = "ADD"
+    new_nodes["Vector Math.015"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-170, -290)
+    node.operation = "ADD"
+    new_nodes["Vector Math.011"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (10, -250)
+    node.operation = "DIVIDE"
+    node.inputs[1].default_value = (1e3, 1e3, 1e3)
+    new_nodes["Vector Math.012"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (90, 210)
+    node.operation = "FLOOR"
+    new_nodes["Vector Math.004"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-90, 290)
+    node.operation = "MULTIPLY"
+    node.inputs[1].default_value = (1e3, 1e3, 1e3)
+    new_nodes["Vector Math.003"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-270, 290)
+    node.operation = "FRACTION"
+    new_nodes["Vector Math.002"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (190, -210)
+    node.operation = "FLOOR"
+    new_nodes["Vector Math.013"] = node
+
+    node = tree_nodes.new(type="NodeGroupInput")
+    node.location = (-680, -20)
+    new_nodes["Group Input"] = node
+
+    node = tree_nodes.new(type="NodeGroupOutput")
+    node.location = (640, -20)
+    new_nodes["Group Output"] = node
+
+    # create links
+    tree_links = new_node_group.links
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Vector Math.002"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Vector Math.005"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math.007"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.015"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Vector Math.003"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.003"].outputs[0], new_nodes["Vector Math.004"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.005"].outputs[0], new_nodes["Vector Math.006"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.007"].outputs[0], new_nodes["Vector Math.008"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.006"].outputs[0], new_nodes["Vector Math.009"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.008"].outputs[0], new_nodes["Vector Math.009"].inputs[1])
+    tree_links.new(new_nodes["Vector Math.009"].outputs[0], new_nodes["Vector Math.010"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.011"].outputs[0], new_nodes["Vector Math.012"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.012"].outputs[0], new_nodes["Vector Math.013"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.004"].outputs[0], new_nodes["Vector Math.014"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.010"].outputs[0], new_nodes["Vector Math.014"].inputs[1])
+    tree_links.new(new_nodes["Vector Math.014"].outputs[0], new_nodes["Vector Math.015"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.013"].outputs[0], new_nodes["Vector Math.015"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Vector Math.011"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math.011"].inputs[1])
+
+    return new_node_group
+
+def create_duo_node_vec_div_3e_mod_3e(context, override_create, node_tree_type):
+    ensure_node_groups(override_create, [VEC_DIV_3E_MOD_3E_DUO_NG_NAME],
+        node_tree_type, create_prereq_duo_node_group)
+    node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
+    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(VEC_DIV_3E_MOD_3E_DUO_NG_NAME,
+                                                                                node_tree_type))
+
+class BSR_VecDiv3eMod3eCreateDuoNode(bpy.types.Operator):
+    bl_description = "Add a vector Division (by 1000) and Modulus (by 1000) node"
+    bl_idname = "big_space_rig.vec_div_3e_mod_3e_create_duo_node"
+    bl_label = "Divide 3e Mod 3e"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        s = context.space_data
+        if s.type == 'NODE_EDITOR' and s.node_tree != None and \
+            s.tree_type in ['CompositorNodeTree', 'ShaderNodeTree', 'TextureNodeTree', 'GeometryNodeTree']:
+            return True
+        return False
+
+    def execute(self, context):
+        scn = context.scene
+        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig)
+        if big_space_rig is None:
+            self.report({'ERROR'}, "Unable to create VecDiv3eMod3e node because no Big Space Rig given.")
+            return {'CANCELLED'}
+        bsr_place = scn.BSR_NodeGetInputFromRigPlace
+        if bsr_place is None:
+            self.report({'ERROR'}, "Unable to create VecDiv3eMod3e node because no Place given.")
+            return {'CANCELLED'}
+        bpy.ops.node.select_all(action='DESELECT')
+        create_duo_node_vec_div_3e_mod_3e(context, False, context.space_data.edit_tree.bl_idname)
+        return {'FINISHED'}
+
+def create_duo_vec_div_6e(node_tree_type):
+    # initialize variables
+    new_nodes = {}
+    new_node_group = bpy.data.node_groups.new(name=node_group_name_for_name_and_type(VEC_DIV_6E_DUO_NG_NAME,
+                                                                                     node_tree_type),
+                                              type=node_tree_type)
+    new_node_group.inputs.new(type='NodeSocketVector', name="Vector 6e")
+    new_node_group.inputs.new(type='NodeSocketVector', name="Vector 0e")
+    new_node_group.inputs.new(type='NodeSocketVector', name="Vector World")
+    new_node_group.outputs.new(type='NodeSocketVector', name="Vector")
+    tree_nodes = new_node_group.nodes
+    # delete old nodes before adding new nodes
+    tree_nodes.clear()
+
+    # create nodes
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-190, -70)
+    node.operation = "ADD"
+    new_nodes["Vector Math.002"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-10, -70)
+    node.operation = "DIVIDE"
+    node.inputs[1].default_value = (1e6, 1e6, 1e6)
+    new_nodes["Vector Math.003"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (190, 70)
+    node.operation = "ADD"
+    new_nodes["Vector Math.004"] = node
+
+    node = tree_nodes.new(type="NodeGroupInput")
+    node.location = (-390, 0)
+    new_nodes["Group Input"] = node
+
+    node = tree_nodes.new(type="NodeGroupOutput")
+    node.location = (380, 0)
+    new_nodes["Group Output"] = node
+
+    # create links
+    tree_links = new_node_group.links
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Vector Math.002"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math.002"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Vector Math.004"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.004"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Vector Math.003"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.003"].outputs[0], new_nodes["Vector Math.004"].inputs[1])
+
+    return new_node_group
+
+def create_duo_node_vec_div_6e(context, override_create, node_tree_type):
+    ensure_node_groups(override_create, [VEC_DIV_6E_DUO_NG_NAME],
+        node_tree_type, create_prereq_duo_node_group)
+    node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
+    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(VEC_DIV_6E_DUO_NG_NAME,
+                                                                                node_tree_type))
+
+class BSR_VecDiv6eCreateDuoNode(bpy.types.Operator):
+    bl_description = "Add a vector division node for division by one million (1,000,000)"
+    bl_idname = "big_space_rig.vec_div_6e_create_duo_node"
+    bl_label = "Divide 6e"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        s = context.space_data
+        if s.type == 'NODE_EDITOR' and s.node_tree != None and \
+            s.tree_type in ['CompositorNodeTree', 'ShaderNodeTree', 'TextureNodeTree', 'GeometryNodeTree']:
+            return True
+        return False
+
+    def execute(self, context):
+        scn = context.scene
+        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig)
+        if big_space_rig is None:
+            self.report({'ERROR'}, "Unable to create VecDiv6e node because no Big Space Rig given.")
+            return {'CANCELLED'}
+        bsr_place = scn.BSR_NodeGetInputFromRigPlace
+        if bsr_place is None:
+            self.report({'ERROR'}, "Unable to create VecDiv6e node because no Place given.")
+            return {'CANCELLED'}
+        bpy.ops.node.select_all(action='DESELECT')
+        create_duo_node_vec_div_6e(context, False, context.space_data.edit_tree.bl_idname)
         return {'FINISHED'}

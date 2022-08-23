@@ -663,8 +663,9 @@ def add_place_fp_geo_nodes_to_object(ob, override_create, alt_group_name, big_sp
     add_place_fp_to_existing_group(geo_nodes_mod.node_group.name, True, big_space_rig, big_space_rig_bone, ob)
 
 class BSR_AddPlaceFP_GeoNodes(bpy.types.Operator):
-    bl_description = "Add Geometry Nodes to selected object(s). Object(s) must already be attached to Big Space Rig "+\
-                     "for this to work"
+    bl_description = "Add Geometry Nodes to selected object(s), to create the Forced Perspective effect " \
+        "inside a Mesh Object attached to a Place of a Big Space Rig. Object(s) must already be attached to " \
+        "Big Space Rig for this to work"
     bl_idname = "big_space_rig.add_place_fp_geo_nodes"
     bl_label = "Add Geometry Nodes"
     bl_options = {'REGISTER', 'UNDO'}

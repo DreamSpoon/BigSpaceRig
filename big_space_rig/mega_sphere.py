@@ -694,7 +694,7 @@ def create_geo_ng_megasphere():
     new_node_group.inputs.new(type='NodeSocketVector', name="Observer 6e Loc")
     new_node_group.inputs.new(type='NodeSocketVector', name="Observer 0e Loc")
     new_node_group.outputs.new(type='NodeSocketGeometry', name="Geometry")
-    new_node_group.outputs.new(type='NodeSocketVector', name="Original Loc")
+    new_node_group.outputs.new(type='NodeSocketVector', name="MegaSphere Normal")
     new_node_group.outputs.new(type='NodeSocketBool', name="Max FaceCount")
     tree_nodes = new_node_group.nodes
     # delete old nodes before adding new nodes
@@ -858,7 +858,7 @@ def create_geo_ng_megasphere():
     new_nodes["Vector Math"] = node
 
     node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
-    node.label = "Capture original loc"
+    node.label = "Capture sphere normal"
     node.location = (-1280, -140)
     node.data_type = 'FLOAT_VECTOR'
     new_nodes["Capture Attribute"] = node
@@ -1145,7 +1145,7 @@ def create_individual_geo_ng(new_node_group, big_space_rig, proxy_place_bone_nam
     # initialize variables
     new_nodes = {}
     new_node_group.inputs.new(type='NodeSocketMaterial', name="Material")
-    new_node_group.outputs.new(type='NodeSocketVector', name="Original Loc")
+    new_node_group.outputs.new(type='NodeSocketVector', name="MegaSphere Normal")
     tree_nodes = new_node_group.nodes
     # delete old nodes before adding new nodes
     tree_nodes.clear()
