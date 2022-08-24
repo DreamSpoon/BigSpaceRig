@@ -22,8 +22,19 @@ from .node_other import (ensure_node_groups, node_group_name_for_name_and_type, 
 from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME)
 from .node_other import (get_0e_6e_from_place_bone_name)
 
+MERGE_VERT_LOD_GEO_NG_NAME = "MergeVertexLOD.BSR.GeoNG"
+
 VEC_DIV_3E_MOD_3E_DUO_NG_NAME = "VecDiv3eMod3e.BSR"
 VEC_DIV_6E_DUO_NG_NAME = "VecDiv6e.BSR"
+
+# depending on the name passed to function, create the right set of nodes in a group and pass back
+def create_prereq_mono_node_group(node_group_name, node_tree_type):
+    if node_group_name == MERGE_VERT_LOD_GEO_NG_NAME:
+        return create_geo_ng_merge_vertex_lod()
+
+    # error
+    print("Unknown name passed to create_custom_mono_node_group: " + str(node_group_name))
+    return None
 
 # depending on the name passed to function, create the right set of nodes in a group and pass back
 def create_prereq_duo_node_group(node_group_name, node_tree_type):
@@ -33,7 +44,7 @@ def create_prereq_duo_node_group(node_group_name, node_tree_type):
         return create_duo_vec_div_6e(node_tree_type)
 
     # error
-    print("Unknown name passed to create_custom_geo_node_group: " + str(node_group_name))
+    print("Unknown name passed to create_custom_duo_node_group: " + str(node_group_name))
     return None
 
 def create_duo_node_observer_input(context, node_tree_type, big_space_rig, node_loc_offset):
@@ -711,4 +722,121 @@ class BSR_VecDiv6eCreateDuoNode(bpy.types.Operator):
             return {'CANCELLED'}
         bpy.ops.node.select_all(action='DESELECT')
         create_duo_node_vec_div_6e(context, False, context.space_data.edit_tree.bl_idname)
+        return {'FINISHED'}
+
+def create_geo_ng_merge_vertex_lod():
+    # initialize variables
+    new_nodes = {}
+    new_node_group = bpy.data.node_groups.new(name=MERGE_VERT_LOD_GEO_NG_NAME, type='GeometryNodeTree')
+    new_node_group.inputs.new(type='NodeSocketGeometry', name="Geometry")
+    new_node_group.inputs.new(type='NodeSocketBool', name="LOD inner edges")
+    new_node_group.inputs.new(type='NodeSocketBool', name="LOD outer verts")
+    new_node_group.outputs.new(type='NodeSocketGeometry', name="Geometry")
+    tree_nodes = new_node_group.nodes
+    # delete old nodes before adding new nodes
+    tree_nodes.clear()
+
+    # create nodes
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-380, -420)
+    node.operation = "LENGTH"
+    new_nodes["Vector Math"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-200, -400)
+    node.operation = "MULTIPLY"
+    node.inputs[1].default_value = 0.15
+    new_nodes["Math"] = node
+
+    node = tree_nodes.new(type="GeometryNodeInputPosition")
+    node.location = (-560, -460)
+    new_nodes["Position.001"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-20, -280)
+    node.operation = "LESS_THAN"
+    new_nodes["Math.001"] = node
+
+    node = tree_nodes.new(type="GeometryNodeProximity")
+    node.location = (-200, -200)
+    node.target_element = 'EDGES'
+    new_nodes["Geometry Proximity"] = node
+
+    node = tree_nodes.new(type="GeometryNodeSeparateGeometry")
+    node.label = "Separate inner edges"
+    node.location = (-380, -180)
+    node.domain = 'EDGE'
+    new_nodes["Separate Geometry"] = node
+
+    node = tree_nodes.new(type="GeometryNodeInputPosition")
+    node.location = (-380, -340)
+    new_nodes["Position"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (160, -180)
+    new_nodes["Boolean Math"] = node
+
+    node = tree_nodes.new(type="GeometryNodeSetPosition")
+    node.location = (340, -120)
+    new_nodes["Set Position.001"] = node
+
+    node = tree_nodes.new(type="NodeGroupInput")
+    node.location = (-680, -140)
+    new_nodes["Group Input"] = node
+
+    node = tree_nodes.new(type="NodeGroupOutput")
+    node.location = (520, -140)
+    new_nodes["Group Output"] = node
+
+    # create links
+    tree_links = new_node_group.links
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Separate Geometry"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Separate Geometry"].inputs[1])
+    tree_links.new(new_nodes["Set Position.001"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Separate Geometry"].outputs[0], new_nodes["Geometry Proximity"].inputs[0])
+    tree_links.new(new_nodes["Position"].outputs[0], new_nodes["Geometry Proximity"].inputs[1])
+    tree_links.new(new_nodes["Geometry Proximity"].outputs[0], new_nodes["Set Position.001"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Set Position.001"].inputs[0])
+    tree_links.new(new_nodes["Position.001"].outputs[0], new_nodes["Vector Math"].inputs[0])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Math.001"].inputs[1])
+    tree_links.new(new_nodes["Vector Math"].outputs[1], new_nodes["Math"].inputs[0])
+    tree_links.new(new_nodes["Geometry Proximity"].outputs[1], new_nodes["Math.001"].inputs[0])
+    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Boolean Math"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Boolean Math"].inputs[0])
+    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Set Position.001"].inputs[1])
+
+    return new_node_group
+
+def create_geo_node_merge_vertex_lod(context, override_create):
+    ensure_node_groups(override_create, [MERGE_VERT_LOD_GEO_NG_NAME], 'GeometryNodeTree', create_prereq_mono_node_group)
+    node = context.space_data.edit_tree.nodes.new(type='GeometryNodeGroup')
+    node.node_tree = bpy.data.node_groups.get(MERGE_VERT_LOD_GEO_NG_NAME)
+
+class BSR_MergeVertexLOD_CreateGeoNode(bpy.types.Operator):
+    bl_description = "Create node to fix 'holes' between level-of-detail geometry in MegaSphere, which usually " \
+        "show up after adding displacements to MegaSphere geometry - e.g. Noise texture displacements"
+    bl_idname = "big_space_rig.merge_vertex_lod_create_geo_node"
+    bl_label = "Merge Vertex LOD"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        s = context.space_data
+        if s.type == 'NODE_EDITOR' and s.node_tree != None and \
+            s.tree_type in ['GeometryNodeTree']:
+            return True
+        return False
+
+    def execute(self, context):
+        scn = context.scene
+        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig)
+        if big_space_rig is None:
+            self.report({'ERROR'}, "Unable to create Merge Vertex LOD node because no Big Space Rig given.")
+            return {'CANCELLED'}
+        bsr_place = scn.BSR_NodeGetInputFromRigPlace
+        if bsr_place is None:
+            self.report({'ERROR'}, "Unable to create Merge Vertex LOD node because no Place given.")
+            return {'CANCELLED'}
+        bpy.ops.node.select_all(action='DESELECT')
+        create_geo_node_merge_vertex_lod(context, False)
         return {'FINISHED'}

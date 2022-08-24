@@ -87,8 +87,6 @@ CIRCLE_WIDGET_NAME = "WidgetCircle"
 
 WIDGET_CIRCLE_VERT_COUNT = 32
 
-BSR_CUSTOM_NODE_GROUP_NAME = "BigSpaceRigGeoNodeGroup"
-
 # returns False if 'ob' is not a Big Space Rig, otherwise returns True
 # TODO: enhance the check - e.g. if bones are renamed, then how to check? rig/bones w/ custom props?
 def is_big_space_rig(ob):

@@ -43,7 +43,8 @@ from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
 from .mat_node_noise import BSR_Noise3eCreateDuoNode
 from .mat_node_util import (BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode,
-    BSR_PlaceOffsetInputCreateDuoNode, BSR_VecDiv3eMod3eCreateDuoNode, BSR_VecDiv6eCreateDuoNode)
+    BSR_PlaceOffsetInputCreateDuoNode, BSR_VecDiv3eMod3eCreateDuoNode, BSR_VecDiv6eCreateDuoNode,
+    BSR_MergeVertexLOD_CreateGeoNode)
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -171,11 +172,12 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         subcol.active = (scn.BSR_NodeGetInputFromRigPlace != BLANK_ITEM_STR)
         subcol.operator("big_space_rig.place_input_create_duo_node")
         subcol.operator("big_space_rig.place_offset_input_create_duo_node")
-
         box = layout.box()
         box.label(text="Texture - Noise")
         box.operator("big_space_rig.noise_3e_create_duo_node")
-
+        box = layout.box()
+        box.label(text="Utility")
+        box.operator("big_space_rig.merge_vertex_lod_create_geo_node")
         box = layout.box()
         box.label(text="Vector")
         box.operator("big_space_rig.vec_div_3e_mod_3e_create_duo_node")
@@ -196,6 +198,7 @@ classes = [
     BSR_PlaceOffsetInputCreateDuoNode,
     BSR_VecDiv3eMod3eCreateDuoNode,
     BSR_VecDiv6eCreateDuoNode,
+    BSR_MergeVertexLOD_CreateGeoNode,
 ]
 # geometry node support is only for Blender v2.9+ (or maybe v3.0+ ...)
 # TODO: check what version is needed for current geometry nodes setup
@@ -279,7 +282,6 @@ def register_props():
     bts.BSR_NewObserverFP_MinScale = bp.FloatProperty(name="FP Min Scale",
         description="Forced Perspective Minimum Scale value, which is the minimum scale to apply with the " +
         "'Forced Perspective' effect", default=0.0)
-
     bts.BSR_AttachPreCreateRig = bp.BoolProperty(name="Create Rig if Needed", description="Create a new " +
         "Big Space Rig before attaching objects, if no Big Space Rig was active before pressing attach button",
         default=True)
@@ -289,7 +291,6 @@ def register_props():
     bts.BSR_UsePlaceScaleFP =  bp.BoolProperty(name="Use Place Scaling", description="Apply a 'forced perspective' " +\
         "scaling effect to places as they move away from the observer - farther away objects 'shrink' to maintain " +\
         "close range to observer. Some accuracy is lost due to greater floating point rounding error", default=False)
-
     bts.BSR_GeoNodesOverrideCreate = bp.BoolProperty(name="Override Create", description="Big Space Rig Geometry " +
         "Nodes custom node group is re-created when geometry nodes are added to object(s), and any previous custom " +
         "group with the same name is deprecated", default=False)
@@ -297,7 +298,6 @@ def register_props():
         "Geometry Nodes group to alternate geometry node group (click to unlock)", default=False)
     bts.BSR_GeoNodesCreateAltGroup = bp.PointerProperty(name="Alt Group", description="Alternative Geometry Nodes " +
         "group to receive Big Space Rig new Geometry Nodes", type=bpy.types.NodeTree, poll=only_geo_node_group_poll)
-
     bts.BSR_MegaSphereRadius = bp.FloatProperty(name="Mega Sphere Radius", description="Radius of sphere, in " + \
         "mega-meters", default=1.0)
     bts.BSR_MegaSphereOverrideCreateNG = bp.BoolProperty(name="Override Create", description="Mega Sphere Geometry " +
@@ -307,7 +307,6 @@ def register_props():
         "at given Place in Big Space Rig", default=False)
     bts.BSR_MegaSpherePlaceBoneName = bpy.props.EnumProperty(name="Place", description="Sphere center " + \
         "place bone", items=bone_items)
-
     bts.BSR_NodeGetInputFromRig = bpy.props.EnumProperty(name="Rig", description="Big Space Rig to use with " + \
         "input nodes", items=obs_input_rig_items)
     bts.BSR_NodeGetInputFromRigPlace = bpy.props.EnumProperty(name="Place", description="Place to use with input " + \

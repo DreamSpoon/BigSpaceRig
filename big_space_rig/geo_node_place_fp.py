@@ -19,12 +19,14 @@
 import bpy
 
 from .rig import (OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT,
-    BSR_CUSTOM_NODE_GROUP_NAME, is_big_space_rig, get_parent_big_space_rig)
+    is_big_space_rig, get_parent_big_space_rig)
 
-def create_place_custom_geo_node_group():
+PLACE_FP_GEO_NG_NAME = "PlaceFP.BSR.GeoNG"
+
+def create_place_fp_geo_node_group():
     # initialize variables
     new_nodes = {}
-    new_node_group = bpy.data.node_groups.new(name=BSR_CUSTOM_NODE_GROUP_NAME, type='GeometryNodeTree')
+    new_node_group = bpy.data.node_groups.new(name=PLACE_FP_GEO_NG_NAME, type='GeometryNodeTree')
     new_node_group.inputs.new(type='NodeSocketGeometry', name="Geometry")
     new_node_group.inputs.new(type='NodeSocketFloat', name="BSR FP Power")
     new_node_group.inputs.new(type='NodeSocketFloat', name="BSR FP Min Dist")
@@ -605,7 +607,7 @@ def add_place_fp_to_existing_group(existing_group_name, clear_node_tree, big_spa
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.label = "BigSpaceRig Geo"
-    node.node_tree = bpy.data.node_groups.get(BSR_CUSTOM_NODE_GROUP_NAME)
+    node.node_tree = bpy.data.node_groups.get(PLACE_FP_GEO_NG_NAME)
     node.location = (0, 0)
     new_nodes["BigSpaceRigGeoNodeGroup"] = node
 
@@ -636,19 +638,19 @@ def add_place_fp_to_existing_group(existing_group_name, clear_node_tree, big_spa
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False
 
-def ensure_place_fp_node_group(override_create):
+def ensure_place_fp_geo_node_group(override_create):
     # check if custom node group already exists, and create/override if necessary
-    node_group = bpy.data.node_groups.get(BSR_CUSTOM_NODE_GROUP_NAME)
+    node_group = bpy.data.node_groups.get(PLACE_FP_GEO_NG_NAME)
     if node_group is None or override_create:
         # create the custom node group
-        new_node_group = create_place_custom_geo_node_group()
+        new_node_group = create_place_fp_geo_node_group()
         # if override create is enabled, then ensure new group name will be "first", meaning:
         #     group name does not have suffix like '.001', '.002', etc.
         if override_create:
-            new_node_group.name = BSR_CUSTOM_NODE_GROUP_NAME
+            new_node_group.name = PLACE_FP_GEO_NG_NAME
 
 def add_place_fp_geo_nodes_to_object(ob, override_create, alt_group_name, big_space_rig, big_space_rig_bone):
-    ensure_place_fp_node_group(override_create)
+    ensure_place_fp_geo_node_group(override_create)
 
     geo_nodes_mod = ob.modifiers.new(name="BigSpaceRig.GeometryNodes", type='NODES')
     # use alternate group, if needed and if available
