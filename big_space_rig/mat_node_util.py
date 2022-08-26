@@ -22,15 +22,15 @@ from .node_other import (ensure_node_groups, node_group_name_for_name_and_type, 
 from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME)
 from .node_other import (get_0e_6e_from_place_bone_name)
 
-MERGE_VERT_LOD_GEO_NG_NAME = "MergeVertexLOD.BSR.GeoNG"
+SNAP_VERT_LOD_GEO_NG_NAME = "SnapVertexLOD.BSR.GeoNG"
 
 VEC_DIV_3E_MOD_3E_DUO_NG_NAME = "VecDiv3eMod3e.BSR"
 VEC_DIV_6E_DUO_NG_NAME = "VecDiv6e.BSR"
 
 # depending on the name passed to function, create the right set of nodes in a group and pass back
 def create_prereq_mono_node_group(node_group_name, node_tree_type):
-    if node_group_name == MERGE_VERT_LOD_GEO_NG_NAME:
-        return create_geo_ng_merge_vertex_lod()
+    if node_group_name == SNAP_VERT_LOD_GEO_NG_NAME:
+        return create_geo_ng_snap_vertex_lod()
 
     # error
     print("Unknown name passed to create_custom_mono_node_group: " + str(node_group_name))
@@ -225,7 +225,7 @@ class BSR_ObserverInputCreateDuoNode(bpy.types.Operator):
 
     def execute(self, context):
         scn = context.scene
-        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig)
+        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig[1:len(scn.BSR_NodeGetInputFromRig)])
         if big_space_rig is None:
             self.report({'ERROR'}, "Unable to Create Observer Position Input node because no Big Space Rig given.")
             return {'CANCELLED'}
@@ -415,11 +415,11 @@ class BSR_PlaceInputCreateDuoNode(bpy.types.Operator):
 
     def execute(self, context):
         scn = context.scene
-        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig)
+        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig[1:len(scn.BSR_NodeGetInputFromRig)])
         if big_space_rig is None:
             self.report({'ERROR'}, "Unable to Create Place Position Input node because no Big Space Rig given.")
             return {'CANCELLED'}
-        bsr_place = scn.BSR_NodeGetInputFromRigPlace
+        bsr_place = scn.BSR_NodeGetInputFromRigPlace[1:len(scn.BSR_NodeGetInputFromRigPlace)]
         if bsr_place is None:
             self.report({'ERROR'}, "Unable to Create Place Position Input node because no Place given.")
             return {'CANCELLED'}
@@ -467,11 +467,11 @@ class BSR_PlaceOffsetInputCreateDuoNode(bpy.types.Operator):
 
     def execute(self, context):
         scn = context.scene
-        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig)
+        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig[1:len(scn.BSR_NodeGetInputFromRig)])
         if big_space_rig is None:
             self.report({'ERROR'}, "Unable to Create Offset Place Position Input node because no Big Space Rig given.")
             return {'CANCELLED'}
-        bsr_place = scn.BSR_NodeGetInputFromRigPlace
+        bsr_place = scn.BSR_NodeGetInputFromRigPlace[1:len(scn.BSR_NodeGetInputFromRigPlace)]
         if bsr_place is None:
             self.report({'ERROR'}, "Unable to Create Offset Place Position Input node because no Place given.")
             return {'CANCELLED'}
@@ -629,15 +629,6 @@ class BSR_VecDiv3eMod3eCreateDuoNode(bpy.types.Operator):
         return False
 
     def execute(self, context):
-        scn = context.scene
-        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig)
-        if big_space_rig is None:
-            self.report({'ERROR'}, "Unable to create VecDiv3eMod3e node because no Big Space Rig given.")
-            return {'CANCELLED'}
-        bsr_place = scn.BSR_NodeGetInputFromRigPlace
-        if bsr_place is None:
-            self.report({'ERROR'}, "Unable to create VecDiv3eMod3e node because no Place given.")
-            return {'CANCELLED'}
         bpy.ops.node.select_all(action='DESELECT')
         create_duo_node_vec_div_3e_mod_3e(context, False, context.space_data.edit_tree.bl_idname)
         return {'FINISHED'}
@@ -717,23 +708,14 @@ class BSR_VecDiv6eCreateDuoNode(bpy.types.Operator):
         return False
 
     def execute(self, context):
-        scn = context.scene
-        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig)
-        if big_space_rig is None:
-            self.report({'ERROR'}, "Unable to create VecDiv6e node because no Big Space Rig given.")
-            return {'CANCELLED'}
-        bsr_place = scn.BSR_NodeGetInputFromRigPlace
-        if bsr_place is None:
-            self.report({'ERROR'}, "Unable to create VecDiv6e node because no Place given.")
-            return {'CANCELLED'}
         bpy.ops.node.select_all(action='DESELECT')
         create_duo_node_vec_div_6e(context, False, context.space_data.edit_tree.bl_idname)
         return {'FINISHED'}
 
-def create_geo_ng_merge_vertex_lod():
+def create_geo_ng_snap_vertex_lod():
     # initialize variables
     new_nodes = {}
-    new_node_group = bpy.data.node_groups.new(name=MERGE_VERT_LOD_GEO_NG_NAME, type='GeometryNodeTree')
+    new_node_group = bpy.data.node_groups.new(name=SNAP_VERT_LOD_GEO_NG_NAME, type='GeometryNodeTree')
     new_node_group.inputs.new(type='NodeSocketGeometry', name="Geometry")
     new_node_group.inputs.new(type='NodeSocketFloat', name="LOD inner verts")
     new_node_group.inputs.new(type='NodeSocketFloat', name="LOD outer verts")
@@ -830,16 +812,16 @@ def create_geo_ng_merge_vertex_lod():
 
     return new_node_group
 
-def create_geo_node_merge_vertex_lod(context, override_create):
-    ensure_node_groups(override_create, [MERGE_VERT_LOD_GEO_NG_NAME], 'GeometryNodeTree', create_prereq_mono_node_group)
+def create_geo_node_snap_vertex_lod(context, override_create):
+    ensure_node_groups(override_create, [SNAP_VERT_LOD_GEO_NG_NAME], 'GeometryNodeTree', create_prereq_mono_node_group)
     node = context.space_data.edit_tree.nodes.new(type='GeometryNodeGroup')
-    node.node_tree = bpy.data.node_groups.get(MERGE_VERT_LOD_GEO_NG_NAME)
+    node.node_tree = bpy.data.node_groups.get(SNAP_VERT_LOD_GEO_NG_NAME)
 
-class BSR_MergeVertexLOD_CreateGeoNode(bpy.types.Operator):
+class BSR_SnapVertexLOD_CreateGeoNode(bpy.types.Operator):
     bl_description = "Create node to fix 'holes' between level-of-detail geometry in MegaSphere, which usually " \
         "show up after adding displacements to MegaSphere geometry - e.g. Noise texture displacements"
-    bl_idname = "big_space_rig.merge_vertex_lod_create_geo_node"
-    bl_label = "Merge Vertex LOD"
+    bl_idname = "big_space_rig.snap_vertex_lod_create_geo_node"
+    bl_label = "Snap Vertex LOD"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -852,14 +834,14 @@ class BSR_MergeVertexLOD_CreateGeoNode(bpy.types.Operator):
 
     def execute(self, context):
         scn = context.scene
-        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig)
+        big_space_rig = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig[1:len(scn.BSR_NodeGetInputFromRig)])
         if big_space_rig is None:
-            self.report({'ERROR'}, "Unable to create Merge Vertex LOD node because no Big Space Rig given.")
+            self.report({'ERROR'}, "Unable to create Snap Vertex LOD node because no Big Space Rig given.")
             return {'CANCELLED'}
-        bsr_place = scn.BSR_NodeGetInputFromRigPlace
+        bsr_place = scn.BSR_NodeGetInputFromRigPlace[1:len(scn.BSR_NodeGetInputFromRigPlace)]
         if bsr_place is None:
-            self.report({'ERROR'}, "Unable to create Merge Vertex LOD node because no Place given.")
+            self.report({'ERROR'}, "Unable to create Snap Vertex LOD node because no Place given.")
             return {'CANCELLED'}
         bpy.ops.node.select_all(action='DESELECT')
-        create_geo_node_merge_vertex_lod(context, False)
+        create_geo_node_snap_vertex_lod(context, False)
         return {'FINISHED'}

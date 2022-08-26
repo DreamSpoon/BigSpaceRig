@@ -1188,12 +1188,6 @@ def create_geo_ng_megasphere():
     node.inputs[2].default_value = 0.5
     new_nodes["Math.001"] = node
 
-#    node = tree_nodes.new(type="GeometryNodeMergeByDistance")
-#    node.location = (3780, 220)
-#    node.inputs[1].default_value = True
-#    node.inputs[2].default_value = 0.001
-#    new_nodes["Merge by Distance"] = node
-
     node = tree_nodes.new(type="ShaderNodeVectorMath")
     node.location = (500, -520)
     node.operation = "MULTIPLY"
@@ -1292,7 +1286,6 @@ def create_geo_ng_megasphere():
     tree_links.new(new_nodes["Group.002"].outputs[0], new_nodes["Join Geometry"].inputs[0])
     tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Group.002"].inputs[3])
     tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Group.011"].inputs[3])
-#    tree_links.new(new_nodes["Capture Attribute"].outputs[0], new_nodes["Merge by Distance"].inputs[0])
     tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Vector Math"].inputs[0])
     tree_links.new(new_nodes["Group.012"].outputs[1], new_nodes["Group Output"].inputs[4])
     tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Vector Math.002"].inputs[0])
@@ -1368,7 +1361,6 @@ def create_geo_ng_megasphere():
     tree_links.new(new_nodes["Group.013"].outputs[1], new_nodes["Math.001"].inputs[1])
     tree_links.new(new_nodes["Vertex Neighbors"].outputs[1], new_nodes["Math"].inputs[0])
     tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Math.001"].inputs[0])
-#    tree_links.new(new_nodes["Merge by Distance"].outputs[0], new_nodes["Group Output"].inputs[0])
     tree_links.new(new_nodes["Capture Attribute"].outputs[0], new_nodes["Group Output"].inputs[0])
     tree_links.new(new_nodes["Position.003"].outputs[0], new_nodes["Vector Math.008"].inputs[0])
     tree_links.new(new_nodes["Edge Neighbors"].outputs[0], new_nodes["Math.003"].inputs[0])

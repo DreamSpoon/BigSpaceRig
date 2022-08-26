@@ -43,23 +43,23 @@ OBJ_PROP_BONE_SCL_MULT = "big_space_rig_bone_scl_mult"
 OBJ_PROP_BONE_PLACE = "place_bone"
 
 SPACE_BONEHEAD = (0, 0, 0)
-SPACE_BONETAIL = (0, 6.854101911, 0)
+SPACE_BONETAIL = (0, 10.0, 0)
 PROXY_SPACE_0E_BONEHEAD = (0, 0, 0)
-PROXY_SPACE_0E_BONETAIL = (0, 6.854101911, 0)
+PROXY_SPACE_0E_BONETAIL = (0, 10.0, 0)
 PROXY_SPACE_6E_BONEHEAD = (0, 0, 0)
-PROXY_SPACE_6E_BONETAIL = (0, 6.854101911, 0)
+PROXY_SPACE_6E_BONETAIL = (0, 20.0, 0)
 PROXY_OBSERVER_0E_BONEHEAD = (0, 0, 0)
-PROXY_OBSERVER_0E_BONETAIL = (0, 0.034441854, 0)
+PROXY_OBSERVER_0E_BONETAIL = (0, 0.5, 0)
 PROXY_OBSERVER_6E_BONEHEAD = (0, 0, 0)
-PROXY_OBSERVER_6E_BONETAIL = (0, 0.034441854, 0)
+PROXY_OBSERVER_6E_BONETAIL = (0, 2.0, 0)
 OBSERVER_FOCUS_BONEHEAD = (0, 0, 0)
-OBSERVER_FOCUS_BONETAIL = (0, 0.61803399, 0)
+OBSERVER_FOCUS_BONETAIL = (0, 1.0, 0)
 PROXY_PLACE_0E_BONEHEAD = (0, 0, 0)
-PROXY_PLACE_0E_BONETAIL = (0, 0.090169945, 0)
+PROXY_PLACE_0E_BONETAIL = (0, 1.0, 0)
 PROXY_PLACE_6E_BONEHEAD = (0, 0, 0)
-PROXY_PLACE_6E_BONETAIL = (0, 0.090169945, 0)
+PROXY_PLACE_6E_BONETAIL = (0, 0.1, 0)
 PLACE_BONEHEAD = (0, 0, 0)
-PLACE_BONETAIL = (0, 4, 0)
+PLACE_BONETAIL = (0, 5.0, 0)
 
 SPACE_BONELAYERS = [(x==0) for x in range(32)]
 PROXY_SPACE_0E_BONELAYERS = [(x==0) for x in range(32)]
@@ -373,4 +373,44 @@ class BSR_CreateBigSpaceRig(bpy.types.Operator):
         scn = context.scene
         create_bsr_armature(context, scn.BSR_NewObserverFP_Power, scn.BSR_NewObserverFP_MinDist,
                                   scn.BSR_NewObserverFP_MinScale)
+        return {'FINISHED'}
+
+def quick_pose_observer_6e(big_space_rig):
+    bpy.ops.object.mode_set(mode='POSE')
+    bpy.ops.pose.select_all(action='DESELECT')
+    big_space_rig.data.bones[PROXY_OBSERVER_6E_BNAME].select = True
+    big_space_rig.data.bones.active = big_space_rig.data.bones[PROXY_OBSERVER_6E_BNAME]
+
+class BSR_QuickPoseObserver6e(bpy.types.Operator):
+    bl_description = "Switch to Pose mode and select the Observer 6e bone for movement at mega-scale (x1,000,000)"
+    bl_idname = "big_space_rig.quick_pose_observer_6e"
+    bl_label = "Observer 6e"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        active_ob = context.active_object
+        if not is_big_space_rig(active_ob):
+            self.report({'ERROR'}, "Unable to Quick Pose Observer 6e because active object is not a Big Space Rig")
+            return {'CANCELLED'}
+        quick_pose_observer_6e(active_ob)
+        return {'FINISHED'}
+
+def quick_pose_observer_0e(big_space_rig):
+    bpy.ops.object.mode_set(mode='POSE')
+    bpy.ops.pose.select_all(action='DESELECT')
+    big_space_rig.data.bones[PROXY_OBSERVER_0E_BNAME].select = True
+    big_space_rig.data.bones.active = big_space_rig.data.bones[PROXY_OBSERVER_0E_BNAME]
+
+class BSR_QuickPoseObserver0e(bpy.types.Operator):
+    bl_description = "Switch to Pose mode and select the Observer 0e bone for movement at regular scale (x1)"
+    bl_idname = "big_space_rig.quick_pose_observer_0e"
+    bl_label = "Observer 0e"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        active_ob = context.active_object
+        if not is_big_space_rig(active_ob):
+            self.report({'ERROR'}, "Unable to Quick Pose Observer 0e because active object is not a Big Space Rig")
+            return {'CANCELLED'}
+        quick_pose_observer_0e(active_ob)
         return {'FINISHED'}

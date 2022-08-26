@@ -37,14 +37,14 @@ from bpy.props import PointerProperty
 
 from .rig import (OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT,
     OBJ_PROP_BONE_PLACE)
-from .rig import (BSR_CreateBigSpaceRig, is_big_space_rig)
+from .rig import (is_big_space_rig, BSR_CreateBigSpaceRig, BSR_QuickPoseObserver6e, BSR_QuickPoseObserver0e)
 from .attach import (BSR_AttachCreatePlace, BSR_AttachSinglePlace, BSR_AttachMultiPlace)
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
 from .mat_node_noise import BSR_Noise3eCreateDuoNode
 from .mat_node_util import (BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode,
     BSR_PlaceOffsetInputCreateDuoNode, BSR_VecDiv3eMod3eCreateDuoNode, BSR_VecDiv6eCreateDuoNode,
-    BSR_MergeVertexLOD_CreateGeoNode)
+    BSR_SnapVertexLOD_CreateGeoNode)
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -54,7 +54,7 @@ else:
 # May cause problem re: names of objects, i.e. if Big Space Rig object name equals this.
 # This is used as a "NONE" marker for lists (of objects, bones, etc.).
 # Solution: try to make this a string that would never be used, e.g. a blank space for an object's name.
-BLANK_ITEM_STR = " "
+BLANK_ITEM_STR = "_"
 
 class BSR_PT_ActiveRig(bpy.types.Panel):
     bl_label = "Active Rig"
@@ -73,9 +73,13 @@ class BSR_PT_ActiveRig(bpy.types.Panel):
         box.prop(active_ob, '["'+OBJ_PROP_FP_POWER+'"]')
         box.prop(active_ob, '["'+OBJ_PROP_FP_MIN_DIST+'"]')
         box.prop(active_ob, '["'+OBJ_PROP_FP_MIN_SCALE+'"]')
+        box = layout.box()
+        box.label(text="Go to Observer")
+        box.operator("big_space_rig.quick_pose_observer_6e")
+        box.operator("big_space_rig.quick_pose_observer_0e")
 
-class BSR_PT_Rig(bpy.types.Panel):
-    bl_label = "Rig"
+class BSR_PT_CreateRig(bpy.types.Panel):
+    bl_label = "Create Rig"
     bl_space_type = "VIEW_3D"
     bl_region_type = Region
     bl_category = "BigSpaceRig"
@@ -84,7 +88,6 @@ class BSR_PT_Rig(bpy.types.Panel):
         scn = context.scene
         layout = self.layout
         box = layout.box()
-        box.label(text="Create Rig")
         box.operator("big_space_rig.create_big_space_rig")
         box.label(text="New Rig Properties:")
         box.prop(scn, "BSR_NewObserverFP_Power")
@@ -177,7 +180,7 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         box.operator("big_space_rig.noise_3e_create_duo_node")
         box = layout.box()
         box.label(text="Utility")
-        box.operator("big_space_rig.merge_vertex_lod_create_geo_node")
+        box.operator("big_space_rig.snap_vertex_lod_create_geo_node")
         box = layout.box()
         box.label(text="Vector")
         box.operator("big_space_rig.vec_div_3e_mod_3e_create_duo_node")
@@ -185,8 +188,10 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
 
 classes = [
     BSR_PT_ActiveRig,
-    BSR_PT_Rig,
+    BSR_PT_CreateRig,
     BSR_CreateBigSpaceRig,
+    BSR_QuickPoseObserver6e,
+    BSR_QuickPoseObserver0e,
     BSR_PT_Attach,
     BSR_AttachCreatePlace,
     BSR_AttachMultiPlace,
@@ -198,7 +203,7 @@ classes = [
     BSR_PlaceOffsetInputCreateDuoNode,
     BSR_VecDiv3eMod3eCreateDuoNode,
     BSR_VecDiv6eCreateDuoNode,
-    BSR_MergeVertexLOD_CreateGeoNode,
+    BSR_SnapVertexLOD_CreateGeoNode,
 ]
 # geometry node support is only for Blender v2.9+ (or maybe v3.0+ ...)
 # TODO: check what version is needed for current geometry nodes setup
@@ -242,7 +247,8 @@ def bone_items(self, context):
     ob = context.active_object
     if not is_big_space_rig(ob):
         return [(BLANK_ITEM_STR, "", "")]
-    return [(bone.name, bone.name, "") for bone in ob.data.bones if bone.get(OBJ_PROP_BONE_PLACE) == True]
+    else:
+        return [(BLANK_ITEM_STR+bone.name, bone.name, "") for bone in ob.data.bones if bone.get(OBJ_PROP_BONE_PLACE) == True]
 
 def obs_input_rig_items(self, context):
     ob = context.active_object
@@ -250,7 +256,7 @@ def obs_input_rig_items(self, context):
     for ob in bpy.data.objects:
         if is_big_space_rig(ob):
             rig_list.append(ob)
-    rig_name_items = [(rig.name, rig.name, "") for rig in rig_list]
+    rig_name_items = [(BLANK_ITEM_STR+rig.name, rig.name, "") for rig in rig_list]
     # if list is empty then return the "blank" list
     if len(rig_name_items) < 1:
         return [(BLANK_ITEM_STR, "", "")]
@@ -261,11 +267,12 @@ def place_input_rig_items(self, context):
     ob = bpy.data.objects.get(context.scene.BSR_NodeGetInputFromRig)
     if not is_big_space_rig(ob):
         return [(BLANK_ITEM_STR, "", "")]
-    place_item_list = [(bone.name, bone.name, "") for bone in ob.data.bones if bone.get(OBJ_PROP_BONE_PLACE) == True]
+    place_item_list = [(BLANK_ITEM_STR+bone.name, bone.name, "") for bone in ob.data.bones if bone.get(OBJ_PROP_BONE_PLACE) == True]
     # if zero places found then return the "blank" list
     if len(place_item_list) < 1:
         return [(BLANK_ITEM_STR, "", "")]
-    return place_item_list 
+    else:
+        return place_item_list
 
 def register_props():
     bts = bpy.types.Scene
