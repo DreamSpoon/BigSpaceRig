@@ -494,113 +494,94 @@ def create_duo_vec_div3e_mod_3e(node_tree_type):
     new_node_group.inputs.new(type='NodeSocketVector', name="World")
     new_node_group.outputs.new(type='NodeSocketVector', name="Vector")
     tree_nodes = new_node_group.nodes
-    # delete old nodes before adding new nodes
+    # delete all nodes
     tree_nodes.clear()
 
     # create nodes
     node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (-450, 110)
-    node.operation = "DIVIDE"
-    node.inputs[1].default_value = (1e3, 1e3, 1e3)
-    new_nodes["Vector Math.005"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (-270, 110)
-    node.operation = "FRACTION"
-    new_nodes["Vector Math.006"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (-450, -90)
-    node.operation = "DIVIDE"
-    node.inputs[1].default_value = (1e3, 1e3, 1e3)
-    new_nodes["Vector Math.007"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (-270, -90)
-    node.operation = "FRACTION"
-    new_nodes["Vector Math.008"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (-90, 30)
+    node.location = (-480, 20)
     node.operation = "ADD"
-    new_nodes["Vector Math.009"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (90, 30)
-    node.operation = "FRACTION"
-    new_nodes["Vector Math.010"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (270, 30)
-    node.operation = "ADD"
-    new_nodes["Vector Math.014"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (450, 30)
-    node.operation = "ADD"
-    new_nodes["Vector Math.015"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (-170, -290)
-    node.operation = "ADD"
-    new_nodes["Vector Math.011"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (10, -250)
-    node.operation = "DIVIDE"
-    node.inputs[1].default_value = (1e3, 1e3, 1e3)
-    new_nodes["Vector Math.012"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (90, 210)
-    node.operation = "FLOOR"
     new_nodes["Vector Math.004"] = node
 
     node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (-90, 290)
-    node.operation = "MULTIPLY"
-    node.inputs[1].default_value = (1e3, 1e3, 1e3)
-    new_nodes["Vector Math.003"] = node
+    node.location = (60, 140)
+    node.operation = "ADD"
+    new_nodes["Vector Math.006"] = node
 
     node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (-270, 290)
+    node.location = (-480, 180)
     node.operation = "FRACTION"
+    new_nodes["Vector Math.012"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-300, 260)
+    node.operation = "MULTIPLY"
+    node.inputs[1].default_value = (1e3, 1e3, 1e3)
+    new_nodes["Vector Math.011"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-120, 180)
+    node.operation = "FLOOR"
+    new_nodes["Vector Math.010"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-120, 20)
+    node.operation = "FRACTION"
+    new_nodes["Vector Math.005"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-300, 40)
+    node.operation = "DIVIDE"
+    node.inputs[1].default_value = (1e3, 1e3, 1e3)
     new_nodes["Vector Math.002"] = node
 
     node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (190, -210)
+    node.location = (-300, -180)
+    node.operation = "ADD"
+    new_nodes["Vector Math.008"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-120, -140)
+    node.operation = "DIVIDE"
+    node.inputs[1].default_value = (1e3, 1e3, 1e3)
+    new_nodes["Vector Math.014"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (60, -80)
     node.operation = "FLOOR"
     new_nodes["Vector Math.013"] = node
 
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (240, 60)
+    node.operation = "ADD"
+    new_nodes["Vector Math.007"] = node
+
     node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (-680, -20)
+    node.location = (-660, -60)
     new_nodes["Group Input"] = node
 
     node = tree_nodes.new(type="NodeGroupOutput")
-    node.location = (640, -20)
+    node.location = (420, 20)
     new_nodes["Group Output"] = node
 
     # create links
     tree_links = new_node_group.links
-    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Vector Math.002"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Vector Math.005"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math.007"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.015"].outputs[0], new_nodes["Group Output"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Vector Math.003"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.003"].outputs[0], new_nodes["Vector Math.004"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.005"].outputs[0], new_nodes["Vector Math.006"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.007"].outputs[0], new_nodes["Vector Math.008"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.006"].outputs[0], new_nodes["Vector Math.009"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.008"].outputs[0], new_nodes["Vector Math.009"].inputs[1])
-    tree_links.new(new_nodes["Vector Math.009"].outputs[0], new_nodes["Vector Math.010"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.011"].outputs[0], new_nodes["Vector Math.012"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.012"].outputs[0], new_nodes["Vector Math.013"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.004"].outputs[0], new_nodes["Vector Math.014"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.010"].outputs[0], new_nodes["Vector Math.014"].inputs[1])
-    tree_links.new(new_nodes["Vector Math.014"].outputs[0], new_nodes["Vector Math.015"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.013"].outputs[0], new_nodes["Vector Math.015"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Vector Math.011"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math.011"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Vector Math.012"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.007"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.012"].outputs[0], new_nodes["Vector Math.011"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.011"].outputs[0], new_nodes["Vector Math.010"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Vector Math.005"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.010"].outputs[0], new_nodes["Vector Math.006"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.005"].outputs[0], new_nodes["Vector Math.006"].inputs[1])
+    tree_links.new(new_nodes["Vector Math.014"].outputs[0], new_nodes["Vector Math.013"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.006"].outputs[0], new_nodes["Vector Math.007"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.013"].outputs[0], new_nodes["Vector Math.007"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Vector Math.004"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math.004"].inputs[1])
+    tree_links.new(new_nodes["Vector Math.004"].outputs[0], new_nodes["Vector Math.002"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Vector Math.008"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math.008"].inputs[1])
+    tree_links.new(new_nodes["Vector Math.008"].outputs[0], new_nodes["Vector Math.014"].inputs[0])
 
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False
