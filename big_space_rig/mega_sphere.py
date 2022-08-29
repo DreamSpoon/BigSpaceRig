@@ -583,7 +583,7 @@ def create_geo_ng_subdiv():
     new_node_group.inputs.new(type='NodeSocketFloat', name="Crease Delta Dist")
     new_node_group.inputs.new(type='NodeSocketFloat', name="Sphere Radius")
     new_node_group.inputs.new(type='NodeSocketBool', name="Max FaceCount")
-    new_node_group.outputs.new(type='NodeSocketGeometry', name="Mesh")
+    new_node_group.outputs.new(type='NodeSocketGeometry', name="Geometry")
     new_node_group.outputs.new(type='NodeSocketBool', name="Max FaceCount")
     tree_nodes = new_node_group.nodes
     # delete all nodes
@@ -1016,7 +1016,7 @@ def create_geo_ng_megasphere():
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (2760, 20)
-    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_ITERATE_GEO_NG_NAME)
+    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_SUBDIV_GEO_NG_NAME)
     node.inputs[4].default_value = 25.0
     node.inputs[5].default_value = 27.0
     node.inputs[6].default_value = 0.0
