@@ -152,6 +152,8 @@ class BSR_PT_MegaSphere(bpy.types.Panel):
             subcol = col.column()
             subcol.active = scn.BSR_MegaSphereUsePlace
             subcol.prop(scn, "BSR_MegaSpherePlaceBoneName")
+        box.label(text="Add Noise")
+        box.prop(scn, "BSR_MegaSphereWithNoise")
 
 class BSR_PT_CreateDuoNodes(bpy.types.Panel):
     bl_idname = "NODE_PT_BigSpaceRig"
@@ -295,8 +297,8 @@ def register_props():
     bts.BSR_AttachNoReParent = bp.BoolProperty(name="Do not Re-Parent", description="Objects that already " +
         "have a parent object will not be 're-parented' to the Big Space Rig. Only the 'root parents', and " +
         "non-parented objects will be attached to Big Space Rig", default=True)
-    bts.BSR_UsePlaceScaleFP =  bp.BoolProperty(name="Use Place Scaling", description="Apply a 'forced perspective' " +\
-        "scaling effect to places as they move away from the observer - farther away objects 'shrink' to maintain " +\
+    bts.BSR_UsePlaceScaleFP =  bp.BoolProperty(name="Use Place Scaling", description="Apply a 'forced perspective' " +
+        "scaling effect to places as they move away from the observer - farther away objects 'shrink' to maintain " +
         "close range to observer. Some accuracy is lost due to greater floating point rounding error", default=False)
     bts.BSR_GeoNodesOverrideCreate = bp.BoolProperty(name="Override Create", description="Big Space Rig Geometry " +
         "Nodes custom node group is re-created when geometry nodes are added to object(s), and any previous custom " +
@@ -305,19 +307,21 @@ def register_props():
         "Geometry Nodes group to alternate geometry node group (click to unlock)", default=False)
     bts.BSR_GeoNodesCreateAltGroup = bp.PointerProperty(name="Alt Group", description="Alternative Geometry Nodes " +
         "group to receive Big Space Rig new Geometry Nodes", type=bpy.types.NodeTree, poll=only_geo_node_group_poll)
-    bts.BSR_MegaSphereRadius = bp.FloatProperty(name="Mega Sphere Radius", description="Radius of sphere, in " + \
+    bts.BSR_MegaSphereRadius = bp.FloatProperty(name="Mega Sphere Radius", description="Radius of sphere, in " +
         "mega-meters", default=1.0)
     bts.BSR_MegaSphereOverrideCreateNG = bp.BoolProperty(name="Override Create", description="Mega Sphere Geometry " +
         "Nodes custom node group is re-created when Mega Sphere is created, and any previous custom group with the " +
         "same name is deprecated", default=False)
-    bts.BSR_MegaSphereUsePlace = bp.BoolProperty(name="Use Place Offset", description="Create MegaSphere centered " + \
+    bts.BSR_MegaSphereUsePlace = bp.BoolProperty(name="Use Place Offset", description="Create MegaSphere centered " +
         "at given Place in Big Space Rig", default=False)
-    bts.BSR_MegaSpherePlaceBoneName = bpy.props.EnumProperty(name="Place", description="Sphere center " + \
+    bts.BSR_MegaSpherePlaceBoneName = bpy.props.EnumProperty(name="Place", description="Sphere center " +
         "place bone", items=bone_items)
-    bts.BSR_NodeGetInputFromRig = bpy.props.EnumProperty(name="Rig", description="Big Space Rig to use with " + \
+    bts.BSR_NodeGetInputFromRig = bpy.props.EnumProperty(name="Rig", description="Big Space Rig to use with " +
         "input nodes", items=obs_input_rig_items)
-    bts.BSR_NodeGetInputFromRigPlace = bpy.props.EnumProperty(name="Place", description="Place to use with input " + \
+    bts.BSR_NodeGetInputFromRigPlace = bpy.props.EnumProperty(name="Place", description="Place to use with input " +
         "nodes", items=place_input_rig_items)
+    bts.BSR_MegaSphereWithNoise = bp.BoolProperty(name="Create with noise", description="Add nodes to apply Noise3e " +
+        "to MegaSphere, when MegaSphere is created", default=False)
 
 if __name__ == "__main__":
     register()

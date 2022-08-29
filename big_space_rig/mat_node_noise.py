@@ -26,7 +26,7 @@ SAMPLE_3E_DUO_NG_NAME = "Sample3e.BSR"
 NOISE_3E_DUO_NG_NAME = "Noise3e.BSR"
 
 # depending on the name passed to function, create the right set of nodes in a group and pass back
-def create_prereq_duo_node_group(node_group_name, node_tree_type):
+def create_prereq_noise_node_group(node_group_name, node_tree_type):
     if node_group_name == PINGPONG_3E_DUO_NG_NAME:
         return create_duo_ng_ping_pong_3e(node_tree_type)
     elif node_group_name == SAMPLE_3E_DUO_NG_NAME:
@@ -561,7 +561,7 @@ def create_duo_node_noise_3e(context, override_create, node_tree_type):
     ensure_node_groups(override_create, [PINGPONG_3E_DUO_NG_NAME,
                                          SAMPLE_3E_DUO_NG_NAME,
                                          NOISE_3E_DUO_NG_NAME],
-        node_tree_type, create_prereq_duo_node_group)
+        node_tree_type, create_prereq_noise_node_group)
     node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(NOISE_3E_DUO_NG_NAME, node_tree_type))
     node.inputs[3].default_value = 1.0

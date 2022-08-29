@@ -21,7 +21,10 @@ import bpy
 from .rig import is_big_space_rig
 from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME)
 from .attach import (PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
-from .node_other import (get_0e_6e_from_place_bone_name)
+from .node_other import (get_0e_6e_from_place_bone_name, ensure_node_groups, node_group_name_for_name_and_type)
+from .mat_node_util import (SNAP_VERT_LOD_GEO_NG_NAME, VEC_DIV_3E_MOD_3E_DUO_NG_NAME, create_prereq_util_node_group)
+from .mat_node_noise import (PINGPONG_3E_DUO_NG_NAME, SAMPLE_3E_DUO_NG_NAME, NOISE_3E_DUO_NG_NAME,
+    create_prereq_noise_node_group)
 
 MEGASPHERE_SCALE_FOR_DIST_GEO_NG_NAME = "MegaSphere.ScaleForDist.BSR.GeoNG"
 MEGASPHERE_SCALE_FOR_PROXIMITY_GEO_NG_NAME = "MegaSphere.ScaleForProximity.BSR.GeoNG"
@@ -395,6 +398,7 @@ def create_geo_ng_cull_by_dist():
 
     node = tree_nodes.new(type="FunctionNodeBooleanMath")
     node.location = (-505, -735)
+    node.operation = 'NOT'
     new_nodes["Boolean Math"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
@@ -429,20 +433,20 @@ def create_geo_ng_cull_by_dist():
     node.domain = 'FACE'
     new_nodes["Delete Geometry.001"] = node
 
-    node = tree_nodes.new(type="NodeGroupOutput")
-    node.location = (725, -470)
-    new_nodes["Group Output"] = node
-
-    node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (-1150, -505)
-    new_nodes["Group Input"] = node
-
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (150, -770)
     node.operation = "COMPARE"
     node.inputs[1].default_value = 0.0
     node.inputs[2].default_value = 0.0
     new_nodes["Math.005"] = node
+
+    node = tree_nodes.new(type="NodeGroupInput")
+    node.location = (-1150, -505)
+    new_nodes["Group Input"] = node
+
+    node = tree_nodes.new(type="NodeGroupOutput")
+    node.location = (725, -470)
+    new_nodes["Group Output"] = node
 
     # create links
     tree_links = new_node_group.links
@@ -1458,39 +1462,9 @@ def ensure_mega_sphere_geo_nodes(override_create):
     ensure_geo_node_group(MEGASPHERE_ITERATE_GEO_NG_NAME, override_create)
     ensure_geo_node_group(MEGASPHERE_GEO_NG_NAME, override_create)
 
-def create_individual_geo_ng(new_node_group, big_space_rig, proxy_place_bone_name_0e=None, proxy_place_bone_name_6e=None):
-    # initialize variables
+def create_obs_place_input_nodes(tree_nodes, tree_links, megasphere_node, vec_d3em3e_node, big_space_rig,
+                                 proxy_place_bone_name_0e, proxy_place_bone_name_6e):
     new_nodes = {}
-    new_node_group.inputs.new(type='NodeSocketMaterial', name="Material")
-    new_node_group.outputs.new(type='NodeSocketVector', name="MegaSphere Normal")
-    tree_nodes = new_node_group.nodes
-    # delete old nodes before adding new nodes
-    tree_nodes.clear()
-
-    # create nodes
-    node = tree_nodes.new(type="GeometryNodeGroup")
-    node.label = "MegaSphere"
-    node.location = (-40, -20)
-    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_GEO_NG_NAME)
-    node.inputs[0].default_value = 10.0
-    node.inputs[1].default_value = 1.0
-    node.inputs[2].default_value = 0.0
-    node.inputs[3].default_value = 0.0
-    node.inputs[4].default_value = 9999.0
-    node.inputs[5].default_value = 64000
-    new_nodes["MegaSphere.Group"] = node
-
-    node = tree_nodes.new(type="GeometryNodeSetMaterial")
-    node.location = (220, 120)
-    new_nodes["Set Material"] = node
-
-    node = tree_nodes.new(type="NodeGroupOutput")
-    node.location = (400, 40)
-    new_nodes["Group Output"] = node
-
-    node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (-220, 80)
-    new_nodes["Group Input"] = node
 
     node = tree_nodes.new(type="FunctionNodeInputVector")
     node.label = "Obs 6e"
@@ -1660,42 +1634,230 @@ def create_individual_geo_ng(new_node_group, big_space_rig, proxy_place_bone_nam
         new_nodes["Vector.003"] = node
 
         node = tree_nodes.new(type="ShaderNodeVectorMath")
-        node.location = (-220, -420)
+        node.location = (-220, -260)
         node.operation = "SUBTRACT"
         new_nodes["Vector Math"] = node
 
         node = tree_nodes.new(type="ShaderNodeVectorMath")
-        node.location = (-220, -260)
+        node.location = (-220, -420)
         node.operation = "SUBTRACT"
         new_nodes["Vector Math.001"] = node
 
+    if proxy_place_bone_name_0e is None or proxy_place_bone_name_6e is None:
+        tree_links.new(new_nodes["Vector"].outputs[0], megasphere_node.inputs[6])
+        tree_links.new(new_nodes["Vector.001"].outputs[0], megasphere_node.inputs[7])
+        tree_links.new(new_nodes["Vector"].outputs[0], vec_d3em3e_node.inputs[0])
+        tree_links.new(new_nodes["Vector.001"].outputs[0], vec_d3em3e_node.inputs[1])
+        return new_nodes["Vector"], new_nodes["Vector.001"]
+    else:
+        tree_links.new(new_nodes["Vector"].outputs[0], new_nodes["Vector Math"].inputs[0])
+        tree_links.new(new_nodes["Vector.001"].outputs[0], new_nodes["Vector Math.001"].inputs[0])
+        tree_links.new(new_nodes["Vector.002"].outputs[0], new_nodes["Vector Math"].inputs[1])
+        tree_links.new(new_nodes["Vector.003"].outputs[0], new_nodes["Vector Math.001"].inputs[1])
+        tree_links.new(new_nodes["Vector Math"].outputs[0], megasphere_node.inputs[6])
+        tree_links.new(new_nodes["Vector Math.001"].outputs[0], megasphere_node.inputs[7])
+        tree_links.new(new_nodes["Vector Math"].outputs[0], vec_d3em3e_node.inputs[0])
+        tree_links.new(new_nodes["Vector Math.001"].outputs[0], vec_d3em3e_node.inputs[1])
+        return new_nodes["Vector Math"], new_nodes["Vector Math.001"]
+
+def create_apply_megasphere_nodes_regular(tree_nodes, tree_links):
+    new_nodes = {}
+
+    # create nodes
+    node = tree_nodes.new(type="GeometryNodeGroup")
+    node.label = "MegaSphere"
+    node.location = (-40, -20)
+    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_GEO_NG_NAME)
+    node.inputs[0].default_value = 10.0
+    node.inputs[1].default_value = 1.0
+    node.inputs[2].default_value = 0.0
+    node.inputs[3].default_value = 0.0
+    node.inputs[4].default_value = 9999.0
+    node.inputs[5].default_value = 64000
+    new_nodes["MegaSphere.Group"] = node
+
+    node = tree_nodes.new(type="GeometryNodeSetMaterial")
+    node.location = (220, 120)
+    new_nodes["Set Material"] = node
+
+    node = tree_nodes.new(type="NodeGroupInput")
+    node.location = (-220, 80)
+    new_nodes["Group Input"] = node
+
+    node = tree_nodes.new(type="NodeGroupOutput")
+    node.location = (400, 40)
+    new_nodes["Group Output"] = node
+
     # create links
-    tree_links = new_node_group.links
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Set Material"].inputs[2])
     tree_links.new(new_nodes["MegaSphere.Group"].outputs[1], new_nodes["Group Output"].inputs[1])
     tree_links.new(new_nodes["MegaSphere.Group"].outputs[0], new_nodes["Set Material"].inputs[0])
     tree_links.new(new_nodes["Set Material"].outputs[0], new_nodes["Group Output"].inputs[0])
-    if proxy_place_bone_name_0e is None or proxy_place_bone_name_6e is None:
-        tree_links.new(new_nodes["Vector"].outputs[0], new_nodes["MegaSphere.Group"].inputs[6])
-        tree_links.new(new_nodes["Vector.001"].outputs[0], new_nodes["MegaSphere.Group"].inputs[7])
+
+    return new_nodes["MegaSphere.Group"]
+
+def create_apply_megasphere_nodes_noise(tree_nodes, tree_links):
+    new_nodes = {}
+
+    # create nodes
+    node = tree_nodes.new(type="GeometryNodeGroup")
+    node.label = "MegaSphere"
+    node.location = (-40, -20)
+    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_GEO_NG_NAME)
+    node.inputs[0].default_value = 10.0
+    node.inputs[1].default_value = 1.0
+    node.inputs[2].default_value = 0.0
+    node.inputs[3].default_value = 0.0
+    node.inputs[4].default_value = 9999.0
+    node.inputs[5].default_value = 64000
+    new_nodes["Group"] = node
+
+    node = tree_nodes.new(type="GeometryNodeGroup")
+    node.location = (1040, -20)
+    node.node_tree = bpy.data.node_groups.get(SNAP_VERT_LOD_GEO_NG_NAME)
+    new_nodes["Group.003"] = node
+
+    node = tree_nodes.new(type="GeometryNodeGroup")
+    node.location = (-40, -420)
+    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(VEC_DIV_3E_MOD_3E_DUO_NG_NAME,
+                                                                                'GeometryNodeTree'))
+    new_nodes["Group.001"] = node
+
+    node = tree_nodes.new(type="GeometryNodeGroup")
+    node.location = (140, -420)
+    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(NOISE_3E_DUO_NG_NAME,
+                                                                                'GeometryNodeTree'))
+    node.inputs[1].default_value = (0.0, 0.0, 0.0)
+    node.inputs[2].default_value = 0.0
+    node.inputs[3].default_value = 1.0
+    node.inputs[4].default_value = 2.0
+    node.inputs[5].default_value = 0.5
+    node.inputs[6].default_value = 0.0
+    new_nodes["Group.002"] = node
+
+    node = tree_nodes.new(type="GeometryNodeInputPosition")
+    node.location = (-220, -580)
+    new_nodes["Position"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (320, -400)
+    node.operation = "ADD"
+    node.inputs[1].default_value = -0.5
+    new_nodes["Math"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (500, -360)
+    node.operation = "MULTIPLY"
+    node.inputs[1].default_value = 1000.0
+    new_nodes["Math.001"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (680, -280)
+    node.operation = "MULTIPLY"
+    new_nodes["Vector Math.002"] = node
+
+    node = tree_nodes.new(type="GeometryNodeSetPosition")
+    node.location = (860, -160)
+    new_nodes["Set Position"] = node
+
+    node = tree_nodes.new(type="GeometryNodeSubdivisionSurface")
+    node.location = (560, -40)
+    node.inputs[1].default_value = 0
+    new_nodes["Subdivision Surface"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (380, -40)
+    node.operation = "ADD"
+    new_nodes["Math.002"] = node
+
+    node = tree_nodes.new(type="GeometryNodeMergeByDistance")
+    node.location = (1240, -20)
+    node.inputs[2].default_value = 0.001
+    new_nodes["Merge by Distance"] = node
+
+    node = tree_nodes.new(type="GeometryNodeSetShadeSmooth")
+    node.location = (1400, -20)
+    node.inputs[2].default_value = True
+    new_nodes["Set Shade Smooth"] = node
+
+    node = tree_nodes.new(type="GeometryNodeSetMaterial")
+    node.location = (1580, -20)
+    new_nodes["Set Material"] = node
+
+    node = tree_nodes.new(type="NodeGroupInput")
+    node.location = (1400, -160)
+    new_nodes["Group Input"] = node
+
+    node = tree_nodes.new(type="NodeGroupOutput")
+    node.location = (1760, -20)
+    new_nodes["Group Output"] = node
+
+    # create links
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Set Material"].inputs[2])
+    tree_links.new(new_nodes["Group"].outputs[1], new_nodes["Group Output"].inputs[1])
+    tree_links.new(new_nodes["Position"].outputs[0], new_nodes["Group.001"].inputs[2])
+    tree_links.new(new_nodes["Group.001"].outputs[0], new_nodes["Group.002"].inputs[0])
+    tree_links.new(new_nodes["Group.002"].outputs[0], new_nodes["Math"].inputs[0])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Math.001"].inputs[0])
+    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Vector Math.002"].inputs[1])
+    tree_links.new(new_nodes["Group"].outputs[1], new_nodes["Vector Math.002"].inputs[0])
+    tree_links.new(new_nodes["Group"].outputs[2], new_nodes["Math.002"].inputs[0])
+    tree_links.new(new_nodes["Group"].outputs[3], new_nodes["Math.002"].inputs[1])
+    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Subdivision Surface"].inputs[2])
+    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Set Position"].inputs[3])
+    tree_links.new(new_nodes["Group"].outputs[2], new_nodes["Group.003"].inputs[1])
+    tree_links.new(new_nodes["Group"].outputs[3], new_nodes["Group.003"].inputs[2])
+    tree_links.new(new_nodes["Subdivision Surface"].outputs[0], new_nodes["Set Position"].inputs[0])
+    tree_links.new(new_nodes["Set Position"].outputs[0], new_nodes["Group.003"].inputs[0])
+    tree_links.new(new_nodes["Merge by Distance"].outputs[0], new_nodes["Set Shade Smooth"].inputs[0])
+    tree_links.new(new_nodes["Group"].outputs[0], new_nodes["Subdivision Surface"].inputs[0])
+    tree_links.new(new_nodes["Set Shade Smooth"].outputs[0], new_nodes["Set Material"].inputs[0])
+    tree_links.new(new_nodes["Set Material"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Group.003"].outputs[0], new_nodes["Merge by Distance"].inputs[0])
+
+    return new_nodes["Group"], new_nodes["Group.001"]
+
+def create_individual_geo_ng(new_node_group, override_create, use_noise, big_space_rig, proxy_place_bone_name_0e=None,
+                             proxy_place_bone_name_6e=None):
+    # initialize variables
+    new_nodes = {}
+    new_node_group.inputs.new(type='NodeSocketMaterial', name="Material")
+    new_node_group.outputs.new(type='NodeSocketVector', name="MegaSphere Normal")
+    tree_nodes = new_node_group.nodes
+    tree_links = new_node_group.links
+    # delete old nodes before adding new nodes
+    tree_nodes.clear()
+
+    # create nodes to implement MegaSphere
+    if use_noise:
+        ensure_node_groups(override_create, [VEC_DIV_3E_MOD_3E_DUO_NG_NAME,
+                                             SNAP_VERT_LOD_GEO_NG_NAME], 'GeometryNodeTree',
+                           create_prereq_util_node_group)
+        ensure_node_groups(override_create, [PINGPONG_3E_DUO_NG_NAME,
+                                             SAMPLE_3E_DUO_NG_NAME,
+                                             NOISE_3E_DUO_NG_NAME], 'GeometryNodeTree',
+                           create_prereq_noise_node_group)
+        megasphere_node, vec_d3em3e_node = create_apply_megasphere_nodes_noise(tree_nodes, tree_links)
     else:
-        tree_links.new(new_nodes["Vector"].outputs[0], new_nodes["Vector Math.001"].inputs[0])
-        tree_links.new(new_nodes["Vector.001"].outputs[0], new_nodes["Vector Math"].inputs[0])
-        tree_links.new(new_nodes["Vector.002"].outputs[0], new_nodes["Vector Math.001"].inputs[1])
-        tree_links.new(new_nodes["Vector.003"].outputs[0], new_nodes["Vector Math"].inputs[1])
-        tree_links.new(new_nodes["Vector Math"].outputs[0], new_nodes["MegaSphere.Group"].inputs[7])
-        tree_links.new(new_nodes["Vector Math.001"].outputs[0], new_nodes["MegaSphere.Group"].inputs[6])
+        megasphere_node = create_apply_megasphere_nodes_regular(tree_nodes, tree_links)
+        vec_d3em3e_node = None
+
+    # create observer/place input nodes and links
+    create_obs_place_input_nodes(tree_nodes, tree_links, megasphere_node, vec_d3em3e_node, big_space_rig,
+                                 proxy_place_bone_name_0e, proxy_place_bone_name_6e)
 
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False
 
     return new_node_group
 
-def add_mega_sphere_geo_nodes_to_object(ob, big_space_rig, proxy_place_bone_name_0e, proxy_place_bone_name_6e):
+def add_mega_sphere_geo_nodes_to_object(ob, big_space_rig, proxy_place_bone_name_0e, proxy_place_bone_name_6e,
+                                        override_create, use_noise):
     geo_nodes_mod = ob.modifiers.new(name="MegaSphere.GeometryNodes", type='NODES')
-    create_individual_geo_ng(geo_nodes_mod.node_group, big_space_rig, proxy_place_bone_name_0e, proxy_place_bone_name_6e)
+    create_individual_geo_ng(geo_nodes_mod.node_group, override_create, use_noise, big_space_rig, proxy_place_bone_name_0e,
+                             proxy_place_bone_name_6e)
 
-def create_mega_sphere(context, big_space_rig, override_create, place_bone_name):
+def create_mega_sphere(context, big_space_rig, override_create, use_noise, place_bone_name):
     # ensure that node groups exist that will be used later by the Mega Sphere geometry nodes modifier
     ensure_mega_sphere_geo_nodes(override_create)
     # create mesh object, that will receive Mega Sphere geometry nodes which overwrite geometry
@@ -1709,7 +1871,8 @@ def create_mega_sphere(context, big_space_rig, override_create, place_bone_name)
     else:
         proxy_place_bone_name_0e, proxy_place_bone_name_6e = None, None
 
-    add_mega_sphere_geo_nodes_to_object(ob, big_space_rig, proxy_place_bone_name_0e, proxy_place_bone_name_6e)
+    add_mega_sphere_geo_nodes_to_object(ob, big_space_rig, proxy_place_bone_name_0e, proxy_place_bone_name_6e,
+                                        override_create, use_noise)
 
 class BSR_MegaSphereCreate(bpy.types.Operator):
     bl_description = "Create a sphere of mega-meter proportions. Active object must be Big Space Rig for this to work"
@@ -1726,6 +1889,7 @@ class BSR_MegaSphereCreate(bpy.types.Operator):
             return {'CANCELLED'}
         place_bone_name = ""
         if scn.BSR_MegaSphereUsePlace:
-            place_bone_name = scn.BSR_MegaSpherePlaceBoneName
-        create_mega_sphere(context, active_ob, scn.BSR_MegaSphereOverrideCreateNG, place_bone_name)
+            place_bone_name = scn.BSR_MegaSpherePlaceBoneName[1:len(scn.BSR_MegaSpherePlaceBoneName)]
+        create_mega_sphere(context, active_ob, scn.BSR_MegaSphereOverrideCreateNG, scn.BSR_MegaSphereWithNoise,
+                           place_bone_name)
         return {'FINISHED'}
