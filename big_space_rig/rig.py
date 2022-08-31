@@ -19,6 +19,7 @@
 import bpy
 import math
 import mathutils
+from mathutils import Vector
 
 if bpy.app.version < (2,80,0):
     from .imp_v27 import (create_mesh_obj_from_pydata, get_cursor_location)
@@ -295,23 +296,23 @@ def create_bsr_armature(context, bsr_fp_power, bsr_fp_min_dist, bsr_fp_min_scale
     b_proxy_space_0e.name = PROXY_SPACE_0E_BNAME
     # save bone name for later use (in Pose bones mode, where the edit bones name may not be usable - will cause error)
     bname_proxy_space_0e = b_proxy_space_0e.name
-    b_proxy_space_0e.head = mathutils.Vector(PROXY_SPACE_0E_BONEHEAD)
-    b_proxy_space_0e.tail = mathutils.Vector(PROXY_SPACE_0E_BONETAIL)
+    b_proxy_space_0e.head = Vector(PROXY_SPACE_0E_BONEHEAD)
+    b_proxy_space_0e.tail = Vector(PROXY_SPACE_0E_BONETAIL)
     b_proxy_space_0e.show_wire = True
     b_proxy_space_0e.layers = PROXY_SPACE_0E_BONELAYERS
 
     b_proxy_space_6e = new_rig.data.edit_bones.new(name=PROXY_SPACE_6E_BNAME)
     bname_proxy_space_6e = b_proxy_space_6e.name
-    b_proxy_space_6e.head = mathutils.Vector(PROXY_SPACE_6E_BONEHEAD)
-    b_proxy_space_6e.tail = mathutils.Vector(PROXY_SPACE_6E_BONETAIL)
+    b_proxy_space_6e.head = Vector(PROXY_SPACE_6E_BONEHEAD)
+    b_proxy_space_6e.tail = Vector(PROXY_SPACE_6E_BONETAIL)
     b_proxy_space_6e.show_wire = True
     b_proxy_space_6e.layers = PROXY_SPACE_6E_BONELAYERS
 
     b_proxy_observer_0e = new_rig.data.edit_bones.new(name=PROXY_OBSERVER_0E_BNAME)
     bname_proxy_obs_0e = b_proxy_observer_0e.name
     # set bone data
-    b_proxy_observer_0e.head = mathutils.Vector(PROXY_OBSERVER_0E_BONEHEAD)
-    b_proxy_observer_0e.tail = mathutils.Vector(PROXY_OBSERVER_0E_BONETAIL)
+    b_proxy_observer_0e.head = Vector(PROXY_OBSERVER_0E_BONEHEAD)
+    b_proxy_observer_0e.tail = Vector(PROXY_OBSERVER_0E_BONETAIL)
     b_proxy_observer_0e.parent = b_proxy_space_0e
     b_proxy_observer_0e.show_wire = True
     b_proxy_observer_0e.layers = PROXY_OBSERVER_0E_BONELAYERS
@@ -319,16 +320,16 @@ def create_bsr_armature(context, bsr_fp_power, bsr_fp_min_dist, bsr_fp_min_scale
     b_proxy_observer_6e = new_rig.data.edit_bones.new(name=PROXY_OBSERVER_6E_BNAME)
     bname_proxy_obs_6e = b_proxy_observer_6e.name
     # set bone data
-    b_proxy_observer_6e.head = mathutils.Vector(PROXY_OBSERVER_6E_BONEHEAD)
-    b_proxy_observer_6e.tail = mathutils.Vector(PROXY_OBSERVER_6E_BONETAIL)
+    b_proxy_observer_6e.head = Vector(PROXY_OBSERVER_6E_BONEHEAD)
+    b_proxy_observer_6e.tail = Vector(PROXY_OBSERVER_6E_BONETAIL)
     b_proxy_observer_6e.parent = b_proxy_space_6e
     b_proxy_observer_6e.show_wire = True
     b_proxy_observer_6e.layers = PROXY_OBSERVER_6E_BONELAYERS
 
     b_observer_focus = new_rig.data.edit_bones.new(name=OBSERVER_FOCUS_BNAME)
     bname_observer_focus = b_observer_focus.name
-    b_observer_focus.head = mathutils.Vector(OBSERVER_FOCUS_BONEHEAD)
-    b_observer_focus.tail = mathutils.Vector(OBSERVER_FOCUS_BONETAIL)
+    b_observer_focus.head = Vector(OBSERVER_FOCUS_BONEHEAD)
+    b_observer_focus.tail = Vector(OBSERVER_FOCUS_BONETAIL)
     b_observer_focus.show_wire = True
     b_observer_focus.layers = OBSERVER_FOCUS_BONELAYERS
 
@@ -413,4 +414,74 @@ class BSR_QuickPoseObserver0e(bpy.types.Operator):
             self.report({'ERROR'}, "Unable to Quick Pose Observer 0e because active object is not a Big Space Rig")
             return {'CANCELLED'}
         quick_pose_observer_0e(active_ob)
+        return {'FINISHED'}
+
+def get_angle_from_deg_min_sec(degrees, minutes, seconds):
+    # note that 648000 = 180 * 3600
+    return (degrees * 3600 + (minutes * 60 + seconds)) * (math.pi / 648000.0)
+
+def go_to_coordinates(context, big_space_rig, radius_6e, radius_0e, lat_degrees, lat_minutes, lat_seconds, lat_frac_sec,
+                      long_degrees, long_minutes, long_seconds, long_frac_sec):
+    old_3dview_mode = context.mode
+    bpy.ops.object.mode_set(mode='POSE')
+
+    first_latitude = get_angle_from_deg_min_sec(lat_degrees, lat_minutes, lat_seconds)
+    first_longitude = get_angle_from_deg_min_sec(long_degrees, long_minutes, long_seconds)
+    second_latitude = get_angle_from_deg_min_sec(lat_degrees, lat_minutes, lat_seconds+1)
+    second_longitude = get_angle_from_deg_min_sec(long_degrees, long_minutes, long_seconds+1)
+
+    bottom_left = Vector((
+        radius_6e * math.cos(first_latitude) * math.cos(first_longitude),
+        radius_6e * math.cos(first_latitude) * math.sin(first_longitude),
+        radius_6e * math.sin(first_latitude),
+    ))
+    top_left = Vector((
+        radius_6e * math.cos(second_latitude) * math.cos(first_longitude),
+        radius_6e * math.cos(second_latitude) * math.sin(first_longitude),
+        radius_6e * math.sin(second_latitude),
+    ))
+    bottom_right = Vector((
+        radius_6e * math.cos(first_latitude) * math.cos(second_longitude),
+        radius_6e * math.cos(first_latitude) * math.sin(second_longitude),
+        radius_6e * math.sin(first_latitude),
+    ))
+    top_right = Vector((
+        radius_6e * math.cos(second_latitude) * math.cos(second_longitude),
+        radius_6e * math.cos(second_latitude) * math.sin(second_longitude),
+        radius_6e * math.sin(second_latitude),
+    ))
+
+    # get the weighted-average of top and botom left, and the weighted-average of top and bottom right
+    left_spot = (top_left - bottom_left) * lat_frac_sec + bottom_left
+    right_spot = (top_right - bottom_right) * lat_frac_sec + bottom_right
+    # now take the weighted-average of the left and right
+    view_loc = (right_spot - left_spot) * long_frac_sec + left_spot
+    # apply to mega-meter scale Observer
+    big_space_rig.pose.bones[PROXY_OBSERVER_6E_BNAME].location = view_loc
+
+    # get normalized location vector, and offset along this vector by amount radius_0e
+    loc_norm = Vector(view_loc)
+    loc_norm.normalize()
+    # apply to meter scale Observer
+    big_space_rig.pose.bones[PROXY_OBSERVER_0E_BNAME].location = loc_norm * radius_0e
+
+    bpy.ops.object.mode_set(mode=old_3dview_mode)
+
+class BSR_ViewMegaSphere(bpy.types.Operator):
+    bl_description = "View MegaSphere (set Big Space Rig's Observer 6e and 0e location) by Radius, Longitude, " \
+        "Latitude coordinates"
+    bl_idname = "big_space_rig.view_mega_sphere_by_rad_lat_long"
+    bl_label = "Go to Coordinates"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        active_ob = context.active_object
+        if not is_big_space_rig(active_ob):
+            self.report({'ERROR'}, "Unable to Go to Coordinates because active object is not a Big Space Rig")
+            return {'CANCELLED'}
+        scn = context.scene
+        go_to_coordinates(context, active_ob, scn.BSR_ViewMegaSphereRad6e, scn.BSR_ViewMegaSphereRad0e,
+            scn.BSR_ViewMegaSphereLatDegrees, scn.BSR_ViewMegaSphereLatMinutes, scn.BSR_ViewMegaSphereLatSeconds,
+            scn.BSR_ViewMegaSphereLatFracSec, scn.BSR_ViewMegaSphereLongDegrees, scn.BSR_ViewMegaSphereLongMinutes,
+            scn.BSR_ViewMegaSphereLongSeconds, scn.BSR_ViewMegaSphereLongFracSec)
         return {'FINISHED'}

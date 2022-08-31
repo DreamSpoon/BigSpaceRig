@@ -1577,8 +1577,10 @@ def create_obs_place_input_nodes(tree_nodes, tree_links, megasphere_node, vec_d3
     if proxy_place_bone_name_0e is None or proxy_place_bone_name_6e is None:
         tree_links.new(new_nodes["Vector"].outputs[0], megasphere_node.inputs[6])
         tree_links.new(new_nodes["Vector.001"].outputs[0], megasphere_node.inputs[7])
-        tree_links.new(new_nodes["Vector"].outputs[0], vec_d3em3e_node.inputs[0])
-        tree_links.new(new_nodes["Vector.001"].outputs[0], vec_d3em3e_node.inputs[1])
+        # if using noise, then create links to next node
+        if vec_d3em3e_node != None:
+            tree_links.new(new_nodes["Vector"].outputs[0], vec_d3em3e_node.inputs[0])
+            tree_links.new(new_nodes["Vector.001"].outputs[0], vec_d3em3e_node.inputs[1])
         return new_nodes["Vector"], new_nodes["Vector.001"]
     else:
         tree_links.new(new_nodes["Vector"].outputs[0], new_nodes["Vector Math"].inputs[0])
@@ -1587,8 +1589,10 @@ def create_obs_place_input_nodes(tree_nodes, tree_links, megasphere_node, vec_d3
         tree_links.new(new_nodes["Vector.003"].outputs[0], new_nodes["Vector Math.001"].inputs[1])
         tree_links.new(new_nodes["Vector Math"].outputs[0], megasphere_node.inputs[6])
         tree_links.new(new_nodes["Vector Math.001"].outputs[0], megasphere_node.inputs[7])
-        tree_links.new(new_nodes["Vector Math"].outputs[0], vec_d3em3e_node.inputs[0])
-        tree_links.new(new_nodes["Vector Math.001"].outputs[0], vec_d3em3e_node.inputs[1])
+        # if using noise, then create links to next node
+        if vec_d3em3e_node != None:
+            tree_links.new(new_nodes["Vector Math"].outputs[0], vec_d3em3e_node.inputs[0])
+            tree_links.new(new_nodes["Vector Math.001"].outputs[0], vec_d3em3e_node.inputs[1])
         return new_nodes["Vector Math"], new_nodes["Vector Math.001"]
 
 def create_apply_megasphere_nodes_regular(tree_nodes, tree_links):

@@ -37,7 +37,8 @@ from bpy.props import PointerProperty
 
 from .rig import (OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT,
     OBJ_PROP_BONE_PLACE)
-from .rig import (is_big_space_rig, BSR_CreateBigSpaceRig, BSR_QuickPoseObserver6e, BSR_QuickPoseObserver0e)
+from .rig import (is_big_space_rig, BSR_CreateBigSpaceRig, BSR_QuickPoseObserver6e, BSR_QuickPoseObserver0e,
+    BSR_ViewMegaSphere)
 from .attach import (BSR_AttachCreatePlace, BSR_AttachSinglePlace, BSR_AttachMultiPlace)
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
@@ -155,6 +156,23 @@ class BSR_PT_MegaSphere(bpy.types.Panel):
         box.label(text="Add Noise")
         box.prop(scn, "BSR_MegaSphereWithNoise")
 
+        box = layout.box()
+        box.label(text="View By Radius, Latitude, Longitude")
+        box.operator("big_space_rig.view_mega_sphere_by_rad_lat_long")
+        box.label(text="Radius")
+        box.prop(scn, "BSR_ViewMegaSphereRad6e")
+        box.prop(scn, "BSR_ViewMegaSphereRad0e")
+        box.label(text="Latitude")
+        box.prop(scn, "BSR_ViewMegaSphereLatDegrees")
+        box.prop(scn, "BSR_ViewMegaSphereLatMinutes")
+        box.prop(scn, "BSR_ViewMegaSphereLatSeconds")
+        box.prop(scn, "BSR_ViewMegaSphereLatFracSec")
+        box.label(text="Longitude")
+        box.prop(scn, "BSR_ViewMegaSphereLongDegrees")
+        box.prop(scn, "BSR_ViewMegaSphereLongMinutes")
+        box.prop(scn, "BSR_ViewMegaSphereLongSeconds")
+        box.prop(scn, "BSR_ViewMegaSphereLongFracSec")
+
 class BSR_PT_CreateDuoNodes(bpy.types.Panel):
     bl_idname = "NODE_PT_BigSpaceRig"
     bl_label = "BigSpaceRig"
@@ -215,6 +233,7 @@ if bpy.app.version >= (2,90,0):
         BSR_AddPlaceFP_GeoNodes,
         BSR_PT_MegaSphere,
         BSR_MegaSphereCreate,
+        BSR_ViewMegaSphere,
     ])
 
 def register():
@@ -226,6 +245,17 @@ def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
     bts = bpy.types.Scene
+
+    del bts.BSR_ViewMegaSphereLongFracSec
+    del bts.BSR_ViewMegaSphereLongSeconds
+    del bts.BSR_ViewMegaSphereLongMinutes
+    del bts.BSR_ViewMegaSphereLongDegrees
+    del bts.BSR_ViewMegaSphereLatFracSec
+    del bts.BSR_ViewMegaSphereLatSeconds
+    del bts.BSR_ViewMegaSphereLatMinutes
+    del bts.BSR_ViewMegaSphereLatDegrees
+    del bts.BSR_ViewMegaSphereRad0e
+    del bts.BSR_ViewMegaSphereRad6e
     del bts.BSR_NodeGetInputFromRigPlace
     del bts.BSR_NodeGetInputFromRig
     del bts.BSR_MegaSpherePlaceBoneName
@@ -322,6 +352,26 @@ def register_props():
         "nodes", items=place_input_rig_items)
     bts.BSR_MegaSphereWithNoise = bp.BoolProperty(name="Create with noise", description="Add nodes to apply Noise3e " +
         "to MegaSphere, when MegaSphere is created", default=False)
+    bts.BSR_ViewMegaSphereRad6e = bp.FloatProperty(name="Radius 6e", description="Radius, in mega-meters",
+        default=1.0)
+    bts.BSR_ViewMegaSphereRad0e = bp.FloatProperty(name="Radius 0e", description="Radius Append, in meters",
+        default=0.0)
+    bts.BSR_ViewMegaSphereLatDegrees = bp.IntProperty(name="Degrees", description="Degrees of Latitude",
+        default=0)
+    bts.BSR_ViewMegaSphereLatMinutes = bp.IntProperty(name="Minutes", description="Minutes of Latitude",
+        default=0)
+    bts.BSR_ViewMegaSphereLatSeconds = bp.IntProperty(name="Seconds", description="Seconds of Latitude",
+        default=0)
+    bts.BSR_ViewMegaSphereLatFracSec = bp.FloatProperty(name="Frac Sec", description="Fraction of Second of " +
+        "Latitude (from 0.0 to 1.0)", default=0.0, min=0.0, max=1.0)
+    bts.BSR_ViewMegaSphereLongDegrees = bp.IntProperty(name="Degrees", description="Degrees of Longitude",
+        default=0)
+    bts.BSR_ViewMegaSphereLongMinutes = bp.IntProperty(name="Minutes", description="Minutes of Longitude",
+        default=0)
+    bts.BSR_ViewMegaSphereLongSeconds = bp.IntProperty(name="Seconds", description="Seconds of Longitude",
+        default=0)
+    bts.BSR_ViewMegaSphereLongFracSec = bp.FloatProperty(name="Frac Sec", description="Fraction of Second of " +
+        "longitude (from 0.0 to 1.0)", default=0.0, min=0.0, max=1.0)
 
 if __name__ == "__main__":
     register()

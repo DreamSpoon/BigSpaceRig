@@ -87,5 +87,5 @@ Setting "big_space_rig_fp_power" to 0.25, or less, results in objects shrinking 
     - e.g. giant space ships parked in Earth's orbit
 
 # Geometry Nodes Notes
-Geometry Nodes support is still work in progress, but going very well, currently:
+Forced Perspective Geometry Nodes:
 - objects must be attached to a Big Space Rig before Geometry Nodes can be added to them
