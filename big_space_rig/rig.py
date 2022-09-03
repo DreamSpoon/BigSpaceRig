@@ -416,55 +416,69 @@ class BSR_QuickPoseObserver0e(bpy.types.Operator):
         quick_pose_observer_0e(active_ob)
         return {'FINISHED'}
 
-def get_angle_from_deg_min_sec(degrees, minutes, seconds):
-    # note that 648000 = 180 * 3600
-    return (degrees * 3600 + (minutes * 60 + seconds)) * (math.pi / 648000.0)
+def get_rad_from_deg_min_sec(degrees, minutes, seconds, frac_sec):
+    # 648000 = 180 * 3600
+    return (degrees * 3600 + minutes * 60 + seconds + frac_sec) * (math.pi / 648000.0)
 
-def go_to_coordinates(context, big_space_rig, radius_6e, radius_0e, lat_degrees, lat_minutes, lat_seconds, lat_frac_sec,
-                      long_degrees, long_minutes, long_seconds, long_frac_sec):
+def go_to_coordinates(context, big_space_rig, radius_6e, radius_0e, lat_degrees, lat_minutes, lat_seconds,
+                      lat_frac_sec, long_degrees, long_minutes, long_seconds, long_frac_sec):
+    # save view mode, then switch to pose mode so pose bone locations can be set
     old_3dview_mode = context.mode
     bpy.ops.object.mode_set(mode='POSE')
-
-    first_latitude = get_angle_from_deg_min_sec(lat_degrees, lat_minutes, lat_seconds)
-    first_longitude = get_angle_from_deg_min_sec(long_degrees, long_minutes, long_seconds)
-    second_latitude = get_angle_from_deg_min_sec(lat_degrees, lat_minutes, lat_seconds+1)
-    second_longitude = get_angle_from_deg_min_sec(long_degrees, long_minutes, long_seconds+1)
-
-    bottom_left = Vector((
-        radius_6e * math.cos(first_latitude) * math.cos(first_longitude),
-        radius_6e * math.cos(first_latitude) * math.sin(first_longitude),
-        radius_6e * math.sin(first_latitude),
+    # get super-accurate (?) latitude/longitude from input degrees, minutes, seconds
+    # Note:
+    # 360 degrees in full circle, 60 minutes per degree, 60 seconds per minute, so total possible points on circle =
+    #     360 * 60 * 60 = 1296000
+    # 1,296,000 possible numbers
+    # https://docs.python.org/3/tutorial/floatingpoint.html
+    # double precision floating point has 1 part in 2 ** 53 bits usable/reliable
+    # 2 ** 53 = 9007199254740992
+    # 9,007,199,254,740,992 possible numbers
+    # the difference in orders of magnitude indicates that degrees angle floating point error is not significant
+    lat_rad = get_rad_from_deg_min_sec(lat_degrees, lat_minutes, lat_seconds, lat_frac_sec)
+    long_rad = get_rad_from_deg_min_sec(long_degrees, long_minutes, long_seconds, long_frac_sec)
+    # "big" radius is in mega-meters
+    big_surf_point = Vector((
+        radius_6e * math.cos(lat_rad) * math.cos(long_rad),
+        radius_6e * math.cos(lat_rad) * math.sin(long_rad),
+        radius_6e * math.sin(lat_rad),
     ))
-    top_left = Vector((
-        radius_6e * math.cos(second_latitude) * math.cos(first_longitude),
-        radius_6e * math.cos(second_latitude) * math.sin(first_longitude),
-        radius_6e * math.sin(second_latitude),
+    big_mult_3e = Vector((big_surf_point[0]*1000.0,
+                      big_surf_point[1]*1000.0,
+                      big_surf_point[2]*1000.0,
     ))
-    bottom_right = Vector((
-        radius_6e * math.cos(first_latitude) * math.cos(second_longitude),
-        radius_6e * math.cos(first_latitude) * math.sin(second_longitude),
-        radius_6e * math.sin(first_latitude),
+    big_mult_floor_3e = Vector((math.floor(big_surf_point[0]*1000.0),
+                            math.floor(big_surf_point[1]*1000.0),
+                            math.floor(big_surf_point[2]*1000.0),
     ))
-    top_right = Vector((
-        radius_6e * math.cos(second_latitude) * math.cos(second_longitude),
-        radius_6e * math.cos(second_latitude) * math.sin(second_longitude),
-        radius_6e * math.sin(second_latitude),
+    # init "accumulators", because adjustments are performed later
+    accum_6e = big_mult_floor_3e / 1000.0
+    accum_0e = (big_mult_3e - big_mult_floor_3e) * 1000.0
+    # "small" radius is in meters
+    small_surf_point = Vector((radius_0e * math.cos(lat_rad) * math.cos(long_rad),
+                               radius_0e * math.cos(lat_rad) * math.sin(long_rad),
+                               radius_0e * math.sin(lat_rad),
     ))
-
-    # get the weighted-average of top and botom left, and the weighted-average of top and bottom right
-    left_spot = (top_left - bottom_left) * lat_frac_sec + bottom_left
-    right_spot = (top_right - bottom_right) * lat_frac_sec + bottom_right
-    # now take the weighted-average of the left and right
-    view_loc = (right_spot - left_spot) * long_frac_sec + left_spot
-    # apply to mega-meter scale Observer
-    big_space_rig.pose.bones[PROXY_OBSERVER_6E_BNAME].location = view_loc
-
-    # get normalized location vector, and offset along this vector by amount radius_0e
-    loc_norm = Vector(view_loc)
-    loc_norm.normalize()
-    # apply to meter scale Observer
-    big_space_rig.pose.bones[PROXY_OBSERVER_0E_BNAME].location = loc_norm * radius_0e
-
+    small_div_floor_3e = Vector((math.floor(small_surf_point[0] / 1000.0),
+                                 math.floor(small_surf_point[1] / 1000.0),
+                                 math.floor(small_surf_point[2] / 1000.0),
+    ))
+    small_6e = small_div_floor_3e / 1000.0
+    small_0e = small_surf_point - small_div_floor_3e * 1000.0
+    # add small radius adjustment to accumulator
+    accum_6e = accum_6e + small_6e
+    accum_0e = accum_0e + small_0e
+    # implement addition carry operation from accum_0e to accum_6e
+    carry_div_floor_3e = Vector((math.floor(accum_0e[0]/1000.0),
+                                 math.floor(accum_0e[1]/1000.0),
+                                 math.floor(accum_0e[2]/1000.0),
+    ))
+    accum_6e = accum_6e + carry_div_floor_3e / 1000.0
+    accum_0e = accum_0e - carry_div_floor_3e * 1000.0
+    # set locations of Big Space Rig bones to accumulator values
+    big_space_rig.pose.bones[PROXY_OBSERVER_6E_BNAME].location = accum_6e
+    big_space_rig.pose.bones[PROXY_OBSERVER_0E_BNAME].location = accum_0e
+    # return to original view mode
     bpy.ops.object.mode_set(mode=old_3dview_mode)
 
 class BSR_ViewMegaSphere(bpy.types.Operator):
