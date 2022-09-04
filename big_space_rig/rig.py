@@ -79,14 +79,18 @@ WIDGET_PINCH_TRIANGLE_OBJNAME = "WGT_PinchTri"
 WIDGET_QUAD_OBJNAME = "WGT_Quad"
 WIDGET_PINCH_QUAD_OBJNAME = "WGT_PinchQuad"
 WIDGET_CIRCLE_OBJNAME = "WGT_Circle"
+WIDGET_ICOSPHERE7_OBJNAME = "WGT_Icosphere7"
 
 TRI_WIDGET_NAME = "WidgetTriangle"
 TRI_PINCH_WIDGET_NAME = "WidgetPinchTriangle"
 QUAD_WIDGET_NAME = "WidgetQuad"
 PINCH_QUAD_WIDGET_NAME = "WidgetPinchQuad"
 CIRCLE_WIDGET_NAME = "WidgetCircle"
+ICOSPHERE7_WIDGET_NAME = "WidgetIcosphere7"
 
 WIDGET_CIRCLE_VERT_COUNT = 32
+
+BSRH_COLLECTION_NAME = "BigSpaceRigHidden"
 
 # returns False if 'ob' is not a Big Space Rig, otherwise returns True
 # TODO: enhance the check - e.g. if bones are renamed, then how to check? rig/bones w/ custom props?
@@ -180,6 +184,12 @@ def create_widget_circle(collection_name=None):
         return create_mesh_obj_from_pydata(verts, edges=edges, obj_name=WIDGET_CIRCLE_OBJNAME,
                                            collection_name=collection_name)
 
+def set_widget_view_layer(wgt_obj):
+    # widgets are only in final layer
+    wgt_obj.layers[19] = True
+    for i in range(19):
+        wgt_obj.layers[i] = False
+
 def create_bsr_widgets(context):
     # if v2.79
     if bpy.app.version < (2,80,0):
@@ -189,32 +199,28 @@ def create_bsr_widgets(context):
         pinch_quad_obj = create_widget_pinch_square()
         circle_obj = create_widget_circle()
 
-        # widgets are only in final layer
-        tri_obj.layers[19] = True
-        tri_pinch_obj.layers[19] = True
-        quad_obj.layers[19] = True
-        pinch_quad_obj.layers[19] = True
-        circle_obj.layers[19] = True
-        for i in range(19):
-            tri_obj.layers[i] = False
-            tri_pinch_obj.layers[i] = False
-            quad_obj.layers[i] = False
-            pinch_quad_obj.layers[i] = False
-            circle_obj.layers[i] = False
+        set_widget_view_layer(tri_obj)
+        set_widget_view_layer(tri_pinch_obj)
+        set_widget_view_layer(quad_obj)
+        set_widget_view_layer(pinch_quad_obj)
+        set_widget_view_layer(circle_obj)
     # else v2.8 or later
     else:
-        new_collection = bpy.data.collections.new("BigSpaceRigHidden")
-        new_collection.hide_render = True
-        # link new collection to currently active collection
-        context.view_layer.active_layer_collection.collection.children.link(new_collection)
-        collection_hide_in_viewport(context, new_collection.name)
+        bsrh_collection = bpy.data.collections.get(BSRH_COLLECTION_NAME)
+        if bsrh_collection is None:
+            bsrh_collection = bpy.data.collections.new(BSRH_COLLECTION_NAME)
+            # link new collection to currently active collection
+            context.view_layer.active_layer_collection.collection.children.link(bsrh_collection)
+        # ensure collection is hidden, render and viewport
+        bsrh_collection.hide_render = True
+        collection_hide_in_viewport(context, bsrh_collection.name)
 
         # widgets are in Big Space Rig Hidden collection
-        tri_obj = create_widget_triangle(collection_name=new_collection.name)
-        tri_pinch_obj = create_widget_pinch_triangle(collection_name=new_collection.name)
-        quad_obj = create_widget_square(collection_name=new_collection.name)
-        pinch_quad_obj = create_widget_pinch_square(collection_name=new_collection.name)
-        circle_obj = create_widget_circle(collection_name=new_collection.name)
+        tri_obj = create_widget_triangle(collection_name=bsrh_collection.name)
+        tri_pinch_obj = create_widget_pinch_triangle(collection_name=bsrh_collection.name)
+        quad_obj = create_widget_square(collection_name=bsrh_collection.name)
+        pinch_quad_obj = create_widget_pinch_square(collection_name=bsrh_collection.name)
+        circle_obj = create_widget_circle(collection_name=bsrh_collection.name)
 
     widget_ob_dict = { TRI_WIDGET_NAME : tri_obj,
                       TRI_PINCH_WIDGET_NAME : tri_pinch_obj,
@@ -238,7 +244,48 @@ def get_widget_objs_from_rig(active_ob):
                 widget_objs[PINCH_QUAD_WIDGET_NAME] = ob
             elif WIDGET_CIRCLE_OBJNAME in ob.name:
                 widget_objs[CIRCLE_WIDGET_NAME] = ob
+            elif WIDGET_ICOSPHERE7_OBJNAME in ob.name:
+                widget_objs[ICOSPHERE7_WIDGET_NAME] = ob
     return widget_objs
+
+def add_widgets_to_big_space_rig(big_space_rig, new_wgt_list):
+    old_wgt_list = get_widget_objs_from_rig(big_space_rig)
+    #if any widget(s) already parented to Big Space Rig, ...
+    if len(old_wgt_list) > 0:
+        # then parent new widgets to the old widget that is directly pareted to Big Space Rig
+        for old_wgt in old_wgt_list.values():
+            if old_wgt.parent == big_space_rig:
+                # parent new widgets to old widget, where old widget is parented directly to Big Space Rig
+                for new_wgt in new_wgt_list:
+                    new_wgt.parent = old_wgt
+    # no widget(s) parented to rig, so parent first widget directly to rig, and parent remaining widgets to first
+    else:
+        first_wgt = None
+        for new_wgt in new_wgt_list:
+            if first_wgt is None:
+                first_wgt = new_wgt
+                first_wgt.parent = big_space_rig
+            else:
+                new_wgt.parent = first_wgt
+
+    # if v2.79
+    if bpy.app.version < (2,80,0):
+            for new_wgt in new_wgt_list:
+                set_widget_view_layer(new_wgt)
+    # else v2.8 or later
+    else:
+        bsrh_collection = bpy.data.collections.get(BSRH_COLLECTION_NAME)
+        if bsrh_collection != None:
+            for new_wgt in new_wgt_list:
+                # do not link object if it is already in BSR Hidden collection
+                if bsrh_collection.objects.get(new_wgt.name):
+                    continue
+                # remove object from all collections
+                for coll in bpy.data.collections:
+                    if coll.objects.get(new_wgt.name) != None:
+                        coll.objects.unlink(new_wgt)
+                # add the BSR Hidden collection
+                bsrh_collection.objects.link(new_wgt)
 
 # TODO: delete Notes and redo
 # Notes:
@@ -344,17 +391,7 @@ def create_bsr_armature(context, bsr_fp_power, bsr_fp_min_dist, bsr_fp_min_scale
     # return to old view mode
     bpy.ops.object.mode_set(mode=old_3dview_mode)
 
-    # parent widgets to new rig, first widget is "main parent" widget to other widgets
-    if len(widget_objs) > 0:
-        main_parent = None
-        for w in widget_objs.values():
-            if main_parent is None:
-                # parent first widget to rig
-                main_parent = w
-                main_parent.parent = new_rig
-                continue
-            # parent remaining widgets to first widget
-            w.parent = main_parent
+    add_widgets_to_big_space_rig(new_rig, widget_objs.values())
 
     new_rig.data.layers = RIG_BONEVIS_LAYERS
 
