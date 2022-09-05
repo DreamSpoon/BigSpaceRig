@@ -16,8 +16,10 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+from math import floor
+
 import bpy
-import mathutils
+from mathutils import Vector
 
 from .rig import (PROXY_SPACE_0E_BNAME, PROXY_SPACE_6E_BNAME, OBSERVER_FOCUS_BNAME, PROXY_OBSERVER_0E_BNAME,
     PROXY_OBSERVER_6E_BNAME, PLACE_BNAME, PROXY_PLACE_0E_BNAME, PROXY_PLACE_6E_BNAME, PLACE_BONEHEAD, PLACE_BONETAIL,
@@ -45,8 +47,8 @@ def create_proxy_place(context, big_space_rig, widget_objs, use_obs_loc=False, p
 
     b_place = big_space_rig.data.edit_bones.new(name=PLACE_BNAME)
     place_bname = b_place.name
-    b_place.head = mathutils.Vector(PLACE_BONEHEAD)
-    b_place.tail = mathutils.Vector(PLACE_BONETAIL)
+    b_place.head = Vector(PLACE_BONEHEAD)
+    b_place.tail = Vector(PLACE_BONETAIL)
     b_place.parent = big_space_rig.data.edit_bones[OBSERVER_FOCUS_BNAME]
     b_place.show_wire = True
     b_place.layers = PLACE_BONELAYERS
@@ -55,16 +57,16 @@ def create_proxy_place(context, big_space_rig, widget_objs, use_obs_loc=False, p
 
     b_proxy_place_0e = big_space_rig.data.edit_bones.new(name=PROXY_PLACE_0E_BNAME)
     proxy_place_0e_bname = b_proxy_place_0e.name
-    b_proxy_place_0e.head = mathutils.Vector(PROXY_PLACE_0E_BONEHEAD)
-    b_proxy_place_0e.tail = mathutils.Vector(PROXY_PLACE_0E_BONETAIL)
+    b_proxy_place_0e.head = Vector(PROXY_PLACE_0E_BONEHEAD)
+    b_proxy_place_0e.tail = Vector(PROXY_PLACE_0E_BONETAIL)
     b_proxy_place_0e.parent = big_space_rig.data.edit_bones[PROXY_SPACE_0E_BNAME]
     b_proxy_place_0e.show_wire = True
     b_proxy_place_0e.layers = PROXY_PLACE_0E_BONELAYERS
 
     b_proxy_place_6e = big_space_rig.data.edit_bones.new(name=PROXY_PLACE_6E_BNAME)
     proxy_place_6e_bname = b_proxy_place_6e.name
-    b_proxy_place_6e.head = mathutils.Vector(PROXY_PLACE_6E_BONEHEAD)
-    b_proxy_place_6e.tail = mathutils.Vector(PROXY_PLACE_6E_BONETAIL)
+    b_proxy_place_6e.head = Vector(PROXY_PLACE_6E_BONEHEAD)
+    b_proxy_place_6e.tail = Vector(PROXY_PLACE_6E_BONETAIL)
     b_proxy_place_6e.parent = big_space_rig.data.edit_bones[PROXY_SPACE_6E_BNAME]
     b_proxy_place_6e.show_wire = True
     b_proxy_place_6e.layers = PROXY_PLACE_6E_BONELAYERS
@@ -95,14 +97,40 @@ def create_proxy_place(context, big_space_rig, widget_objs, use_obs_loc=False, p
 
     # if a place location is given then convert the location to Proxy coordinates
     if place_loc != None:
-        p_loc_6e = (round(place_loc[0] / 1000000, 3),
-                    round(place_loc[1] / 1000000, 3),
-                    round(place_loc[2] / 1000000, 3) )
-        big_space_rig.pose.bones[proxy_place_6e_bname].location = p_loc_6e
-        p_loc_0e = (place_loc[0] - 1000000 * p_loc_6e[0],
-                    place_loc[1] - 1000000 * p_loc_6e[1],
-                    place_loc[2] - 1000000 * p_loc_6e[2] )
-        big_space_rig.pose.bones[proxy_place_0e_bname].location = p_loc_0e
+        # if offset place by observer...
+        if use_obs_loc:
+            # convert place_loc to (6e, 0e) number format
+            floor_div_3e = Vector((floor(place_loc[0] / 1000.0),
+                            floor(place_loc[1] / 1000.0),
+                            floor(place_loc[2] / 1000.0)))
+            accum_6e = floor_div_3e / 1000.0
+            accum_0e = Vector((place_loc[0] - floor_div_3e[0] * 1000.0,
+                        place_loc[1] - floor_div_3e[1] * 1000.0,
+                        place_loc[2] - floor_div_3e[2] * 1000.0))
+            # add observer location in (6e, 0e) number format
+            obs_loc_6e = big_space_rig.pose.bones[PROXY_OBSERVER_6E_BNAME].location
+            obs_loc_0e = big_space_rig.pose.bones[PROXY_OBSERVER_0E_BNAME].location
+            accum_0e = accum_0e + obs_loc_0e
+            floor_div_3e = Vector((floor(accum_0e[0] / 1000.0),
+                            floor(accum_0e[1] / 1000.0),
+                            floor(accum_0e[2] / 1000.0)))
+            accum_6e = accum_6e + obs_loc_6e + floor_div_3e / 1000.0
+            accum_0e = Vector((accum_0e[0] - floor_div_3e[0] * 1000.0,
+                        accum_0e[1] - floor_div_3e[1] * 1000.0,
+                        accum_0e[2] - floor_div_3e[2] * 1000.0))
+            # apply calculated locations to observer bones
+            big_space_rig.pose.bones[proxy_place_6e_bname].location = accum_6e
+            big_space_rig.pose.bones[proxy_place_0e_bname].location = accum_0e
+        # use place without offset
+        else:
+            p_loc_6e = (round(place_loc[0] / 1000000, 3),
+                        round(place_loc[1] / 1000000, 3),
+                        round(place_loc[2] / 1000000, 3) )
+            big_space_rig.pose.bones[proxy_place_6e_bname].location = p_loc_6e
+            p_loc_0e = (place_loc[0] - 1000000 * p_loc_6e[0],
+                        place_loc[1] - 1000000 * p_loc_6e[1],
+                        place_loc[2] - 1000000 * p_loc_6e[2] )
+            big_space_rig.pose.bones[proxy_place_0e_bname].location = p_loc_0e
     # else if new proxy bone should use the proxy observer position, then do it
     elif use_obs_loc:
         big_space_rig.pose.bones[proxy_place_6e_bname].location = (
