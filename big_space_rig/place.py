@@ -26,16 +26,14 @@ from .rig import (PROXY_SPACE_0E_BNAME, PROXY_SPACE_6E_BNAME, OBSERVER_FOCUS_BNA
 from .rig import (TRI_WIDGET_NAME, TRI_PINCH_WIDGET_NAME, QUAD_WIDGET_NAME, PINCH_QUAD_WIDGET_NAME, CIRCLE_WIDGET_NAME,
     WIDGET_TRIANGLE_OBJNAME, WIDGET_PINCH_TRIANGLE_OBJNAME, WIDGET_QUAD_OBJNAME,
     WIDGET_PINCH_QUAD_OBJNAME, WIDGET_CIRCLE_OBJNAME)
-from .rig import (OBJ_PROP_BONE_SCL_MULT, OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_PLACE)
+from .rig import (OBJ_PROP_BONE_SCL_MULT, OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE,
+    OBJ_PROP_BONE_PLACE, PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
 from .rig import (create_bsr_armature, is_big_space_rig, get_widget_objs_from_rig)
 
 if bpy.app.version < (2,80,0):
     from .imp_v27 import (select_object, get_cursor_location)
 else:
     from .imp_v28 import (select_object, get_cursor_location)
-
-PROXY_PLACE_0E_VAR_NAME_PREPEND = "proxy_place_0e"
-PROXY_PLACE_6E_VAR_NAME_PREPEND = "proxy_place_6e"
 
 # "edit bones" must be created at origin (head at origin, ...), so that pose bone locations can be used by drivers
 # to perform offsets, distance calculations, etc.
@@ -111,6 +109,10 @@ def create_proxy_place(context, big_space_rig, widget_objs, use_obs_loc=False, p
             big_space_rig.pose.bones[PROXY_OBSERVER_6E_BNAME].matrix[0][3],
             big_space_rig.pose.bones[PROXY_OBSERVER_6E_BNAME].matrix[1][3],
             big_space_rig.pose.bones[PROXY_OBSERVER_6E_BNAME].matrix[2][3])
+        big_space_rig.pose.bones[proxy_place_0e_bname].location = (
+            big_space_rig.pose.bones[PROXY_OBSERVER_0E_BNAME].matrix[0][3],
+            big_space_rig.pose.bones[PROXY_OBSERVER_0E_BNAME].matrix[1][3],
+            big_space_rig.pose.bones[PROXY_OBSERVER_0E_BNAME].matrix[2][3])
 
     # insert keyframe, to prevent data loss, i.e. position erased, if user does menu Pose -> Clear Transform,
     # presses Ctrl-G to reset location, etc.
@@ -333,8 +335,8 @@ def add_bone_scl_drivers(armature, obs_focus_bname, proxy_obs_0e_bname, proxy_ob
     v_scale_z.targets[0].data_path = "scale.x"
     drv_scale_z.expression = v_scale_z.name
 
-def add_scl_bone_loc_drivers(armature, observer_focus_bname, proxy_observer_0e_bname, proxy_observer_6e_bname, place_bname,
-                         proxy_place_0e_bname, proxy_place_6e_bname):
+def add_scl_bone_loc_drivers(armature, observer_focus_bname, proxy_observer_0e_bname, proxy_observer_6e_bname,
+                             place_bname, proxy_place_0e_bname, proxy_place_6e_bname):
     # X
     drv_loc_x = armature.pose.bones[place_bname].driver_add('location', 0).driver
     # proxy place X ; scale 1
@@ -516,8 +518,8 @@ def add_scl_bone_loc_drivers(armature, observer_focus_bname, proxy_observer_0e_b
     drv_loc_z.expression = "( ("+v_proxy_place_0e_z.name+" - "+v_proxy_obs_0e_z.name+" - "+v_obs_focus_z.name + \
         ") + ("+v_proxy_place_6e_z.name+" - "+v_proxy_obs_6e_z.name+") * 1000000) * "+v_self_scale_z.name
 
-def add_reg_bone_loc_drivers(armature, observer_focus_bname, proxy_observer_0e_bname, proxy_observer_6e_bname, place_bname,
-                         proxy_place_0e_bname, proxy_place_6e_bname):
+def add_reg_bone_loc_drivers(armature, observer_focus_bname, proxy_observer_0e_bname, proxy_observer_6e_bname,
+                             place_bname, proxy_place_0e_bname, proxy_place_6e_bname):
     # X
     drv_loc_x = armature.pose.bones[place_bname].driver_add('location', 0).driver
     # proxy place X ; scale 1
@@ -671,11 +673,9 @@ def add_reg_bone_loc_drivers(armature, observer_focus_bname, proxy_observer_0e_b
     drv_loc_z.expression = "("+v_proxy_place_0e_z.name+" - "+v_proxy_obs_0e_z.name+" - "+v_obs_focus_z.name + \
         ") + ("+v_proxy_place_6e_z.name+" - "+v_proxy_obs_6e_z.name+") * 1000000"
 
-class BSR_AttachCreatePlace(bpy.types.Operator):
-    bl_description = "Based on current position of Big Space Rig's ProxyObserver, create Place-ProxyPlace " + \
-        "pair. Objects parented to Place will be scaled and moved as ProxyObserver moves. Note: Observer " + \
-        "location must be (0, 0, 0) for this to work correctly"
-    bl_idname = "big_space_rig.create_proxy_place"
+class BSR_PlaceCreate(bpy.types.Operator):
+    bl_description = "Create a Place at current position of Big Space Rig's Observer"
+    bl_idname = "big_space_rig.create_place"
     bl_label = "Create Place"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -685,7 +685,7 @@ class BSR_AttachCreatePlace(bpy.types.Operator):
         # error checks
         if not is_big_space_rig(active_ob):
             # create a rig if needed
-            if context.scene.BSR_AttachPreCreateRig:
+            if context.scene.BSR_CreatePlaceCreateRig:
                 create_bsr_armature(context, scn.BSR_NewObserverFP_Power, scn.BSR_NewObserverFP_MinDist,
                                     scn.BSR_NewObserverFP_MinScale)
                 # new active object
@@ -695,14 +695,16 @@ class BSR_AttachCreatePlace(bpy.types.Operator):
                 return {'CANCELLED'}
         # get widgets and create
         widget_objs = get_widget_objs_from_rig(active_ob)
-        create_proxy_place(context, active_ob, widget_objs, use_obs_loc=True, use_fp_scale=scn.BSR_UsePlaceScaleFP)
+        create_proxy_place(context, active_ob, widget_objs, use_obs_loc=scn.BSR_CreatePlaceUseObserverOffset,
+                           use_fp_scale=scn.BSR_CreatePlaceUseFP)
         return {'FINISHED'}
 
-class BSR_AttachSinglePlace(bpy.types.Operator):
-    bl_description = "Attach all selected object(s) to Big Space Rig. Rig must be selected last, and all other\n" + \
-        "objects will be parented to rig. Note: this uses current position of rig's ProxyObserver"
-    bl_idname = "big_space_rig.attach_single_place"
-    bl_label = "Single Place"
+class BSR_PlaceCreateAttachSingle(bpy.types.Operator):
+    bl_description = "Create Place and attach all selected object(s) to new Place in Big Space Rig. Rig must be " \
+        "selected last, and all other objects will be parented to rig. Note: this uses current position of rig's " \
+        "Observer"
+    bl_idname = "big_space_rig.create_attach_single_place"
+    bl_label = "Attach Single"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -713,7 +715,7 @@ class BSR_AttachSinglePlace(bpy.types.Operator):
         # error checks
         if not is_big_space_rig(active_ob):
             # create a rig if needed
-            if context.scene.BSR_AttachPreCreateRig:
+            if context.scene.BSR_CreatePlaceCreateRig:
                 create_bsr_armature(context, scn.BSR_NewObserverFP_Power, scn.BSR_NewObserverFP_MinDist,
                                     scn.BSR_NewObserverFP_MinScale)
                 # new active object
@@ -726,8 +728,8 @@ class BSR_AttachSinglePlace(bpy.types.Operator):
             return {'CANCELLED'}
         widget_objs = get_widget_objs_from_rig(active_ob)
         # expand the rig by creating new bones in the rig
-        place_bname, proxy_place_6e_bname = create_proxy_place(context, active_ob, widget_objs, use_obs_loc=True,
-                                                               use_fp_scale=scn.BSR_UsePlaceScaleFP)
+        place_bname, proxy_place_6e_bname = create_proxy_place(context, active_ob, widget_objs,
+            use_obs_loc=scn.BSR_CreatePlaceUseObserverOffset, use_fp_scale=scn.BSR_CreatePlaceUseFP)
 
         # debug: change current frame of animation, to force Blender to update the armature, drivers, etc. in the
         # dependency graph - which Blender isn't automatically doing, for some reason...
@@ -741,7 +743,7 @@ class BSR_AttachSinglePlace(bpy.types.Operator):
         select_object(active_ob, True)
         for ob in selected_obs:
             # do not select objects that have a parent, if 'no re-parent' option is enabled
-            if ob.parent != None and context.scene.BSR_AttachNoReParent:
+            if ob.parent != None and context.scene.BSR_CreatePlaceNoReParent:
                 continue
             select_object(ob, True)
 
@@ -752,66 +754,76 @@ class BSR_AttachSinglePlace(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class BSR_AttachMultiPlace(bpy.types.Operator):
-    bl_description = "Attach selected objects to active Big Space Rig, creating a separate Place for each attached "+\
-        "object. Select Rig last. This uses current position of objects relative to rig, and zeroes those objects' "+\
-        "locations (may not work with location-keyframed objects)"
-    bl_idname = "big_space_rig.attach_multi_place"
-    bl_label = "Multi Place"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    def execute(self, context):
-        scn = context.scene
-        active_ob = context.active_object
-        # get list of objects, a separate copy of context's list - because context's list may change
-        selected_obs = [ob for ob in context.selected_objects]
-        # error checks
-        if not is_big_space_rig(active_ob):
-            # create a rig if needed
-            if context.scene.BSR_AttachPreCreateRig:
-                create_bsr_armature(context, scn.BSR_NewObserverFP_Power, scn.BSR_NewObserverFP_MinDist,
-                                    scn.BSR_NewObserverFP_MinScale)
-                # new active object
-                active_ob = context.active_object
-            else:
-                self.report({'ERROR'}, "Unable to attach object(s) because Active Object is not a Big Space Rig.")
-                return {'CANCELLED'}
-        if len(context.selected_objects) < 1:
-            self.report({'ERROR'}, "Unable to attach object(s) to Big Space Rig because no object(s) selected")
-            return {'CANCELLED'}
-        widget_objs = get_widget_objs_from_rig(active_ob)
+def create_attach_multi(context, big_space_rig, sel_objects, use_obs_offset, use_fp):
+        widget_objs = get_widget_objs_from_rig(big_space_rig)
 
         # select only the objects that were selected before the function was called, and the
         # Big Space Rig (which may have been 'pre-created')
         bpy.ops.object.select_all(action='DESELECT')
-        select_object(active_ob, True)
-        for ob in selected_obs:
+        select_object(big_space_rig, True)
+        for ob in sel_objects:
             # skip the Big Space Rig for this part (it's already been selected)
-            if ob == active_ob:
+            if ob == big_space_rig:
                 continue
             # do not select objects that have a parent, if 'no re-parent' option is enabled
-            if ob.parent != None and context.scene.BSR_AttachNoReParent:
+            if ob.parent != None and context.scene.BSR_CreatePlaceNoReParent:
                 continue
             select_object(ob, True)
 
-            place_loc = ob.matrix_world.translation - get_cursor_location(context)
+            # calculate the location of the object in the rig's coordinate system
+            place_loc = big_space_rig.matrix_world.inverted() @ ob.matrix_world.translation
+
             # expand the rig by creating new bones in the rig
-            place_bname,proxy_place_6e_bname = create_proxy_place(context, active_ob, widget_objs, place_loc=place_loc,
-                                                                  use_fp_scale=scn.BSR_UsePlaceScaleFP)
+            place_bname, proxy_place_6e_bname = create_proxy_place(context, big_space_rig, widget_objs,
+                use_obs_loc=use_obs_offset, place_loc=place_loc, use_fp_scale=use_fp)
 
             # object's location was converted to Proxy coordinates, so zero object's location values
             ob.location.zero()
-            # parent the object to the new Place,
-            ob.parent = active_ob
+            # parent the object to the new Place
+            ob.parent = big_space_rig
             ob.parent_type = 'BONE'
             ob.parent_bone = place_bname
-            ob.matrix_parent_inverse.identity()
-            # undo translation due to bone length
+
+            # maintain the object's original orientation by applying the inverse of the rig's world matrix
+            ob.matrix_parent_inverse = big_space_rig.matrix_world.inverted()
+            # set location to zero, with bone offset, because location is already stored in Place location
+            ob.matrix_parent_inverse[0][3] = 0.0
             ob.matrix_parent_inverse[1][3] = -PLACE_BONETAIL[1]
+            ob.matrix_parent_inverse[2][3] = 0.0
 
         # debug: change current frame of animation, to force Blender to update the armature, drivers, etc. in the
         # dependency graph - which Blender isn't automatically updating, for some reason...
         # all of this is done to avoid errors with locations of objects/bones when parenting objects to bones
         bpy.context.scene.frame_set(bpy.context.scene.frame_current)
         bpy.context.scene.frame_set(bpy.context.scene.frame_current)
+
+class BSR_PlaceCreateAttachMulti(bpy.types.Operator):
+    bl_description = "Attach selected objects to active Big Space Rig, creating separate Place for each " \
+        "object. Select Rig last. Place locations based on object location relative to rig. Object location " \
+        "values are zeroed (may not work with location-keyframes)"
+    bl_idname = "big_space_rig.create_attach_multi_place"
+    bl_label = "Attach Multi"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        scn = context.scene
+        big_space_rig = context.active_object
+        # get list of objects, a separate copy of context's list - because context's list may change
+        sel_objects = [ob for ob in context.selected_objects]
+        # error checks
+        if not is_big_space_rig(big_space_rig):
+            # create a rig if needed
+            if context.scene.BSR_CreatePlaceCreateRig:
+                create_bsr_armature(context, scn.BSR_NewObserverFP_Power, scn.BSR_NewObserverFP_MinDist,
+                                    scn.BSR_NewObserverFP_MinScale)
+                # new active object
+                big_space_rig = context.active_object
+            else:
+                self.report({'ERROR'}, "Unable to attach object(s) because Active Object is not a Big Space Rig.")
+                return {'CANCELLED'}
+        if len(context.selected_objects) < 1:
+            self.report({'ERROR'}, "Unable to attach object(s) to Big Space Rig because no object(s) selected")
+            return {'CANCELLED'}
+        create_attach_multi(context, big_space_rig, sel_objects, scn.BSR_CreatePlaceUseObserverOffset,
+                            scn.BSR_CreatePlaceUseFP)
         return {'FINISHED'}

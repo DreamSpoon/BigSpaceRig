@@ -92,6 +92,31 @@ WIDGET_CIRCLE_VERT_COUNT = 32
 
 BSRH_COLLECTION_NAME = "BigSpaceRigHidden"
 
+PROXY_PLACE_0E_VAR_NAME_PREPEND = "proxy_place_0e"
+PROXY_PLACE_6E_VAR_NAME_PREPEND = "proxy_place_6e"
+
+def bone_name_from_datapath(datapath_str):
+    left = datapath_str.find("\"")
+    right = datapath_str.rfind("\"")
+    return datapath_str[left+1:right]
+
+def get_0e_6e_from_place_bone_name(big_space_rig, place_bone_name):
+    if big_space_rig.animation_data is None:
+        return None, None
+    proxy_place_bone_name_0e = None
+    proxy_place_bone_name_6e = None
+    # search all drivers of Big Space Rig object, looking for named variables with bone targets - place proxies
+    for drv in big_space_rig.animation_data.drivers:
+        if bone_name_from_datapath(drv.data_path) != place_bone_name:
+            continue
+        d = drv.driver
+        for v in d.variables:
+            if v.name.startswith(PROXY_PLACE_0E_VAR_NAME_PREPEND):
+                proxy_place_bone_name_0e = v.targets[0].bone_target
+            elif v.name.startswith(PROXY_PLACE_6E_VAR_NAME_PREPEND):
+                proxy_place_bone_name_6e = v.targets[0].bone_target
+    return proxy_place_bone_name_0e, proxy_place_bone_name_6e
+
 # returns False if 'ob' is not a Big Space Rig, otherwise returns True
 # TODO: enhance the check - e.g. if bones are renamed, then how to check? rig/bones w/ custom props?
 def is_big_space_rig(ob):
@@ -457,7 +482,7 @@ def get_rad_from_deg_min_sec(degrees, minutes, seconds, frac_sec):
     # 648000 = 180 * 3600
     return (degrees * 3600 + minutes * 60 + seconds + frac_sec) * (math.pi / 648000.0)
 
-def go_to_coordinates(context, big_space_rig, radius_6e, radius_0e, lat_degrees, lat_minutes, lat_seconds,
+def go_to_sphere_coordinates(context, big_space_rig, radius_6e, radius_0e, lat_degrees, lat_minutes, lat_seconds,
                       lat_frac_sec, long_degrees, long_minutes, long_seconds, long_frac_sec):
     # save view mode, then switch to pose mode so pose bone locations can be set
     old_3dview_mode = context.mode
@@ -518,7 +543,7 @@ def go_to_coordinates(context, big_space_rig, radius_6e, radius_0e, lat_degrees,
     # return to original view mode
     bpy.ops.object.mode_set(mode=old_3dview_mode)
 
-class BSR_ViewMegaSphere(bpy.types.Operator):
+class BSR_ObserveMegaSphere(bpy.types.Operator):
     bl_description = "View MegaSphere (set Big Space Rig's Observer 6e and 0e location) by Radius, Longitude, " \
         "Latitude coordinates"
     bl_idname = "big_space_rig.view_mega_sphere_by_rad_lat_long"
@@ -531,8 +556,32 @@ class BSR_ViewMegaSphere(bpy.types.Operator):
             self.report({'ERROR'}, "Unable to Go to Coordinates because active object is not a Big Space Rig")
             return {'CANCELLED'}
         scn = context.scene
-        go_to_coordinates(context, active_ob, scn.BSR_ViewMegaSphereRad6e, scn.BSR_ViewMegaSphereRad0e,
-            scn.BSR_ViewMegaSphereLatDegrees, scn.BSR_ViewMegaSphereLatMinutes, scn.BSR_ViewMegaSphereLatSeconds,
-            scn.BSR_ViewMegaSphereLatFracSec, scn.BSR_ViewMegaSphereLongDegrees, scn.BSR_ViewMegaSphereLongMinutes,
-            scn.BSR_ViewMegaSphereLongSeconds, scn.BSR_ViewMegaSphereLongFracSec)
+        go_to_sphere_coordinates(context, active_ob, scn.BSR_ObserveMegaSphereRad6e, scn.BSR_ObserveMegaSphereRad0e,
+            scn.BSR_ObserveMegaSphereLatDegrees, scn.BSR_ObserveMegaSphereLatMinutes, scn.BSR_ObserveMegaSphereLatSeconds,
+            scn.BSR_ObserveMegaSphereLatFracSec, scn.BSR_ObserveMegaSphereLongDegrees, scn.BSR_ObserveMegaSphereLongMinutes,
+            scn.BSR_ObserveMegaSphereLongSeconds, scn.BSR_ObserveMegaSphereLongFracSec)
+        return {'FINISHED'}
+
+def go_to_place(context, big_space_rig, place_bone_name):
+    place_bone_name_0e, place_bone_name_6e = get_0e_6e_from_place_bone_name(big_space_rig, place_bone_name)
+    big_space_rig.pose.bones[PROXY_OBSERVER_6E_BNAME].location = big_space_rig.pose.bones[place_bone_name_6e].location
+    big_space_rig.pose.bones[PROXY_OBSERVER_0E_BNAME].location = big_space_rig.pose.bones[place_bone_name_0e].location
+
+class BSR_ObservePlace(bpy.types.Operator):
+    bl_description = "Set Observer to Place's coordinates (6e and 0e location)"
+    bl_idname = "big_space_rig.observe_place"
+    bl_label = "Observe Place"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        active_ob = context.active_object
+        if not is_big_space_rig(active_ob):
+            self.report({'ERROR'}, "Unable to Observe Place because active object is not a Big Space Rig")
+            return {'CANCELLED'}
+        scn = context.scene
+        place_bone_name = scn.BSR_ObservePlaceBoneName[1:len(scn.BSR_ObservePlaceBoneName)]
+        if place_bone_name == "":
+            self.report({'ERROR'}, "Unable to Observe Place because Place to observe is blank")
+            return {'CANCELLED'}
+        go_to_place(context, active_ob, place_bone_name)
         return {'FINISHED'}

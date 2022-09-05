@@ -18,10 +18,11 @@
 
 import bpy
 
-from .rig import (is_big_space_rig, get_widget_objs_from_rig, add_widgets_to_big_space_rig)
-from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME, ICOSPHERE7_WIDGET_NAME, WIDGET_ICOSPHERE7_OBJNAME)
-from .attach import (PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
-from .node_other import (get_0e_6e_from_place_bone_name, ensure_node_groups, node_group_name_for_name_and_type)
+from .rig import (is_big_space_rig, get_widget_objs_from_rig, add_widgets_to_big_space_rig,
+    get_0e_6e_from_place_bone_name)
+from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME, ICOSPHERE7_WIDGET_NAME, WIDGET_ICOSPHERE7_OBJNAME,
+    PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
+from .node_other import (ensure_node_groups, node_group_name_for_name_and_type)
 from .mat_node_util import (SNAP_VERT_LOD_GEO_NG_NAME, VEC_DIV_3E_MOD_3E_DUO_NG_NAME, create_prereq_util_node_group)
 from .mat_node_noise import (PINGPONG_3E_DUO_NG_NAME, SAMPLE_3E_DUO_NG_NAME, NOISE_3E_DUO_NG_NAME,
     create_prereq_noise_node_group)

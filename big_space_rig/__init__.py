@@ -16,8 +16,6 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# TODO: show current rig stats, including bones by way of list box
-
 bl_info = {
     "name": "Big Space Rig",
     "description": "'Solar system in a box' addon for Blender, with rig to manage very large spaces (> 10^30 m3), " \
@@ -38,8 +36,8 @@ from bpy.props import PointerProperty
 from .rig import (OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT,
     OBJ_PROP_BONE_PLACE)
 from .rig import (is_big_space_rig, BSR_CreateBigSpaceRig, BSR_QuickPoseObserver6e, BSR_QuickPoseObserver0e,
-    BSR_ViewMegaSphere)
-from .attach import (BSR_AttachCreatePlace, BSR_AttachSinglePlace, BSR_AttachMultiPlace)
+    BSR_ObserveMegaSphere, BSR_ObservePlace)
+from .place import (BSR_PlaceCreate, BSR_PlaceCreateAttachSingle, BSR_PlaceCreateAttachMulti)
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
 from .mat_node_noise import BSR_Noise3eCreateDuoNode
@@ -107,30 +105,37 @@ class BSR_PT_Observer(bpy.types.Panel):
         box.label(text="Pose Observer")
         box.operator("big_space_rig.quick_pose_observer_6e")
         box.operator("big_space_rig.quick_pose_observer_0e")
+
+        box = layout.box()
+        box.active = is_big_space_rig(active_ob)
+        box.label(text="Observe Place")
+        box.operator("big_space_rig.observe_place")
+        box.prop(scn, "BSR_ObservePlaceBoneName")
+
         box = layout.box()
         box.active = is_big_space_rig(active_ob)
         box.label(text="MegaSphere Coordinates")
         box.operator("big_space_rig.view_mega_sphere_by_rad_lat_long")
         box.label(text="Radius")
-        box.prop(scn, "BSR_ViewMegaSphereRad6e")
-        box.prop(scn, "BSR_ViewMegaSphereRad0e")
+        box.prop(scn, "BSR_ObserveMegaSphereRad6e")
+        box.prop(scn, "BSR_ObserveMegaSphereRad0e")
         box.label(text="Latitude")
         col = box.column(align=True)
         col.active = is_big_space_rig(active_ob)
-        col.prop(scn, "BSR_ViewMegaSphereLatDegrees")
-        col.prop(scn, "BSR_ViewMegaSphereLatMinutes")
-        col.prop(scn, "BSR_ViewMegaSphereLatSeconds")
-        col.prop(scn, "BSR_ViewMegaSphereLatFracSec")
+        col.prop(scn, "BSR_ObserveMegaSphereLatDegrees")
+        col.prop(scn, "BSR_ObserveMegaSphereLatMinutes")
+        col.prop(scn, "BSR_ObserveMegaSphereLatSeconds")
+        col.prop(scn, "BSR_ObserveMegaSphereLatFracSec")
         box.label(text="Longitude")
         col = box.column(align=True)
         col.active = is_big_space_rig(active_ob)
-        col.prop(scn, "BSR_ViewMegaSphereLongDegrees")
-        col.prop(scn, "BSR_ViewMegaSphereLongMinutes")
-        col.prop(scn, "BSR_ViewMegaSphereLongSeconds")
-        col.prop(scn, "BSR_ViewMegaSphereLongFracSec")
+        col.prop(scn, "BSR_ObserveMegaSphereLongDegrees")
+        col.prop(scn, "BSR_ObserveMegaSphereLongMinutes")
+        col.prop(scn, "BSR_ObserveMegaSphereLongSeconds")
+        col.prop(scn, "BSR_ObserveMegaSphereLongFracSec")
 
-class BSR_PT_Attach(bpy.types.Panel):
-    bl_label = "Attach"
+class BSR_PT_Place(bpy.types.Panel):
+    bl_label = "Place"
     bl_space_type = "VIEW_3D"
     bl_region_type = Region
     bl_category = "BigSpaceRig"
@@ -140,13 +145,17 @@ class BSR_PT_Attach(bpy.types.Panel):
         scn = context.scene
         layout = self.layout
         box = layout.box()
-        box.label(text="Attach")
-        box.operator("big_space_rig.create_proxy_place")
-        box.operator("big_space_rig.attach_single_place")
-        box.operator("big_space_rig.attach_multi_place")
-        box.prop(scn, "BSR_AttachPreCreateRig")
-        box.prop(scn, "BSR_AttachNoReParent")
-        box.prop(scn, "BSR_UsePlaceScaleFP")
+        box.label(text="Create")
+        box.operator("big_space_rig.create_place")
+        box.label(text="Create and Attach")
+        box.operator("big_space_rig.create_attach_single_place")
+        box.operator("big_space_rig.create_attach_multi_place")
+        box = layout.box()
+        box.label(text="Options")
+        box.prop(scn, "BSR_CreatePlaceUseObserverOffset")
+        box.prop(scn, "BSR_CreatePlaceCreateRig")
+        box.prop(scn, "BSR_CreatePlaceNoReParent")
+        box.prop(scn, "BSR_CreatePlaceUseFP")
 
 class BSR_PT_GeoNodes(bpy.types.Panel):
     bl_label = "FP Geometry Nodes"
@@ -179,9 +188,9 @@ class BSR_PT_MegaSphere(bpy.types.Panel):
         scn = context.scene
         layout = self.layout
         box = layout.box()
+        box.active = is_big_space_rig(active_ob)
         box.label(text="Create")
         col = box.column()
-        col.active = is_big_space_rig(active_ob)
         col.operator("big_space_rig.create_mega_sphere")
         col.prop(scn, "BSR_MegaSphereRadius")
         col.prop(scn, "BSR_MegaSphereOverrideCreateNG")
@@ -233,10 +242,10 @@ classes = [
     BSR_CreateBigSpaceRig,
     BSR_QuickPoseObserver6e,
     BSR_QuickPoseObserver0e,
-    BSR_PT_Attach,
-    BSR_AttachCreatePlace,
-    BSR_AttachMultiPlace,
-    BSR_AttachSinglePlace,
+    BSR_PT_Place,
+    BSR_PlaceCreate,
+    BSR_PlaceCreateAttachMulti,
+    BSR_PlaceCreateAttachSingle,
     BSR_PT_CreateDuoNodes,
     BSR_Noise3eCreateDuoNode,
     BSR_ObserverInputCreateDuoNode,
@@ -245,6 +254,7 @@ classes = [
     BSR_VecDiv3eMod3eCreateDuoNode,
     BSR_VecDiv6eCreateDuoNode,
     BSR_SnapVertexLOD_CreateGeoNode,
+    BSR_ObservePlace,
 ]
 # geometry node support is only for Blender v2.9+ (or maybe v3.0+ ...)
 # TODO: check what version is needed for current geometry nodes setup
@@ -254,7 +264,7 @@ if bpy.app.version >= (2,90,0):
         BSR_AddPlaceFP_GeoNodes,
         BSR_PT_MegaSphere,
         BSR_MegaSphereCreate,
-        BSR_ViewMegaSphere,
+        BSR_ObserveMegaSphere,
     ])
 
 def register():
@@ -267,16 +277,17 @@ def unregister():
         bpy.utils.unregister_class(cls)
     bts = bpy.types.Scene
 
-    del bts.BSR_ViewMegaSphereLongFracSec
-    del bts.BSR_ViewMegaSphereLongSeconds
-    del bts.BSR_ViewMegaSphereLongMinutes
-    del bts.BSR_ViewMegaSphereLongDegrees
-    del bts.BSR_ViewMegaSphereLatFracSec
-    del bts.BSR_ViewMegaSphereLatSeconds
-    del bts.BSR_ViewMegaSphereLatMinutes
-    del bts.BSR_ViewMegaSphereLatDegrees
-    del bts.BSR_ViewMegaSphereRad0e
-    del bts.BSR_ViewMegaSphereRad6e
+    del bts.BSR_ObserveMegaSphereLongFracSec
+    del bts.BSR_ObserveMegaSphereLongSeconds
+    del bts.BSR_ObserveMegaSphereLongMinutes
+    del bts.BSR_ObserveMegaSphereLongDegrees
+    del bts.BSR_ObserveMegaSphereLatFracSec
+    del bts.BSR_ObserveMegaSphereLatSeconds
+    del bts.BSR_ObserveMegaSphereLatMinutes
+    del bts.BSR_ObserveMegaSphereLatDegrees
+    del bts.BSR_ObserveMegaSphereRad0e
+    del bts.BSR_ObserveMegaSphereRad6e
+    del bts.BSR_ObservePlaceBoneName
     del bts.BSR_NodeGetInputFromRigPlace
     del bts.BSR_NodeGetInputFromRig
     del bts.BSR_MegaSpherePlaceBoneName
@@ -286,9 +297,10 @@ def unregister():
     del bts.BSR_GeoNodesCreateAltGroup
     del bts.BSR_GeoNodesCreateUseAltGroup
     del bts.BSR_GeoNodesOverrideCreate
-    del bts.BSR_UsePlaceScaleFP
-    del bts.BSR_AttachNoReParent
-    del bts.BSR_AttachPreCreateRig
+    del bts.BSR_CreatePlaceUseFP
+    del bts.BSR_CreatePlaceNoReParent
+    del bts.BSR_CreatePlaceUseObserverOffset
+    del bts.BSR_CreatePlaceCreateRig
     del bts.BSR_NewObserverFP_MinScale
     del bts.BSR_NewObserverFP_MinDist
     del bts.BSR_NewObserverFP_Power
@@ -342,13 +354,14 @@ def register_props():
     bts.BSR_NewObserverFP_MinScale = bp.FloatProperty(name="FP Min Scale",
         description="Forced Perspective Minimum Scale value, which is the minimum scale to apply with the " +
         "'Forced Perspective' effect", default=0.0, min=0.0)
-    bts.BSR_AttachPreCreateRig = bp.BoolProperty(name="Create Rig if Needed", description="Create a new " +
-        "Big Space Rig before attaching objects, if no Big Space Rig was active before pressing attach button",
-        default=True)
-    bts.BSR_AttachNoReParent = bp.BoolProperty(name="Do not Re-Parent", description="Objects that already " +
+    bts.BSR_CreatePlaceUseObserverOffset = bp.BoolProperty(name="Use Observer Offset", description="Offset created " +
+        "Place(s) by Observer's current position", default=True)
+    bts.BSR_CreatePlaceCreateRig = bp.BoolProperty(name="Create Rig if Needed", description="Create a new " +
+        "Big Space Rig before creating place(s) / attaching objects, if no Big Space Rig was active", default=True)
+    bts.BSR_CreatePlaceNoReParent = bp.BoolProperty(name="Do not Re-Parent", description="Objects that already " +
         "have a parent object will not be 're-parented' to the Big Space Rig. Only the 'root parents', and " +
         "non-parented objects will be attached to Big Space Rig", default=True)
-    bts.BSR_UsePlaceScaleFP =  bp.BoolProperty(name="Use Place Scaling", description="Apply a 'forced perspective' " +
+    bts.BSR_CreatePlaceUseFP =  bp.BoolProperty(name="Use Place Scaling", description="Apply a 'forced perspective' " +
         "scaling effect to places as they move away from the observer - farther away objects 'shrink' to maintain " +
         "close range to observer. Some accuracy is lost due to greater floating point rounding error", default=False)
     bts.BSR_GeoNodesOverrideCreate = bp.BoolProperty(name="Override Create", description="Big Space Rig Geometry " +
@@ -373,25 +386,27 @@ def register_props():
         "nodes", items=place_input_rig_items)
     bts.BSR_MegaSphereWithNoise = bp.BoolProperty(name="Create with noise", description="Add nodes to apply Noise3e " +
         "to MegaSphere, when MegaSphere is created", default=False)
-    bts.BSR_ViewMegaSphereRad6e = bp.FloatProperty(name="Radius 6e", description="Radius, in mega-meters",
+    bts.BSR_ObservePlaceBoneName = bpy.props.EnumProperty(name="Place", description="Place to observe",
+        items=bone_items)
+    bts.BSR_ObserveMegaSphereRad6e = bp.FloatProperty(name="Radius 6e", description="Radius, in mega-meters",
         default=1.0, min=0.0)
-    bts.BSR_ViewMegaSphereRad0e = bp.FloatProperty(name="Radius 0e", description="Radius Append, in meters",
+    bts.BSR_ObserveMegaSphereRad0e = bp.FloatProperty(name="Radius 0e", description="Radius Append, in meters",
         default=0.0)
-    bts.BSR_ViewMegaSphereLatDegrees = bp.IntProperty(name="Degrees", description="Degrees of Latitude",
+    bts.BSR_ObserveMegaSphereLatDegrees = bp.IntProperty(name="Degrees", description="Degrees of Latitude",
         default=0, min=0, max=360)
-    bts.BSR_ViewMegaSphereLatMinutes = bp.IntProperty(name="Minutes", description="Minutes of Latitude",
+    bts.BSR_ObserveMegaSphereLatMinutes = bp.IntProperty(name="Minutes", description="Minutes of Latitude",
         default=0, min=0, max=60)
-    bts.BSR_ViewMegaSphereLatSeconds = bp.IntProperty(name="Seconds", description="Seconds of Latitude",
+    bts.BSR_ObserveMegaSphereLatSeconds = bp.IntProperty(name="Seconds", description="Seconds of Latitude",
         default=0, min=0, max=60)
-    bts.BSR_ViewMegaSphereLatFracSec = bp.FloatProperty(name="Frac Sec", description="Fraction of second of Latitude",
+    bts.BSR_ObserveMegaSphereLatFracSec = bp.FloatProperty(name="Frac Sec", description="Fraction of second of Latitude",
         default=0.0, min=0.0, max=1.0)
-    bts.BSR_ViewMegaSphereLongDegrees = bp.IntProperty(name="Degrees", description="Degrees of Longitude",
+    bts.BSR_ObserveMegaSphereLongDegrees = bp.IntProperty(name="Degrees", description="Degrees of Longitude",
         default=0, min=0, max=360)
-    bts.BSR_ViewMegaSphereLongMinutes = bp.IntProperty(name="Minutes", description="Minutes of Longitude",
+    bts.BSR_ObserveMegaSphereLongMinutes = bp.IntProperty(name="Minutes", description="Minutes of Longitude",
         default=0, min=0, max=60)
-    bts.BSR_ViewMegaSphereLongSeconds = bp.IntProperty(name="Seconds", description="Seconds of Longitude",
+    bts.BSR_ObserveMegaSphereLongSeconds = bp.IntProperty(name="Seconds", description="Seconds of Longitude",
         default=0, min=0, max=60)
-    bts.BSR_ViewMegaSphereLongFracSec = bp.FloatProperty(name="Frac Sec",
+    bts.BSR_ObserveMegaSphereLongFracSec = bp.FloatProperty(name="Frac Sec",
         description="Fraction of second of Longitude", default=0.0, min=0.0, max=1.0)
 
 if __name__ == "__main__":

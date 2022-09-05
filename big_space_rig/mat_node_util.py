@@ -20,7 +20,7 @@ import bpy
 
 from .node_other import (ensure_node_groups, node_group_name_for_name_and_type, get_node_group_for_type)
 from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME)
-from .node_other import (get_0e_6e_from_place_bone_name)
+from .rig import get_0e_6e_from_place_bone_name
 
 VEC_DIV_3E_MOD_3E_DUO_NG_NAME = "VecDiv3eMod3e.BSR"
 VEC_DIV_6E_DUO_NG_NAME = "VecDiv6e.BSR"
