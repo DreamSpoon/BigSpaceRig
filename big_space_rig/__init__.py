@@ -40,10 +40,9 @@ from .rig import (is_big_space_rig, BSR_CreateBigSpaceRig, BSR_QuickPoseObserver
 from .place import (BSR_PlaceCreate, BSR_PlaceCreateAttachSingle, BSR_PlaceCreateAttachMulti)
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
-from .mat_node_noise import BSR_Noise3eCreateDuoNode
 from .mat_node_util import (BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode,
     BSR_PlaceOffsetInputCreateDuoNode, BSR_VecDiv3eMod3eCreateDuoNode, BSR_VecDiv6eCreateDuoNode,
-    BSR_SnapVertexLOD_CreateGeoNode)
+    BSR_SnapVertexLOD_CreateGeoNode, BSR_TileXYZ3eCreateDuoNode)
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -225,13 +224,11 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         subcol.operator("big_space_rig.place_input_create_duo_node")
         subcol.operator("big_space_rig.place_offset_input_create_duo_node")
         box = layout.box()
-        box.label(text="Texture - Noise")
-        box.operator("big_space_rig.noise_3e_create_duo_node")
-        box = layout.box()
-        box.label(text="Utility")
+        box.label(text="MegaSphere Util")
         box.operator("big_space_rig.snap_vertex_lod_create_geo_node")
         box = layout.box()
         box.label(text="Vector")
+        box.operator("big_space_rig.tile_xyz_3e_create_duo_node")
         box.operator("big_space_rig.vec_div_3e_mod_3e_create_duo_node")
         box.operator("big_space_rig.vec_div_6e_create_duo_node")
 
@@ -247,7 +244,7 @@ classes = [
     BSR_PlaceCreateAttachMulti,
     BSR_PlaceCreateAttachSingle,
     BSR_PT_CreateDuoNodes,
-    BSR_Noise3eCreateDuoNode,
+    BSR_TileXYZ3eCreateDuoNode,
     BSR_ObserverInputCreateDuoNode,
     BSR_PlaceInputCreateDuoNode,
     BSR_PlaceOffsetInputCreateDuoNode,
