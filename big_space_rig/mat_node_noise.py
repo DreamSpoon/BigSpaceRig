@@ -21,15 +21,12 @@ import bpy
 
 from .node_other import (ensure_node_groups, node_group_name_for_name_and_type, get_node_group_for_type)
 
-PINGPONG_3E_DUO_NG_NAME = "PingPong3e.BSR"
 SAMPLE_3E_DUO_NG_NAME = "Sample3e.BSR"
 NOISE_3E_DUO_NG_NAME = "Noise3e.BSR"
 
 # depending on the name passed to function, create the right set of nodes in a group and pass back
 def create_prereq_noise_node_group(node_group_name, node_tree_type):
-    if node_group_name == PINGPONG_3E_DUO_NG_NAME:
-        return create_duo_ng_ping_pong_3e(node_tree_type)
-    elif node_group_name == SAMPLE_3E_DUO_NG_NAME:
+    if node_group_name == SAMPLE_3E_DUO_NG_NAME:
         return create_duo_ng_sample_3e(node_tree_type)
     elif node_group_name == NOISE_3E_DUO_NG_NAME:
         return create_duo_ng_noise_3e(node_tree_type)
@@ -38,127 +35,49 @@ def create_prereq_noise_node_group(node_group_name, node_tree_type):
     print("Unknown name passed to create_custom_geo_node_group: " + str(node_group_name))
     return None
 
-def create_duo_ng_ping_pong_3e(node_tree_type):
-    # initialize variables
-    new_nodes = {}
-    new_node_group = bpy.data.node_groups.new(name=node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
-                                                                                     node_tree_type),
-                                              type=node_tree_type)
-    new_node_group.inputs.new(type='NodeSocketFloat', name="Value 0e")
-    new_node_group.inputs.new(type='NodeSocketFloat', name="Value World")
-    new_node_group.outputs.new(type='NodeSocketFloat', name="Value")
-    tree_nodes = new_node_group.nodes
-    # delete old nodes before adding new nodes
-    tree_nodes.clear()
-
-    # create nodes
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (270, 0)
-    node.operation = "MULTIPLY"
-    node.inputs[1].default_value = 2000.0
-    new_nodes["Math.003"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (90, 0)
-    node.operation = "PINGPONG"
-    node.inputs[1].default_value = 0.5
-    new_nodes["Math.002"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-80, 0)
-    node.operation = "FRACT"
-    new_nodes["Math.005"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-440, 80)
-    node.operation = "FRACT"
-    new_nodes["Math.001"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-620, 80)
-    node.operation = "DIVIDE"
-    node.inputs[1].default_value = 1000.0
-    new_nodes["Math"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-540, -80)
-    node.operation = "DIVIDE"
-    node.inputs[1].default_value = 1000.0
-    new_nodes["Math.006"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-260, 20)
-    node.operation = "ADD"
-    new_nodes["Math.004"] = node
-
-    node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (-820, 0)
-    new_nodes["Group Input"] = node
-
-    node = tree_nodes.new(type="NodeGroupOutput")
-    node.location = (460, 0)
-    new_nodes["Group Output"] = node
-
-    # create links
-    tree_links = new_node_group.links
-    tree_links.new(new_nodes["Math.003"].outputs[0], new_nodes["Group Output"].inputs[0])
-    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Math.001"].inputs[0])
-    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Math.003"].inputs[0])
-    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Math.004"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Math"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.006"].inputs[0])
-    tree_links.new(new_nodes["Math.006"].outputs[0], new_nodes["Math.004"].inputs[1])
-    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Math.005"].inputs[0])
-    tree_links.new(new_nodes["Math.005"].outputs[0], new_nodes["Math.002"].inputs[0])
-
-    # deselect all new nodes
-    for n in new_nodes.values(): n.select = False
-
-    return new_node_group
-
 def create_duo_ng_sample_3e(node_tree_type):
     # initialize variables
     new_nodes = {}
     new_node_group = bpy.data.node_groups.new(name=node_group_name_for_name_and_type(SAMPLE_3E_DUO_NG_NAME,
                                                                                      node_tree_type),
                                               type=node_tree_type)
-    new_node_group.inputs.new(type='NodeSocketFloat', name="Value 0e")
-    new_node_group.inputs.new(type='NodeSocketFloat', name="Value World")
-    new_node_group.outputs.new(type='NodeSocketFloat', name="Value")
+    new_node_group.inputs.new(type='NodeSocketVector', name="Vector 0e")
+    new_node_group.inputs.new(type='NodeSocketVector', name="Vector World")
+    new_node_group.outputs.new(type='NodeSocketVector', name="Vector")
     tree_nodes = new_node_group.nodes
-    # delete old nodes before adding new nodes
+    # delete all nodes
     tree_nodes.clear()
 
     # create nodes
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (200, 0)
-    node.operation = "FRACT"
-    new_nodes["Math.003"] = node
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-340, 0)
+    node.operation = "DIVIDE"
+    node.inputs[1].default_value = (1000.0, 1000.0, 1000.0)
+    new_nodes["Vector Math"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (20, 20)
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-340, -200)
+    node.operation = "DIVIDE"
+    node.inputs[1].default_value = (1000.0, 1000.0, 1000.0)
+    new_nodes["Vector Math.004"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (20, 0)
     node.operation = "ADD"
-    new_nodes["Math.004"] = node
+    new_nodes["Vector Math.002"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-160, 80)
-    node.operation = "FRACT"
-    new_nodes["Math.005"] = node
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (200, 0)
+    node.operation = "FRACTION"
+    new_nodes["Vector Math.003"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-340, 80)
-    node.operation = "DIVIDE"
-    node.inputs[1].default_value = 1000.0
-    new_nodes["Math.006"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-240, -80)
-    node.operation = "DIVIDE"
-    node.inputs[1].default_value = 1000.0
-    new_nodes["Math.007"] = node
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-160, 0)
+    node.operation = "FRACTION"
+    new_nodes["Vector Math.001"] = node
 
     node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (-540, 0)
+    node.location = (-520, 0)
     new_nodes["Group Input"] = node
 
     node = tree_nodes.new(type="NodeGroupOutput")
@@ -167,13 +86,13 @@ def create_duo_ng_sample_3e(node_tree_type):
 
     # create links
     tree_links = new_node_group.links
-    tree_links.new(new_nodes["Math.006"].outputs[0], new_nodes["Math.005"].inputs[0])
-    tree_links.new(new_nodes["Math.005"].outputs[0], new_nodes["Math.004"].inputs[0])
-    tree_links.new(new_nodes["Math.007"].outputs[0], new_nodes["Math.004"].inputs[1])
-    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Math.003"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Math.006"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.007"].inputs[0])
-    tree_links.new(new_nodes["Math.003"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Vector Math"].outputs[0], new_nodes["Vector Math.001"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Vector Math"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Vector Math.004"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.001"].outputs[0], new_nodes["Vector Math.002"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.004"].outputs[0], new_nodes["Vector Math.002"].inputs[1])
+    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Vector Math.003"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.003"].outputs[0], new_nodes["Group Output"].inputs[0])
 
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False
@@ -201,356 +120,243 @@ def create_duo_ng_noise_3e(node_tree_type):
     new_node_group.outputs.new(type='NodeSocketFloat', name="Value")
     new_node_group.outputs.new(type='NodeSocketColor', name="Color")
     tree_nodes = new_node_group.nodes
-    # delete old nodes before adding new nodes
+    # delete all nodes
     tree_nodes.clear()
 
     # create nodes
     node = tree_nodes.new(type=node_group_type)
-    node.location = (-560, 600)
-    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
-                                                                                node_tree_type))
-    new_nodes["Group.016"] = node
+    node.location = (-280, 720)
+    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(SAMPLE_3E_DUO_NG_NAME, node_tree_type))
+    new_nodes["Group"] = node
 
-    node = tree_nodes.new(type=node_group_type)
-    node.location = (-560, 740)
-    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(SAMPLE_3E_DUO_NG_NAME,
-                                                                                node_tree_type))
-    new_nodes["Group.005"] = node
+    node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
+    node.label = "cosine"
+    node.location = (260, 720)
+    new_nodes["Separate XYZ"] = node
 
-    node = tree_nodes.new(type=node_group_type)
-    node.location = (-560, 460)
-    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
-                                                                                node_tree_type))
-    new_nodes["Group.003"] = node
+    node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
+    node.label = "sine"
+    node.location = (260, 580)
+    new_nodes["Separate XYZ.001"] = node
 
-    node = tree_nodes.new(type=node_group_type)
-    node.location = (-560, -500)
-    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
-                                                                                node_tree_type))
-    new_nodes["Group.008"] = node
+    node = tree_nodes.new(type="ShaderNodeCombineXYZ")
+    node.location = (1080, 520)
+    new_nodes["Combine XYZ"] = node
 
-    node = tree_nodes.new(type=node_group_type)
-    node.location = (-560, -360)
-    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
-                                                                                node_tree_type))
-    new_nodes["Group.019"] = node
-
-    node = tree_nodes.new(type=node_group_type)
-    node.location = (-560, -640)
-    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(SAMPLE_3E_DUO_NG_NAME,
-                                                                                node_tree_type))
-    new_nodes["Group.007"] = node
-
-    node = tree_nodes.new(type=node_group_type)
-    node.location = (-560, 0)
-    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(SAMPLE_3E_DUO_NG_NAME,
-                                                                                node_tree_type))
-    new_nodes["Group.006"] = node
-
-    node = tree_nodes.new(type=node_group_type)
-    node.location = (-560, 140)
-    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
-                                                                                node_tree_type))
-    new_nodes["Group.018"] = node
-
-    node = tree_nodes.new(type=node_group_type)
-    node.location = (-560, -140)
-    node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(PINGPONG_3E_DUO_NG_NAME,
-                                                                                node_tree_type))
-    new_nodes["Group.004"] = node
+    node = tree_nodes.new(type="ShaderNodeTexNoise")
+    node.location = (1440, 720)
+    node.noise_dimensions = "4D"
+    new_nodes["Noise Texture"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-360, 840)
+    node.location = (720, 520)
     node.operation = "MULTIPLY"
-    node.inputs[1].default_value = math.pi * 2
-    new_nodes["Math.024"] = node
+    new_nodes["Math"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-180, 800)
-    node.operation = "SINE"
-    new_nodes["Math.025"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (0, 760)
+    node.location = (540, 520)
     node.operation = "MULTIPLY"
-    node.inputs[1].default_value = 250.0
+    new_nodes["Math.001"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "Y"
+    node.location = (900, 520)
+    node.operation = "ADD"
+    new_nodes["Math.003"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (720, 360)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.004"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (540, 360)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.005"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (720, 160)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.006"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (540, 160)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.007"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "Z"
+    node.location = (900, 160)
+    node.operation = "SUBTRACT"
+    new_nodes["Math.008"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (540, 0)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.009"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (720, 0)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.010"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (540, 880)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.011"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (720, 880)
+    node.operation = "MULTIPLY"
     new_nodes["Math.012"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-360, 640)
+    node.location = (540, 720)
     node.operation = "MULTIPLY"
-    node.inputs[1].default_value = math.pi * 2
-    new_nodes["Math.026"] = node
+    new_nodes["Math.013"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-180, 540)
-    node.operation = "COSINE"
-    new_nodes["Math.027"] = node
+    node.location = (720, 720)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.014"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (0, 480)
+    node.location = (720, 1240)
     node.operation = "MULTIPLY"
-    node.inputs[1].default_value = 250.0
+    new_nodes["Math.015"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (540, 1240)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.016"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (540, 1080)
+    node.operation = "MULTIPLY"
     new_nodes["Math.017"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (180, 420)
+    node.location = (720, 1080)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.018"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "W"
+    node.location = (900, 1080)
     node.operation = "ADD"
     new_nodes["Math.019"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (580, 440)
+    node.label = "X"
+    node.location = (900, 720)
+    node.operation = "SUBTRACT"
+    new_nodes["Math.020"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (1260, 720)
     node.operation = "ADD"
     new_nodes["Math.021"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (760, 260)
-    node.operation = "ADD"
-    new_nodes["Math.022"] = node
+    node.location = (1080, 900)
+    node.operation = "MULTIPLY"
+    node.inputs[1].default_value = 1000.0
+    new_nodes["Math.002"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (940, 260)
-    node.operation = "DIVIDE"
-    node.inputs[1].default_value = 3.0
-    new_nodes["Math.023"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-200, 220)
-    node.operation = "SINE"
-    new_nodes["Math.032"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-200, -40)
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (80, 720)
     node.operation = "COSINE"
-    new_nodes["Math.035"] = node
+    new_nodes["Vector Math"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-380, 60)
-    node.operation = "MULTIPLY"
-    node.inputs[1].default_value = math.pi * 2
-    new_nodes["Math.034"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-20, 180)
-    node.operation = "MULTIPLY"
-    node.inputs[1].default_value = 250.0
-    new_nodes["Math.013"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-20, -100)
-    node.operation = "MULTIPLY"
-    node.inputs[1].default_value = 250.0
-    new_nodes["Math.018"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (180, -100)
-    node.operation = "ADD"
-    new_nodes["Math.036"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-200, -400)
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (80, 580)
     node.operation = "SINE"
-    new_nodes["Math.037"] = node
+    new_nodes["Vector Math.001"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-200, -600)
-    node.operation = "COSINE"
-    new_nodes["Math.040"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-20, -580)
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-100, 720)
     node.operation = "MULTIPLY"
-    node.inputs[1].default_value = 250.0
-    new_nodes["Math.020"] = node
+    node.inputs[1].default_value = (math.pi*2, math.pi*2, math.pi*2)
+    new_nodes["Vector Math.002"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-380, -620)
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (1260, 520)
     node.operation = "MULTIPLY"
-    node.inputs[1].default_value = math.pi * 2
-    new_nodes["Math.039"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-380, -440)
-    node.operation = "MULTIPLY"
-    node.inputs[1].default_value = math.pi * 2
-    new_nodes["Math.043"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-20, -380)
-    node.operation = "MULTIPLY"
-    node.inputs[1].default_value = 250.0
-    new_nodes["Math.014"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (180, -460)
-    node.operation = "ADD"
-    new_nodes["Math.041"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-380, 260)
-    node.operation = "MULTIPLY"
-    node.inputs[1].default_value = math.pi * 2
-    new_nodes["Math.031"] = node
-
-    node = tree_nodes.new(type="ShaderNodeTexNoise")
-    node.location = (380, 120)
-    node.noise_dimensions = '4D'
-    new_nodes["Noise Texture.001"] = node
-
-    node = tree_nodes.new(type="ShaderNodeTexNoise")
-    node.location = (380, 640)
-    node.noise_dimensions = '4D'
-    new_nodes["Noise Texture"] = node
-
-    node = tree_nodes.new(type="ShaderNodeTexNoise")
-    node.location = (380, -220)
-    node.noise_dimensions = '4D'
-    new_nodes["Noise Texture.002"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMixRGB")
-    node.location = (760, 100)
-    node.blend_type = "MIX"
-    node.inputs[0].default_value = 1.0 / 3.0
-    new_nodes["Mix.001"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMixRGB")
-    node.location = (580, 260)
-    node.blend_type = "MIX"
-    node.inputs[0].default_value = 0.5
-    new_nodes["Mix"] = node
-
-    node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
-    node.location = (-800, 60)
-    new_nodes["Separate XYZ.008"] = node
-
-    node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
-    node.location = (-800, -100)
-    new_nodes["Separate XYZ.004"] = node
-
-    node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
-    node.location = (-780, 480)
-    new_nodes["Separate XYZ.003"] = node
-
-    node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
-    node.location = (-780, 640)
-    new_nodes["Separate XYZ.006"] = node
-
-    node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
-    node.location = (-780, -460)
-    new_nodes["Separate XYZ.010"] = node
-
-    node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
-    node.location = (-780, -600)
-    new_nodes["Separate XYZ.011"] = node
-
-    node = tree_nodes.new(type="ShaderNodeCombineXYZ")
-    node.location = (180, 120)
-    new_nodes["Combine XYZ.001"] = node
-
-    node = tree_nodes.new(type="ShaderNodeCombineXYZ")
-    node.location = (180, 680)
-    new_nodes["Combine XYZ"] = node
-
-    node = tree_nodes.new(type="ShaderNodeCombineXYZ")
-    node.location = (180, -320)
-    new_nodes["Combine XYZ.002"] = node
+    node.inputs[1].default_value = (1000.0, 1000.0, 1000.0)
+    new_nodes["Vector Math.003"] = node
 
     node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (-1120, -180)
+    node.location = (-460, 720)
     new_nodes["Group Input"] = node
 
     node = tree_nodes.new(type="NodeGroupOutput")
-    node.location = (1160, 160)
+    node.location = (1620, 720)
     new_nodes["Group Output"] = node
 
     # create links
     tree_links = new_node_group.links
-    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Separate XYZ.006"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Separate XYZ.003"].inputs[0])
-    tree_links.new(new_nodes["Mix.001"].outputs[0], new_nodes["Group Output"].inputs[1])
-    tree_links.new(new_nodes["Math.025"].outputs[0], new_nodes["Math.012"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.003"].outputs[0], new_nodes["Group.005"].inputs[1])
-    tree_links.new(new_nodes["Separate XYZ.006"].outputs[0], new_nodes["Group.005"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.003"].outputs[1], new_nodes["Group.016"].inputs[1])
-    tree_links.new(new_nodes["Separate XYZ.006"].outputs[1], new_nodes["Group.016"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.003"].outputs[2], new_nodes["Group.003"].inputs[1])
-    tree_links.new(new_nodes["Separate XYZ.006"].outputs[2], new_nodes["Group.003"].inputs[0])
-    tree_links.new(new_nodes["Math.019"].outputs[0], new_nodes["Noise Texture"].inputs[1])
-    tree_links.new(new_nodes["Math.012"].outputs[0], new_nodes["Combine XYZ"].inputs[0])
-    tree_links.new(new_nodes["Combine XYZ"].outputs[0], new_nodes["Noise Texture"].inputs[0])
-    tree_links.new(new_nodes["Noise Texture"].outputs[1], new_nodes["Mix"].inputs[1])
-    tree_links.new(new_nodes["Noise Texture"].outputs[0], new_nodes["Math.021"].inputs[0])
-    tree_links.new(new_nodes["Mix"].outputs[0], new_nodes["Mix.001"].inputs[1])
-    tree_links.new(new_nodes["Math.021"].outputs[0], new_nodes["Math.022"].inputs[0])
-    tree_links.new(new_nodes["Math.022"].outputs[0], new_nodes["Math.023"].inputs[0])
     tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Noise Texture"].inputs[2])
     tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Noise Texture"].inputs[3])
     tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Noise Texture"].inputs[4])
     tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Noise Texture"].inputs[5])
-    tree_links.new(new_nodes["Math.017"].outputs[0], new_nodes["Math.019"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math.019"].inputs[1])
-    tree_links.new(new_nodes["Math.024"].outputs[0], new_nodes["Math.025"].inputs[0])
-    tree_links.new(new_nodes["Math.026"].outputs[0], new_nodes["Math.027"].inputs[0])
-    tree_links.new(new_nodes["Math.027"].outputs[0], new_nodes["Math.017"].inputs[0])
-    tree_links.new(new_nodes["Group.016"].outputs[0], new_nodes["Combine XYZ"].inputs[1])
-    tree_links.new(new_nodes["Group.003"].outputs[0], new_nodes["Combine XYZ"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Separate XYZ.008"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Separate XYZ.004"].inputs[0])
-    tree_links.new(new_nodes["Math.032"].outputs[0], new_nodes["Math.013"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.004"].outputs[2], new_nodes["Group.004"].inputs[1])
-    tree_links.new(new_nodes["Separate XYZ.008"].outputs[2], new_nodes["Group.004"].inputs[0])
-    tree_links.new(new_nodes["Math.036"].outputs[0], new_nodes["Noise Texture.001"].inputs[1])
-    tree_links.new(new_nodes["Combine XYZ.001"].outputs[0], new_nodes["Noise Texture.001"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Noise Texture.001"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Noise Texture.001"].inputs[3])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Noise Texture.001"].inputs[4])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Noise Texture.001"].inputs[5])
-    tree_links.new(new_nodes["Math.018"].outputs[0], new_nodes["Math.036"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math.036"].inputs[1])
-    tree_links.new(new_nodes["Math.031"].outputs[0], new_nodes["Math.032"].inputs[0])
-    tree_links.new(new_nodes["Math.034"].outputs[0], new_nodes["Math.035"].inputs[0])
-    tree_links.new(new_nodes["Math.035"].outputs[0], new_nodes["Math.018"].inputs[0])
-    tree_links.new(new_nodes["Group.004"].outputs[0], new_nodes["Combine XYZ.001"].inputs[2])
-    tree_links.new(new_nodes["Math.013"].outputs[0], new_nodes["Combine XYZ.001"].inputs[1])
-    tree_links.new(new_nodes["Group.018"].outputs[0], new_nodes["Combine XYZ.001"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.008"].outputs[0], new_nodes["Group.018"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.004"].outputs[0], new_nodes["Group.018"].inputs[1])
-    tree_links.new(new_nodes["Separate XYZ.008"].outputs[1], new_nodes["Group.006"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.004"].outputs[1], new_nodes["Group.006"].inputs[1])
-    tree_links.new(new_nodes["Noise Texture.001"].outputs[1], new_nodes["Mix"].inputs[2])
-    tree_links.new(new_nodes["Math.023"].outputs[0], new_nodes["Group Output"].inputs[0])
-    tree_links.new(new_nodes["Noise Texture.001"].outputs[0], new_nodes["Math.021"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Separate XYZ.010"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Separate XYZ.011"].inputs[0])
-    tree_links.new(new_nodes["Math.037"].outputs[0], new_nodes["Math.014"].inputs[0])
-    tree_links.new(new_nodes["Math.041"].outputs[0], new_nodes["Noise Texture.002"].inputs[1])
-    tree_links.new(new_nodes["Combine XYZ.002"].outputs[0], new_nodes["Noise Texture.002"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Noise Texture.002"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Noise Texture.002"].inputs[3])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Noise Texture.002"].inputs[4])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Noise Texture.002"].inputs[5])
-    tree_links.new(new_nodes["Math.020"].outputs[0], new_nodes["Math.041"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math.041"].inputs[1])
-    tree_links.new(new_nodes["Math.043"].outputs[0], new_nodes["Math.037"].inputs[0])
-    tree_links.new(new_nodes["Math.039"].outputs[0], new_nodes["Math.040"].inputs[0])
-    tree_links.new(new_nodes["Math.040"].outputs[0], new_nodes["Math.020"].inputs[0])
-    tree_links.new(new_nodes["Group.019"].outputs[0], new_nodes["Combine XYZ.002"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.010"].outputs[0], new_nodes["Group.019"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.011"].outputs[0], new_nodes["Group.019"].inputs[1])
-    tree_links.new(new_nodes["Noise Texture.002"].outputs[1], new_nodes["Mix.001"].inputs[2])
-    tree_links.new(new_nodes["Noise Texture.002"].outputs[0], new_nodes["Math.022"].inputs[1])
-    tree_links.new(new_nodes["Math.014"].outputs[0], new_nodes["Combine XYZ.002"].inputs[2])
-    tree_links.new(new_nodes["Group.008"].outputs[0], new_nodes["Combine XYZ.002"].inputs[1])
-    tree_links.new(new_nodes["Separate XYZ.010"].outputs[1], new_nodes["Group.008"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.011"].outputs[1], new_nodes["Group.008"].inputs[1])
-    tree_links.new(new_nodes["Separate XYZ.011"].outputs[2], new_nodes["Group.007"].inputs[1])
-    tree_links.new(new_nodes["Separate XYZ.010"].outputs[2], new_nodes["Group.007"].inputs[0])
-    tree_links.new(new_nodes["Group.007"].outputs[0], new_nodes["Math.043"].inputs[0])
-    tree_links.new(new_nodes["Group.007"].outputs[0], new_nodes["Math.039"].inputs[0])
-    tree_links.new(new_nodes["Group.006"].outputs[0], new_nodes["Math.034"].inputs[0])
-    tree_links.new(new_nodes["Group.006"].outputs[0], new_nodes["Math.031"].inputs[0])
-    tree_links.new(new_nodes["Group.005"].outputs[0], new_nodes["Math.024"].inputs[0])
-    tree_links.new(new_nodes["Group.005"].outputs[0], new_nodes["Math.026"].inputs[0])
+    tree_links.new(new_nodes["Math.016"].outputs[0], new_nodes["Math.015"].inputs[0])
+    tree_links.new(new_nodes["Math.017"].outputs[0], new_nodes["Math.018"].inputs[0])
+    tree_links.new(new_nodes["Math.015"].outputs[0], new_nodes["Math.019"].inputs[0])
+    tree_links.new(new_nodes["Math.018"].outputs[0], new_nodes["Math.019"].inputs[1])
+    tree_links.new(new_nodes["Math.011"].outputs[0], new_nodes["Math.012"].inputs[0])
+    tree_links.new(new_nodes["Math.013"].outputs[0], new_nodes["Math.014"].inputs[0])
+    tree_links.new(new_nodes["Math.012"].outputs[0], new_nodes["Math.020"].inputs[0])
+    tree_links.new(new_nodes["Math.014"].outputs[0], new_nodes["Math.020"].inputs[1])
+    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Math"].inputs[0])
+    tree_links.new(new_nodes["Math.005"].outputs[0], new_nodes["Math.004"].inputs[0])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Math.003"].inputs[0])
+    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Math.003"].inputs[1])
+    tree_links.new(new_nodes["Math.007"].outputs[0], new_nodes["Math.006"].inputs[0])
+    tree_links.new(new_nodes["Math.009"].outputs[0], new_nodes["Math.010"].inputs[0])
+    tree_links.new(new_nodes["Math.006"].outputs[0], new_nodes["Math.008"].inputs[0])
+    tree_links.new(new_nodes["Math.010"].outputs[0], new_nodes["Math.008"].inputs[1])
+    tree_links.new(new_nodes["Math.020"].outputs[0], new_nodes["Combine XYZ"].inputs[0])
+    tree_links.new(new_nodes["Math.003"].outputs[0], new_nodes["Combine XYZ"].inputs[1])
+    tree_links.new(new_nodes["Math.008"].outputs[0], new_nodes["Combine XYZ"].inputs[2])
+    tree_links.new(new_nodes["Combine XYZ"].outputs[0], new_nodes["Vector Math.003"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Vector Math"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Vector Math.001"].inputs[0])
+    tree_links.new(new_nodes["Vector Math"].outputs[0], new_nodes["Separate XYZ"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[0], new_nodes["Math.016"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[0], new_nodes["Math.011"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[0], new_nodes["Math.001"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[0], new_nodes["Math.009"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[1], new_nodes["Math.016"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[1], new_nodes["Math.011"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[1], new_nodes["Math.005"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[1], new_nodes["Math.007"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[2], new_nodes["Math.015"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[2], new_nodes["Math.014"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[2], new_nodes["Math"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[2], new_nodes["Math.006"].inputs[1])
+    tree_links.new(new_nodes["Vector Math.001"].outputs[0], new_nodes["Separate XYZ.001"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[0], new_nodes["Math.017"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[0], new_nodes["Math.013"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[0], new_nodes["Math.005"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[0], new_nodes["Math.007"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[1], new_nodes["Math.009"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[1], new_nodes["Math.001"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[1], new_nodes["Math.013"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[1], new_nodes["Math.017"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[2], new_nodes["Math.010"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[2], new_nodes["Math.004"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[2], new_nodes["Math.012"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[2], new_nodes["Math.018"].inputs[1])
+    tree_links.new(new_nodes["Noise Texture"].outputs[1], new_nodes["Group Output"].inputs[1])
+    tree_links.new(new_nodes["Noise Texture"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Group"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group"].inputs[1])
+    tree_links.new(new_nodes["Group"].outputs[0], new_nodes["Vector Math.002"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.003"].outputs[0], new_nodes["Noise Texture"].inputs[0])
+    tree_links.new(new_nodes["Math.021"].outputs[0], new_nodes["Noise Texture"].inputs[1])
+    tree_links.new(new_nodes["Math.019"].outputs[0], new_nodes["Math.002"].inputs[0])
+    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Math.021"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math.021"].inputs[1])
 
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False
@@ -558,9 +364,7 @@ def create_duo_ng_noise_3e(node_tree_type):
     return new_node_group
 
 def create_duo_node_noise_3e(context, override_create, node_tree_type):
-    ensure_node_groups(override_create, [PINGPONG_3E_DUO_NG_NAME,
-                                         SAMPLE_3E_DUO_NG_NAME,
-                                         NOISE_3E_DUO_NG_NAME],
+    ensure_node_groups(override_create, [SAMPLE_3E_DUO_NG_NAME, NOISE_3E_DUO_NG_NAME],
         node_tree_type, create_prereq_noise_node_group)
     node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(NOISE_3E_DUO_NG_NAME, node_tree_type))

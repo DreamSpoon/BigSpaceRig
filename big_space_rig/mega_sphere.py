@@ -24,8 +24,7 @@ from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME, ICOSPHERE7_W
     PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
 from .node_other import (ensure_node_groups, node_group_name_for_name_and_type)
 from .mat_node_util import (SNAP_VERT_LOD_GEO_NG_NAME, VEC_DIV_3E_MOD_3E_DUO_NG_NAME, create_prereq_util_node_group)
-from .mat_node_noise import (PINGPONG_3E_DUO_NG_NAME, SAMPLE_3E_DUO_NG_NAME, NOISE_3E_DUO_NG_NAME,
-    create_prereq_noise_node_group)
+from .mat_node_noise import (SAMPLE_3E_DUO_NG_NAME, NOISE_3E_DUO_NG_NAME, create_prereq_noise_node_group)
 
 MEGASPHERE_SCALE_FOR_DIST_GEO_NG_NAME = "MegaSphere.ScaleForDist.BSR.GeoNG"
 MEGASPHERE_SCALE_FOR_PROXIMITY_GEO_NG_NAME = "MegaSphere.ScaleForProximity.BSR.GeoNG"
@@ -1782,7 +1781,7 @@ def create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links, i
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (500, -360)
     node.operation = "MULTIPLY"
-    node.inputs[1].default_value = 1000.0
+    node.inputs[1].default_value = 250.0
     new_nodes["Math.001"] = node
 
     node = tree_nodes.new(type="ShaderNodeVectorMath")
@@ -1874,8 +1873,7 @@ def create_individual_geo_ng(new_node_group, ico7_wgt, override_create, use_nois
         ensure_node_groups(override_create, [VEC_DIV_3E_MOD_3E_DUO_NG_NAME,
                                              SNAP_VERT_LOD_GEO_NG_NAME], 'GeometryNodeTree',
                            create_prereq_util_node_group)
-        ensure_node_groups(override_create, [PINGPONG_3E_DUO_NG_NAME,
-                                             SAMPLE_3E_DUO_NG_NAME,
+        ensure_node_groups(override_create, [SAMPLE_3E_DUO_NG_NAME,
                                              NOISE_3E_DUO_NG_NAME], 'GeometryNodeTree',
                            create_prereq_noise_node_group)
         megasphere_node, vec_d3em3e_node = create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links,
