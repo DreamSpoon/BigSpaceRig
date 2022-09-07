@@ -35,26 +35,6 @@ Name notes:
   - "0e" means one, because base 10 to the power of 0 (to the exponent 0)
     - equals 1
 
-## Light and Shadow Notes
-When Forced Perspective scaling is used, shadows between objects may be "wrong".
-Possible solutions include, but are not limited to:
-  - use of the "Sun" type of light can help overcome the problem
-    - good where objects have common light source, but don't need to shadow each other
-	- e.g. moon and planets, without eclipse
-	  - an eclipse might be "baked" onto an object, see next
-  - baked (pre-rendered) "shadow maps"
-    - too complicated a subject to list all the details here, so here is just one link:
-      - [Baking Textures, Light, and Shadows | Blender 2.82 Quarantine Series 1-12](https://www.youtube.com/watch?v=Eio01Yl3G1E)
-      - and baked shadow maps can be used in Cycles:
-        - modify original Material Shader of object (make a backup copy first):
-          - use Texture Image node with original texture (e.g. 8k map of Moon),
-          - attach original Texture Image node (Color socket) to Emission shader node (Color socket),
-          - use Texture Image node with baked shadow map texture,
-		  - attach baked shadow map Texture Image (Color socket) to Emission shader node (Strength socket),
-          - attach Emission Shader output to Material Output
-  - multiple render passes (compositor work required)
-    - may require multiple scenes, composited together
-
 ## General Rig Notes
 - *do NOT rename the following rig bones, or some rig functionality may be broken:*
   - ProxyObserver0e
@@ -64,6 +44,7 @@ Possible solutions include, but are not limited to:
   - ProxyPlace0e
   - ProxyPlace6e
 
+## Forced Perspective Notes
 The scale of each "place" can be individually adjusted, with the distance automatically adjusting to account for the scale difference.
 i.e. "place" have it's scale set manually and the Big Space Rig will automatically vary the distance to account for the scale of that "place".
   - to do the manual adjustment, go to the custom property of the "Place" bone, i.e.
@@ -86,6 +67,26 @@ Setting "big_space_rig_fp_power" to 0.25, or less, results in objects shrinking 
   - better suited to "earth satellite scale"
     - e.g. giant space ships parked in Earth's orbit
 
-# Geometry Nodes Notes
+### Geometry Nodes Notes
 Forced Perspective Geometry Nodes:
 - objects must be attached to a Big Space Rig before Geometry Nodes can be added to them
+
+### Light and Shadow Notes
+When Forced Perspective scaling is used, shadows between objects may be "wrong".
+Possible solutions include, but are not limited to:
+  - use of the "Sun" type of light can help overcome the problem
+    - good where objects have common light source, but don't need to shadow each other
+	- e.g. moon and planets, without eclipse
+	  - an eclipse might be "baked" onto an object, see next
+  - baked (pre-rendered) "shadow maps"
+    - too complicated a subject to list all the details here, so here is just one link:
+      - [Baking Textures, Light, and Shadows | Blender 2.82 Quarantine Series 1-12](https://www.youtube.com/watch?v=Eio01Yl3G1E)
+      - and baked shadow maps can be used in Cycles:
+        - modify original Material Shader of object (make a backup copy first):
+          - use Texture Image node with original texture (e.g. 8k map of Moon),
+          - attach original Texture Image node (Color socket) to Emission shader node (Color socket),
+          - use Texture Image node with baked shadow map texture,
+		  - attach baked shadow map Texture Image (Color socket) to Emission shader node (Strength socket),
+          - attach Emission Shader output to Material Output
+  - multiple render passes (compositor work required)
+    - may require multiple scenes, composited together

@@ -30,14 +30,18 @@ bl_info = {
     "wiki_url": "https://github.com/DreamSpoon/BigSpaceRig#readme",
 }
 
+import math
+
 import bpy
 from bpy.props import PointerProperty
 
 from .rig import (OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT,
     OBJ_PROP_BONE_PLACE)
 from .rig import (is_big_space_rig, BSR_CreateBigSpaceRig, BSR_QuickSelectObserver6e, BSR_QuickSelectObserver0e,
-    BSR_QuickSelectObserverFocus, BSR_ObserveMegaSphere, BSR_ObservePlace, BSR_QuickSelectPlace6e,
+    BSR_QuickSelectObserverFocus, BSR_QuickSelectPlace6e,
     BSR_QuickSelectPlace0e, BSR_QuickSelectPlaceProxy)
+from .observer import (ANGLE_TYPE_ITEMS, ANGLE_TYPE_DEG_MIN_SEC_FRAC, ANGLE_TYPE_DEGREES, ANGLE_TYPE_RADIANS)
+from .observer import (BSR_ObserveMegaSphere, BSR_ObservePlace)
 from .place import (BSR_PlaceCreate, BSR_PlaceCreateAttachSingle, BSR_PlaceCreateAttachMulti, BSR_PlaceParentObject)
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
@@ -50,9 +54,6 @@ if bpy.app.version < (2,80,0):
 else:
     Region = "UI"
 
-# May cause problem re: names of objects, i.e. if Big Space Rig object name equals this.
-# This is used as a "NONE" marker for lists (of objects, bones, etc.).
-# Solution: try to make this a string that would never be used, e.g. a blank space for an object's name.
 BLANK_ITEM_STR = "_"
 
 class BSR_PT_ActiveRig(bpy.types.Panel):
@@ -98,40 +99,55 @@ class BSR_PT_Observer(bpy.types.Panel):
 
     def draw(self, context):
         active_ob = context.active_object
+        is_bsr_active = is_big_space_rig(active_ob)
         scn = context.scene
         layout = self.layout
         box = layout.box()
-        box.active = is_big_space_rig(active_ob)
+        box.active = is_bsr_active
         box.label(text="Quick Select")
         box.operator("big_space_rig.quick_select_observer_6e")
         box.operator("big_space_rig.quick_select_observer_0e")
         box.operator("big_space_rig.quick_select_observer_focus")
         box = layout.box()
-        box.active = is_big_space_rig(active_ob)
+        box.active = is_bsr_active
         box.label(text="Observe Place")
         box.prop(scn, "BSR_ObservePlaceBoneName")
         box.operator("big_space_rig.observe_place")
         box = layout.box()
-        box.active = is_big_space_rig(active_ob)
+        box.active = is_bsr_active
         box.label(text="Observe MegaSphere")
         box.operator("big_space_rig.view_mega_sphere_by_rad_lat_long")
         box.label(text="Radius")
-        box.prop(scn, "BSR_ObserveMegaSphereRad6e")
-        box.prop(scn, "BSR_ObserveMegaSphereRad0e")
-        box.label(text="Latitude")
         col = box.column(align=True)
-        col.active = is_big_space_rig(active_ob)
-        col.prop(scn, "BSR_ObserveMegaSphereLatDegrees")
-        col.prop(scn, "BSR_ObserveMegaSphereLatMinutes")
-        col.prop(scn, "BSR_ObserveMegaSphereLatSeconds")
-        col.prop(scn, "BSR_ObserveMegaSphereLatFracSec")
-        box.label(text="Longitude")
-        col = box.column(align=True)
-        col.active = is_big_space_rig(active_ob)
-        col.prop(scn, "BSR_ObserveMegaSphereLongDegrees")
-        col.prop(scn, "BSR_ObserveMegaSphereLongMinutes")
-        col.prop(scn, "BSR_ObserveMegaSphereLongSeconds")
-        col.prop(scn, "BSR_ObserveMegaSphereLongFracSec")
+        col.prop(scn, "BSR_ObserveMegaSphereRad6e")
+        col.prop(scn, "BSR_ObserveMegaSphereRad0e")
+        box.label(text="Angle Type for (Lat, Long)")
+        box.prop(scn, "BSR_ObserveSphereAngleType")
+        if scn.BSR_ObserveSphereAngleType == ANGLE_TYPE_DEG_MIN_SEC_FRAC:
+            box.label(text="Latitude")
+            col = box.column(align=True)
+#            col.active = is_bsr_active
+            col.prop(scn, "BSR_ObserveMegaSphereLatDMSF_Degrees")
+            col.prop(scn, "BSR_ObserveMegaSphereLatDMSF_Minutes")
+            col.prop(scn, "BSR_ObserveMegaSphereLatDMSF_Seconds")
+            col.prop(scn, "BSR_ObserveMegaSphereLatDMSF_FracSec")
+            box.label(text="Longitude")
+            col = box.column(align=True)
+#            col.active = is_bsr_active
+            col.prop(scn, "BSR_ObserveMegaSphereLongDMSF_Degrees")
+            col.prop(scn, "BSR_ObserveMegaSphereLongDMSF_Minutes")
+            col.prop(scn, "BSR_ObserveMegaSphereLongDMSF_Seconds")
+            col.prop(scn, "BSR_ObserveMegaSphereLongDMSF_FracSec")
+        elif scn.BSR_ObserveSphereAngleType == ANGLE_TYPE_DEGREES:
+            box.label(text="Latitude")
+            box.prop(scn, "BSR_ObserveMegaSphereLatDegrees")
+            box.label(text="Longitude")
+            box.prop(scn, "BSR_ObserveMegaSphereLongDegrees")
+        elif scn.BSR_ObserveSphereAngleType == ANGLE_TYPE_RADIANS:
+            box.label(text="Latitude")
+            box.prop(scn, "BSR_ObserveMegaSphereLatRadians")
+            box.label(text="Longitude")
+            box.prop(scn, "BSR_ObserveMegaSphereLongRadians")
 
 class BSR_PT_Place(bpy.types.Panel):
     bl_label = "Place"
@@ -407,26 +423,36 @@ def register_props():
         default=1.0, min=0.0)
     bts.BSR_ObserveMegaSphereRad0e = bp.FloatProperty(name="Radius 0e", description="Radius Append, in meters",
         default=0.0)
-    bts.BSR_ObserveMegaSphereLatDegrees = bp.IntProperty(name="Degrees", description="Degrees of Latitude",
+    bts.BSR_ObserveSphereAngleType = bpy.props.EnumProperty(name="Type", description="Type of angle to use in " +
+        "determining (x, Y, Z) sphere location from (Latitude, Longitude) coordinates", items=ANGLE_TYPE_ITEMS)
+    bts.BSR_ObserveMegaSphereLatDegrees = bp.FloatProperty(name="Degrees", description="Degrees of Latitude",
+        default=0.0)
+    bts.BSR_ObserveMegaSphereLatDMSF_Degrees = bp.IntProperty(name="Degrees", description="Degrees of Latitude",
         default=0, min=0, max=360)
-    bts.BSR_ObserveMegaSphereLatMinutes = bp.IntProperty(name="Minutes", description="Minutes of Latitude",
+    bts.BSR_ObserveMegaSphereLatDMSF_Minutes = bp.IntProperty(name="Minutes", description="Minutes of Latitude",
         default=0, min=0, max=60)
-    bts.BSR_ObserveMegaSphereLatSeconds = bp.IntProperty(name="Seconds", description="Seconds of Latitude",
+    bts.BSR_ObserveMegaSphereLatDMSF_Seconds = bp.IntProperty(name="Seconds", description="Seconds of Latitude",
         default=0, min=0, max=60)
-    bts.BSR_ObserveMegaSphereLatFracSec = bp.FloatProperty(name="Frac Sec", description="Fraction of second of " +
-        "Latitude", default=0.0, min=0.0, max=1.0)
-    bts.BSR_ObserveMegaSphereLongDegrees = bp.IntProperty(name="Degrees", description="Degrees of Longitude",
+    bts.BSR_ObserveMegaSphereLatDMSF_FracSec = bp.FloatProperty(name="Fraction",
+        description="Fraction of second of Latitude", default=0.0, min=0.0, max=1.0)
+    bts.BSR_ObserveMegaSphereLatRadians = bp.FloatProperty(name="Radians", description="Radians of Latitude",
+        default=0.0)
+    bts.BSR_ObserveMegaSphereLongDegrees = bp.FloatProperty(name="Degrees", description="Degrees of Longitude",
+        default=0.0)
+    bts.BSR_ObserveMegaSphereLongDMSF_Degrees = bp.IntProperty(name="Degrees", description="Degrees of Longitude",
         default=0, min=0, max=360)
-    bts.BSR_ObserveMegaSphereLongMinutes = bp.IntProperty(name="Minutes", description="Minutes of Longitude",
+    bts.BSR_ObserveMegaSphereLongDMSF_Minutes = bp.IntProperty(name="Minutes", description="Minutes of Longitude",
         default=0, min=0, max=60)
-    bts.BSR_ObserveMegaSphereLongSeconds = bp.IntProperty(name="Seconds", description="Seconds of Longitude",
+    bts.BSR_ObserveMegaSphereLongDMSF_Seconds = bp.IntProperty(name="Seconds", description="Seconds of Longitude",
         default=0, min=0, max=60)
-    bts.BSR_ObserveMegaSphereLongFracSec = bp.FloatProperty(name="Frac Sec",
+    bts.BSR_ObserveMegaSphereLongDMSF_FracSec = bp.FloatProperty(name="Fraction",
         description="Fraction of second of Longitude", default=0.0, min=0.0, max=1.0)
-    bts.BSR_QuickSelectPlaceBoneName = bpy.props.EnumProperty(name="Place", description="Place to select for quick " +
-        "pose", items=place_bone_items)
-    bts.BSR_ParentPlaceBoneName = bpy.props.EnumProperty(name="Parent Place", description="Parent selected object(s)" +
-        "to this place", items=place_bone_items)
+    bts.BSR_ObserveMegaSphereLongRadians = bp.FloatProperty(name="Radians", description="Radians of Longitude",
+        default=0.0)
+    bts.BSR_QuickSelectPlaceBoneName = bpy.props.EnumProperty(name="Place",
+        description="Place to select for quick pose", items=place_bone_items)
+    bts.BSR_ParentPlaceBoneName = bpy.props.EnumProperty(name="Parent Place",
+        description="Parent selected object(s) to this place", items=place_bone_items)
 
 if __name__ == "__main__":
     register()
