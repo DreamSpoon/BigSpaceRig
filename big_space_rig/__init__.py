@@ -35,9 +35,10 @@ from bpy.props import PointerProperty
 
 from .rig import (OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT,
     OBJ_PROP_BONE_PLACE)
-from .rig import (is_big_space_rig, BSR_CreateBigSpaceRig, BSR_QuickPoseObserver6e, BSR_QuickPoseObserver0e,
-    BSR_ObserveMegaSphere, BSR_ObservePlace)
-from .place import (BSR_PlaceCreate, BSR_PlaceCreateAttachSingle, BSR_PlaceCreateAttachMulti)
+from .rig import (is_big_space_rig, BSR_CreateBigSpaceRig, BSR_QuickSelectObserver6e, BSR_QuickSelectObserver0e,
+    BSR_QuickSelectObserverFocus, BSR_ObserveMegaSphere, BSR_ObservePlace, BSR_QuickSelectPlace6e,
+    BSR_QuickSelectPlace0e, BSR_QuickSelectPlaceProxy)
+from .place import (BSR_PlaceCreate, BSR_PlaceCreateAttachSingle, BSR_PlaceCreateAttachMulti, BSR_PlaceParentObject)
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
 from .mat_node_util import (BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode,
@@ -101,19 +102,18 @@ class BSR_PT_Observer(bpy.types.Panel):
         layout = self.layout
         box = layout.box()
         box.active = is_big_space_rig(active_ob)
-        box.label(text="Pose Observer")
-        box.operator("big_space_rig.quick_pose_observer_6e")
-        box.operator("big_space_rig.quick_pose_observer_0e")
-
+        box.label(text="Quick Select")
+        box.operator("big_space_rig.quick_select_observer_6e")
+        box.operator("big_space_rig.quick_select_observer_0e")
+        box.operator("big_space_rig.quick_select_observer_focus")
         box = layout.box()
         box.active = is_big_space_rig(active_ob)
         box.label(text="Observe Place")
-        box.operator("big_space_rig.observe_place")
         box.prop(scn, "BSR_ObservePlaceBoneName")
-
+        box.operator("big_space_rig.observe_place")
         box = layout.box()
         box.active = is_big_space_rig(active_ob)
-        box.label(text="MegaSphere Coordinates")
+        box.label(text="Observe MegaSphere")
         box.operator("big_space_rig.view_mega_sphere_by_rad_lat_long")
         box.label(text="Radius")
         box.prop(scn, "BSR_ObserveMegaSphereRad6e")
@@ -144,17 +144,26 @@ class BSR_PT_Place(bpy.types.Panel):
         scn = context.scene
         layout = self.layout
         box = layout.box()
+        box.label(text="Quick Select")
+        box.prop(scn, "BSR_QuickSelectPlaceBoneName")
+        box.operator("big_space_rig.quick_select_place_6e")
+        box.operator("big_space_rig.quick_select_place_0e")
+        box.operator("big_space_rig.quick_select_place_proxy")
+        box = layout.box()
         box.label(text="Create")
         box.operator("big_space_rig.create_place")
         box.label(text="Create and Attach")
         box.operator("big_space_rig.create_attach_single_place")
         box.operator("big_space_rig.create_attach_multi_place")
-        box = layout.box()
-        box.label(text="Options")
+        box.label(text="Create Options")
         box.prop(scn, "BSR_CreatePlaceUseObserverOffset")
         box.prop(scn, "BSR_CreatePlaceCreateRig")
         box.prop(scn, "BSR_CreatePlaceNoReParent")
         box.prop(scn, "BSR_CreatePlaceUseFP")
+        box = layout.box()
+        box.label(text="Parent to Place")
+        box.prop(scn, "BSR_ParentPlaceBoneName")
+        box.operator("big_space_rig.parent_to_place")
 
 class BSR_PT_GeoNodes(bpy.types.Panel):
     bl_label = "FP Geometry Nodes"
@@ -237,12 +246,17 @@ classes = [
     BSR_PT_CreateRig,
     BSR_PT_Observer,
     BSR_CreateBigSpaceRig,
-    BSR_QuickPoseObserver6e,
-    BSR_QuickPoseObserver0e,
+    BSR_QuickSelectObserver6e,
+    BSR_QuickSelectObserver0e,
+    BSR_QuickSelectObserverFocus,
     BSR_PT_Place,
     BSR_PlaceCreate,
     BSR_PlaceCreateAttachMulti,
     BSR_PlaceCreateAttachSingle,
+    BSR_PlaceParentObject,
+    BSR_QuickSelectPlace6e,
+    BSR_QuickSelectPlace0e,
+    BSR_QuickSelectPlaceProxy,
     BSR_PT_CreateDuoNodes,
     BSR_TileXYZ3eCreateDuoNode,
     BSR_ObserverInputCreateDuoNode,
@@ -274,6 +288,8 @@ def unregister():
         bpy.utils.unregister_class(cls)
     bts = bpy.types.Scene
 
+    del bts.BSR_ParentPlaceBoneName
+    del bts.BSR_QuickSelectPlaceBoneName
     del bts.BSR_ObserveMegaSphereLongFracSec
     del bts.BSR_ObserveMegaSphereLongSeconds
     del bts.BSR_ObserveMegaSphereLongMinutes
@@ -305,12 +321,13 @@ def unregister():
 def only_geo_node_group_poll(self, object):
     return object.type == 'GEOMETRY'
 
-def bone_items(self, context):
+def place_bone_items(self, context):
     ob = context.active_object
     if not is_big_space_rig(ob):
         return [(BLANK_ITEM_STR, "", "")]
     else:
-        return [(BLANK_ITEM_STR+bone.name, bone.name, "") for bone in ob.data.bones if bone.get(OBJ_PROP_BONE_PLACE) == True]
+        return [(BLANK_ITEM_STR+bone.name, bone.name, "") for bone in ob.data.bones if \
+                bone.get(OBJ_PROP_BONE_PLACE) == True]
 
 def obs_input_rig_items(self, context):
     ob = context.active_object
@@ -329,7 +346,8 @@ def place_input_rig_items(self, context):
     ob = bpy.data.objects.get(context.scene.BSR_NodeGetInputFromRig)
     if not is_big_space_rig(ob):
         return [(BLANK_ITEM_STR, "", "")]
-    place_item_list = [(BLANK_ITEM_STR+bone.name, bone.name, "") for bone in ob.data.bones if bone.get(OBJ_PROP_BONE_PLACE) == True]
+    place_item_list = [(BLANK_ITEM_STR+bone.name, bone.name, "") for bone in ob.data.bones if \
+                       bone.get(OBJ_PROP_BONE_PLACE) == True]
     # if zero places found then return the "blank" list
     if len(place_item_list) < 1:
         return [(BLANK_ITEM_STR, "", "")]
@@ -376,7 +394,7 @@ def register_props():
     bts.BSR_MegaSphereUsePlace = bp.BoolProperty(name="Use Place Offset", description="Create MegaSphere centered " +
         "at given Place in Big Space Rig", default=False)
     bts.BSR_MegaSpherePlaceBoneName = bpy.props.EnumProperty(name="Place", description="Sphere center " +
-        "place bone", items=bone_items)
+        "place bone", items=place_bone_items)
     bts.BSR_NodeGetInputFromRig = bpy.props.EnumProperty(name="Rig", description="Big Space Rig to use with " +
         "input nodes", items=obs_input_rig_items)
     bts.BSR_NodeGetInputFromRigPlace = bpy.props.EnumProperty(name="Place", description="Place to use with input " +
@@ -384,7 +402,7 @@ def register_props():
     bts.BSR_MegaSphereWithNoise = bp.BoolProperty(name="Create with noise", description="Add nodes to apply Noise3e " +
         "to MegaSphere, when MegaSphere is created", default=False)
     bts.BSR_ObservePlaceBoneName = bpy.props.EnumProperty(name="Place", description="Place to observe",
-        items=bone_items)
+        items=place_bone_items)
     bts.BSR_ObserveMegaSphereRad6e = bp.FloatProperty(name="Radius 6e", description="Radius, in mega-meters",
         default=1.0, min=0.0)
     bts.BSR_ObserveMegaSphereRad0e = bp.FloatProperty(name="Radius 0e", description="Radius Append, in meters",
@@ -395,8 +413,8 @@ def register_props():
         default=0, min=0, max=60)
     bts.BSR_ObserveMegaSphereLatSeconds = bp.IntProperty(name="Seconds", description="Seconds of Latitude",
         default=0, min=0, max=60)
-    bts.BSR_ObserveMegaSphereLatFracSec = bp.FloatProperty(name="Frac Sec", description="Fraction of second of Latitude",
-        default=0.0, min=0.0, max=1.0)
+    bts.BSR_ObserveMegaSphereLatFracSec = bp.FloatProperty(name="Frac Sec", description="Fraction of second of " +
+        "Latitude", default=0.0, min=0.0, max=1.0)
     bts.BSR_ObserveMegaSphereLongDegrees = bp.IntProperty(name="Degrees", description="Degrees of Longitude",
         default=0, min=0, max=360)
     bts.BSR_ObserveMegaSphereLongMinutes = bp.IntProperty(name="Minutes", description="Minutes of Longitude",
@@ -405,6 +423,10 @@ def register_props():
         default=0, min=0, max=60)
     bts.BSR_ObserveMegaSphereLongFracSec = bp.FloatProperty(name="Frac Sec",
         description="Fraction of second of Longitude", default=0.0, min=0.0, max=1.0)
+    bts.BSR_QuickSelectPlaceBoneName = bpy.props.EnumProperty(name="Place", description="Place to select for quick " +
+        "pose", items=place_bone_items)
+    bts.BSR_ParentPlaceBoneName = bpy.props.EnumProperty(name="Parent Place", description="Parent selected object(s)" +
+        "to this place", items=place_bone_items)
 
 if __name__ == "__main__":
     register()

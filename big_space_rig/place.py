@@ -702,7 +702,7 @@ def add_reg_bone_loc_drivers(armature, observer_focus_bname, proxy_observer_0e_b
         ") + ("+v_proxy_place_6e_z.name+" - "+v_proxy_obs_6e_z.name+") * 1000000"
 
 class BSR_PlaceCreate(bpy.types.Operator):
-    bl_description = "Create a Place at current position of Big Space Rig's Observer"
+    bl_description = "Create a Place in Big Space Rig, rig must be active object"
     bl_idname = "big_space_rig.create_place"
     bl_label = "Create Place"
     bl_options = {'REGISTER', 'UNDO'}
@@ -729,8 +729,7 @@ class BSR_PlaceCreate(bpy.types.Operator):
 
 class BSR_PlaceCreateAttachSingle(bpy.types.Operator):
     bl_description = "Create Place and attach all selected object(s) to new Place in Big Space Rig. Rig must be " \
-        "selected last, and all other objects will be parented to rig. Note: this uses current position of rig's " \
-        "Observer"
+        "selected last, and all other objects will be parented to rig"
     bl_idname = "big_space_rig.create_attach_single_place"
     bl_label = "Attach Single"
     bl_options = {'REGISTER', 'UNDO'}
@@ -847,11 +846,47 @@ class BSR_PlaceCreateAttachMulti(bpy.types.Operator):
                 # new active object
                 big_space_rig = context.active_object
             else:
-                self.report({'ERROR'}, "Unable to attach object(s) because Active Object is not a Big Space Rig.")
+                self.report({'ERROR'}, "Unable to Create Attach Multi object(s) because Active Object is not a Big " +
+                            "Space Rig.")
                 return {'CANCELLED'}
         if len(context.selected_objects) < 1:
-            self.report({'ERROR'}, "Unable to attach object(s) to Big Space Rig because no object(s) selected")
+            self.report({'ERROR'}, "Unable to Create Attach Multi object(s) to Big Space Rig because no object(s) " +
+                        "selected")
             return {'CANCELLED'}
         create_attach_multi(context, big_space_rig, sel_objects, scn.BSR_CreatePlaceUseObserverOffset,
                             scn.BSR_CreatePlaceUseFP)
+        return {'FINISHED'}
+
+def parent_objects_to_place(context, big_space_rig, place_bone_name):
+    old_3dview_mode = context.mode
+    bpy.ops.object.mode_set(mode='POSE')
+    bpy.ops.pose.select_all(action='DESELECT')
+    big_space_rig.data.bones[place_bone_name].select = True
+    big_space_rig.data.bones.active = big_space_rig.data.bones[place_bone_name]
+    bpy.ops.object.parent_set(type='BONE')
+    bpy.ops.object.mode_set(mode=old_3dview_mode)
+
+
+class BSR_PlaceParentObject(bpy.types.Operator):
+    bl_description = "Attach selected object(s) to selected Place of active Big Space Rig. Big Space Rig must be " \
+        "selected last"
+    bl_idname = "big_space_rig.parent_to_place"
+    bl_label = "Parent to Place"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        scn = context.scene
+        big_space_rig = context.active_object
+        # error checks
+        if not is_big_space_rig(big_space_rig):
+            self.report({'ERROR'}, "Unable to Parent to Place because Active Object is not a Big Space Rig.")
+            return {'CANCELLED'}
+        if len(context.selected_objects) < 1:
+            self.report({'ERROR'}, "Unable to Parent to Place because no object(s) selected")
+            return {'CANCELLED'}
+        place_bone_name = scn.BSR_ParentPlaceBoneName[1:len(scn.BSR_ParentPlaceBoneName)]
+        if place_bone_name == "":
+            self.report({'ERROR'}, "Unable to Parent to Place because Place is blank")
+            return {'CANCELLED'}
+        parent_objects_to_place(context, big_space_rig, place_bone_name)
         return {'FINISHED'}

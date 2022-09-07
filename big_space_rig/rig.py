@@ -255,10 +255,10 @@ def create_bsr_widgets(context):
                      }
     return widget_ob_dict
 
-def get_widget_objs_from_rig(active_ob):
+def get_widget_objs_from_rig(big_space_rig):
     widget_objs = {}
     for ob in bpy.data.objects:
-        if ob.parent == active_ob or (ob.parent != None and ob.parent.parent == active_ob):
+        if ob.parent == big_space_rig or (ob.parent != None and ob.parent.parent == big_space_rig):
             if WIDGET_TRIANGLE_OBJNAME in ob.name:
                 widget_objs[TRI_WIDGET_NAME] = ob
             elif WIDGET_PINCH_TRIANGLE_OBJNAME in ob.name:
@@ -438,44 +438,112 @@ class BSR_CreateBigSpaceRig(bpy.types.Operator):
                                   scn.BSR_NewObserverFP_MinScale)
         return {'FINISHED'}
 
-def quick_pose_observer_6e(big_space_rig):
+def quick_select_armature_bone(armature, bone_name):
     bpy.ops.object.mode_set(mode='POSE')
     bpy.ops.pose.select_all(action='DESELECT')
-    big_space_rig.data.bones[PROXY_OBSERVER_6E_BNAME].select = True
-    big_space_rig.data.bones.active = big_space_rig.data.bones[PROXY_OBSERVER_6E_BNAME]
+    armature.data.bones[bone_name].select = True
+    armature.data.bones.active = armature.data.bones[bone_name]
 
-class BSR_QuickPoseObserver6e(bpy.types.Operator):
+class BSR_QuickSelectObserver6e(bpy.types.Operator):
     bl_description = "Switch to Pose mode and select the Observer 6e bone for movement at mega-scale (x1,000,000)"
-    bl_idname = "big_space_rig.quick_pose_observer_6e"
+    bl_idname = "big_space_rig.quick_select_observer_6e"
     bl_label = "Observer 6e"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        active_ob = context.active_object
-        if not is_big_space_rig(active_ob):
-            self.report({'ERROR'}, "Unable to Quick Pose Observer 6e because active object is not a Big Space Rig")
+        big_space_rig = context.active_object
+        if not is_big_space_rig(big_space_rig):
+            self.report({'ERROR'}, "Unable to Quick Select Observer 6e because active object is not a Big Space Rig")
             return {'CANCELLED'}
-        quick_pose_observer_6e(active_ob)
+        quick_select_armature_bone(big_space_rig, PROXY_OBSERVER_6E_BNAME)
         return {'FINISHED'}
 
-def quick_pose_observer_0e(big_space_rig):
-    bpy.ops.object.mode_set(mode='POSE')
-    bpy.ops.pose.select_all(action='DESELECT')
-    big_space_rig.data.bones[PROXY_OBSERVER_0E_BNAME].select = True
-    big_space_rig.data.bones.active = big_space_rig.data.bones[PROXY_OBSERVER_0E_BNAME]
-
-class BSR_QuickPoseObserver0e(bpy.types.Operator):
+class BSR_QuickSelectObserver0e(bpy.types.Operator):
     bl_description = "Switch to Pose mode and select the Observer 0e bone for movement at regular scale (x1)"
-    bl_idname = "big_space_rig.quick_pose_observer_0e"
+    bl_idname = "big_space_rig.quick_select_observer_0e"
     bl_label = "Observer 0e"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        active_ob = context.active_object
-        if not is_big_space_rig(active_ob):
-            self.report({'ERROR'}, "Unable to Quick Pose Observer 0e because active object is not a Big Space Rig")
+        big_space_rig = context.active_object
+        if not is_big_space_rig(big_space_rig):
+            self.report({'ERROR'}, "Unable to Quick Select Observer 0e because active object is not a Big Space Rig")
             return {'CANCELLED'}
-        quick_pose_observer_0e(active_ob)
+        quick_select_armature_bone(big_space_rig, PROXY_OBSERVER_0E_BNAME)
+        return {'FINISHED'}
+
+class BSR_QuickSelectObserverFocus(bpy.types.Operator):
+    bl_description = "Switch to Pose mode and select the Observer Focus bone for movement within Forced " \
+        "Perspective place (e.g. parent this bone to the Scene's Camera when Forced Perspective is used)"
+    bl_idname = "big_space_rig.quick_select_observer_focus"
+    bl_label = "Observer Focus"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        big_space_rig = context.active_object
+        if not is_big_space_rig(big_space_rig):
+            self.report({'ERROR'}, "Unable to Quick Select Observer Focus because active object is not a Big Space Rig")
+            return {'CANCELLED'}
+        quick_select_armature_bone(big_space_rig, OBSERVER_FOCUS_BNAME)
+        return {'FINISHED'}
+
+class BSR_QuickSelectPlace6e(bpy.types.Operator):
+    bl_description = "Switch to Pose mode and select the Place 6e bone for movement at mega-scale (x1,000,000)"
+    bl_idname = "big_space_rig.quick_select_place_6e"
+    bl_label = "Place 6e"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        scn = context.scene
+        big_space_rig = context.active_object
+        if not is_big_space_rig(big_space_rig):
+            self.report({'ERROR'}, "Unable to Quick Select Place 6e because active object is not a Big Space Rig")
+            return {'CANCELLED'}
+        place_bone_name = scn.BSR_QuickSelectPlaceBoneName[1:len(scn.BSR_QuickSelectPlaceBoneName)]
+        if place_bone_name == "":
+            self.report({'ERROR'}, "Unable to Quick Select Place 6e because Place is blank")
+            return {'CANCELLED'}
+        place_bone_name_0e, place_bone_name_6e = get_0e_6e_from_place_bone_name(big_space_rig, place_bone_name)
+        quick_select_armature_bone(big_space_rig, place_bone_name_6e)
+        return {'FINISHED'}
+
+class BSR_QuickSelectPlace0e(bpy.types.Operator):
+    bl_description = "Switch to Pose mode and select the Place 0e bone for movement at regular scale (x1)"
+    bl_idname = "big_space_rig.quick_select_place_0e"
+    bl_label = "Place 0e"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        scn = context.scene
+        big_space_rig = context.active_object
+        if not is_big_space_rig(big_space_rig):
+            self.report({'ERROR'}, "Unable to Quick Select Place 0e because active object is not a Big Space Rig")
+            return {'CANCELLED'}
+        place_bone_name = scn.BSR_QuickSelectPlaceBoneName[1:len(scn.BSR_QuickSelectPlaceBoneName)]
+        if place_bone_name == "":
+            self.report({'ERROR'}, "Unable to Quick Select Place 0e because Place is blank")
+            return {'CANCELLED'}
+        place_bone_name_0e, place_bone_name_6e = get_0e_6e_from_place_bone_name(big_space_rig, place_bone_name)
+        quick_select_armature_bone(big_space_rig, place_bone_name_0e)
+        return {'FINISHED'}
+
+class BSR_QuickSelectPlaceProxy(bpy.types.Operator):
+    bl_description = "Switch to Pose mode and select the Place Proxy bone"
+    bl_idname = "big_space_rig.quick_select_place_proxy"
+    bl_label = "Place Proxy"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        scn = context.scene
+        big_space_rig = context.active_object
+        if not is_big_space_rig(big_space_rig):
+            self.report({'ERROR'}, "Unable to Quick Select Place Proxy because active object is not a Big Space Rig")
+            return {'CANCELLED'}
+        place_bone_name = scn.BSR_QuickSelectPlaceBoneName[1:len(scn.BSR_QuickSelectPlaceBoneName)]
+        if place_bone_name == "":
+            self.report({'ERROR'}, "Unable to Quick Select Place Proxy because Place is blank")
+            return {'CANCELLED'}
+        quick_select_armature_bone(big_space_rig, place_bone_name)
         return {'FINISHED'}
 
 def get_rad_from_deg_min_sec(degrees, minutes, seconds, frac_sec):
@@ -551,18 +619,18 @@ class BSR_ObserveMegaSphere(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        active_ob = context.active_object
-        if not is_big_space_rig(active_ob):
+        big_space_rig = context.active_object
+        if not is_big_space_rig(big_space_rig):
             self.report({'ERROR'}, "Unable to Go to Coordinates because active object is not a Big Space Rig")
             return {'CANCELLED'}
         scn = context.scene
-        go_to_sphere_coordinates(context, active_ob, scn.BSR_ObserveMegaSphereRad6e, scn.BSR_ObserveMegaSphereRad0e,
+        go_to_sphere_coordinates(context, big_space_rig, scn.BSR_ObserveMegaSphereRad6e, scn.BSR_ObserveMegaSphereRad0e,
             scn.BSR_ObserveMegaSphereLatDegrees, scn.BSR_ObserveMegaSphereLatMinutes, scn.BSR_ObserveMegaSphereLatSeconds,
             scn.BSR_ObserveMegaSphereLatFracSec, scn.BSR_ObserveMegaSphereLongDegrees, scn.BSR_ObserveMegaSphereLongMinutes,
             scn.BSR_ObserveMegaSphereLongSeconds, scn.BSR_ObserveMegaSphereLongFracSec)
         return {'FINISHED'}
 
-def go_to_place(context, big_space_rig, place_bone_name):
+def go_to_place(big_space_rig, place_bone_name):
     place_bone_name_0e, place_bone_name_6e = get_0e_6e_from_place_bone_name(big_space_rig, place_bone_name)
     big_space_rig.pose.bones[PROXY_OBSERVER_6E_BNAME].location = big_space_rig.pose.bones[place_bone_name_6e].location
     big_space_rig.pose.bones[PROXY_OBSERVER_0E_BNAME].location = big_space_rig.pose.bones[place_bone_name_0e].location
@@ -574,8 +642,8 @@ class BSR_ObservePlace(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        active_ob = context.active_object
-        if not is_big_space_rig(active_ob):
+        big_space_rig = context.active_object
+        if not is_big_space_rig(big_space_rig):
             self.report({'ERROR'}, "Unable to Observe Place because active object is not a Big Space Rig")
             return {'CANCELLED'}
         scn = context.scene
@@ -583,5 +651,5 @@ class BSR_ObservePlace(bpy.types.Operator):
         if place_bone_name == "":
             self.report({'ERROR'}, "Unable to Observe Place because Place to observe is blank")
             return {'CANCELLED'}
-        go_to_place(context, active_ob, place_bone_name)
+        go_to_place(big_space_rig, place_bone_name)
         return {'FINISHED'}
