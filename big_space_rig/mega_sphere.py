@@ -26,8 +26,8 @@ from .node_other import (ensure_node_groups, node_group_name_for_name_and_type)
 from .mat_node_util import (SNAP_VERT_LOD_GEO_NG_NAME, VEC_DIV_3E_MOD_3E_DUO_NG_NAME, TILE_XYZ_3E_DUO_NG_NAME,
     create_prereq_util_node_group)
 
-MEGASPHERE_SCALE_FOR_DIST_GEO_NG_NAME = "MegaSphere.ScaleForDist.BSR.GeoNG"
-MEGASPHERE_SCALE_FOR_PROXIMITY_GEO_NG_NAME = "MegaSphere.ScaleForProximity.BSR.GeoNG"
+MEGASPHERE_SUBDIV_BY_DIST_GEO_NG_NAME = "MegaSphere.NumSubdivByDist.BSR.GeoNG"
+MEGASPHERE_SUBDIV_BY_PROXIMITY_GEO_NG_NAME = "MegaSphere.NumSubdivByProximity.BSR.GeoNG"
 MEGASPHERE_CULL_ANGLE_GEO_NG_NAME = "MegaSphere.CullAngle.BSR.GeoNG"
 MEGASPHERE_CULL_DIST_GEO_NG_NAME = "MegaSphere.CullDist.BSR.GeoNG"
 MEGASPHERE_LOD_GEO_NG_NAME = "MegaSphere.LOD.BSR.GeoNG"
@@ -41,7 +41,7 @@ MEGASPHERE_OBJ_NAME = "MegaSphere"
 def create_geo_ng_scale_for_dist():
     # initialize variables
     new_nodes = {}
-    new_node_group = bpy.data.node_groups.new(name=MEGASPHERE_SCALE_FOR_DIST_GEO_NG_NAME, type='GeometryNodeTree')
+    new_node_group = bpy.data.node_groups.new(name=MEGASPHERE_SUBDIV_BY_DIST_GEO_NG_NAME, type='GeometryNodeTree')
     new_node_group.inputs.new(type='NodeSocketFloat', name="Subdiv Scale")
     new_node_group.inputs.new(type='NodeSocketFloat', name="Mega Sphere Radius")
     new_node_group.inputs.new(type='NodeSocketVector', name="Observer 6e Loc")
@@ -184,7 +184,7 @@ def create_geo_ng_scale_for_dist():
 def create_geo_ng_scale_for_proximity():
     # initialize variables
     new_nodes = {}
-    new_node_group = bpy.data.node_groups.new(name=MEGASPHERE_SCALE_FOR_PROXIMITY_GEO_NG_NAME, type='GeometryNodeTree')
+    new_node_group = bpy.data.node_groups.new(name=MEGASPHERE_SUBDIV_BY_PROXIMITY_GEO_NG_NAME, type='GeometryNodeTree')
     new_node_group.inputs.new(type='NodeSocketGeometry', name="Geometry")
     new_node_group.inputs.new(type='NodeSocketFloat', name="Subdiv Scale")
     new_node_group.inputs.new(type='NodeSocketFloat', name="Max Subdiv")
@@ -683,7 +683,9 @@ def create_geo_ng_iterate():
     new_nodes = {}
     new_node_group = bpy.data.node_groups.new(name=MEGASPHERE_ITERATE_GEO_NG_NAME, type='GeometryNodeTree')
     new_node_group.inputs.new(type='NodeSocketGeometry', name="LOD Geometry")
-    new_node_group.inputs.new(type='NodeSocketFloat', name="LOD inner verts")
+    new_node_group.inputs.new(type='NodeSocketFloat', name="LOD Inner Verts")
+    new_node_group.inputs.new(type='NodeSocketBool', name="LOD Pre-subdiv")
+    new_node_group.inputs.new(type='NodeSocketInt', name="LOD Index")
     new_node_group.inputs.new(type='NodeSocketGeometry', name="Geometry")
     new_node_group.inputs.new(type='NodeSocketBool', name="Max FaceCount")
     new_node_group.inputs.new(type='NodeSocketFloat', name="Sphere Radius")
@@ -696,7 +698,9 @@ def create_geo_ng_iterate():
     new_node_group.inputs.new(type='NodeSocketFloat', name="Cull Distance")
     new_node_group.inputs.new(type='NodeSocketInt', name="Max Faces")
     new_node_group.outputs.new(type='NodeSocketGeometry', name="LOD Geometry")
-    new_node_group.outputs.new(type='NodeSocketFloat', name="LOD inner verts")
+    new_node_group.outputs.new(type='NodeSocketFloat', name="LOD Inner Verts")
+    new_node_group.outputs.new(type='NodeSocketBool', name="LOD Pre-subdiv")
+    new_node_group.outputs.new(type='NodeSocketInt', name="LOD Index")
     new_node_group.outputs.new(type='NodeSocketGeometry', name="Geometry")
     new_node_group.outputs.new(type='NodeSocketBool', name="Max Face Count")
     tree_nodes = new_node_group.nodes
@@ -712,45 +716,17 @@ def create_geo_ng_iterate():
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (-460, 200)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_CULL_DIST_GEO_NG_NAME)
-    new_nodes["Group.002"] = node
+    new_nodes["Group.001"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (-460, 0)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_SUBDIV_GEO_NG_NAME)
-    new_nodes["Group.001"] = node
+    new_nodes["Group.002"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
-    node.location = (440, -120)
+    node.location = (440, -20)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_LOD_GEO_NG_NAME)
     new_nodes["Group.003"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-660, -280)
-    node.operation = "ADD"
-    node.inputs[1].default_value = 2.0
-    new_nodes["Math"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-280, -480)
-    node.operation = "LESS_THAN"
-    new_nodes["Math.003"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.label = "Is one face neighbor"
-    node.location = (-280, -300)
-    node.operation = "LESS_THAN"
-    node.inputs[1].default_value = 2.0
-    new_nodes["Math.004"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-460, -620)
-    node.operation = "MULTIPLY"
-    new_nodes["Math.005"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (-460, -500)
-    node.operation = "LENGTH"
-    new_nodes["Vector Math"] = node
 
     node = tree_nodes.new(type="GeometryNodeInputMeshEdgeNeighbors")
     node.location = (-460, -400)
@@ -765,98 +741,188 @@ def create_geo_ng_iterate():
     node.location = (-640, -540)
     new_nodes["Position"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (260, -240)
-    node.operation = "ADD"
-    node.use_clamp = True
-    new_nodes["Math.001"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (80, -360)
-    node.operation = "MULTIPLY"
-    new_nodes["Math.002"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (80, -60)
-    node.operation = "GREATER_THAN"
-    new_nodes["Math.006"] = node
-
     node = tree_nodes.new(type="GeometryNodeJoinGeometry")
-    node.location = (620, -60)
+    node.location = (620, -20)
     new_nodes["Join Geometry"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-100, -60)
-    node.operation = "ADD"
-    node.inputs[1].default_value = 2.0
-    new_nodes["Math.008"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.label = "Is LOD separate"
-    node.location = (260, -60)
-    node.operation = "MULTIPLY"
-    new_nodes["Math.007"] = node
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.label = "Capture LOD Index"
+    node.location = (980, -20)
+    node.data_type = "INT"
+    node.domain = "FACE"
+    new_nodes["Capture Attribute.001"] = node
 
     node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
-    node.location = (800, -100)
+    node.label = "Capture LOD Inner Verts"
+    node.location = (800, -20)
     node.data_type = "FLOAT"
     node.domain = "POINT"
     new_nodes["Capture Attribute"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.label = "Reset pre-subdiv flag"
+    node.location = (1160, -20)
+    node.data_type = "BOOLEAN"
+    node.domain = "FACE"
+    node.inputs[4].default_value = True
+    new_nodes["Capture Attribute.002"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMapRange")
+    node.location = (440, -680)
+    node.clamp = True
+    node.data_type = "FLOAT"
+    node.interpolation_type = "LINEAR"
+    new_nodes["Map Range"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-280, -480)
+    node.operation = "LESS_THAN"
+    new_nodes["Math.001"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "Is one face neighbor"
+    node.location = (-280, -300)
+    node.operation = "LESS_THAN"
+    node.inputs[1].default_value = 2.0
+    new_nodes["Math.002"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-460, -620)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.003"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-660, -280)
+    node.operation = "ADD"
+    node.inputs[1].default_value = 2.0
+    new_nodes["Math"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (440, -280)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.005"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (620, -160)
+    node.operation = "ADD"
+    node.use_clamp = True
+    new_nodes["Math.004"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (80, -120)
+    node.operation = "GREATER_THAN"
+    new_nodes["Math.006"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-100, -120)
+    node.operation = "ADD"
+    node.inputs[1].default_value = 2.0
+    new_nodes["Math.007"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "Is LOD separate"
+    node.location = (260, -120)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.008"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (800, -380)
+    node.operation = "ADD"
+    new_nodes["Math.011"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "If subdivided"
+    node.location = (620, -560)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.010"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "If pre-subdiv"
+    node.location = (620, -380)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.009"] = node
+
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-460, -500)
+    node.operation = "LENGTH"
+    new_nodes["Vector Math"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (440, -560)
+    node.operation = "NOT"
+    new_nodes["Boolean Math"] = node
 
     node = tree_nodes.new(type="NodeGroupInput")
     node.location = (-940, -20)
     new_nodes["Group Input"] = node
 
     node = tree_nodes.new(type="NodeGroupOutput")
-    node.location = (1000, -200)
+    node.location = (1360, -60)
     new_nodes["Group Output"] = node
 
     # create links
     tree_links = new_node_group.links
     tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Domain Size"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[12], new_nodes["Group.001"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.001"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Group"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[11], new_nodes["Group"].inputs[3])
-    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Group.001"].inputs[6])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Group.001"].inputs[0])
-    tree_links.new(new_nodes["Group.001"].outputs[1], new_nodes["Group Output"].inputs[3])
-    tree_links.new(new_nodes["Group.001"].outputs[0], new_nodes["Group"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[14], new_nodes["Group.002"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Group.002"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[13], new_nodes["Group"].inputs[3])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.002"].inputs[6])
+    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Group.002"].inputs[0])
+    tree_links.new(new_nodes["Group.002"].outputs[1], new_nodes["Group Output"].inputs[5])
+    tree_links.new(new_nodes["Group.002"].outputs[0], new_nodes["Group"].inputs[0])
     tree_links.new(new_nodes["Group"].outputs[0], new_nodes["Group.003"].inputs[0])
     tree_links.new(new_nodes["Group.003"].outputs[0], new_nodes["Join Geometry"].inputs[0])
-    tree_links.new(new_nodes["Group.002"].outputs[0], new_nodes["Join Geometry"].inputs[0])
-    tree_links.new(new_nodes["Domain Size"].outputs[2], new_nodes["Group.001"].inputs[3])
-    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Group.002"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Group.003"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[11], new_nodes["Group.002"].inputs[3])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Math"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.001"].inputs[4])
-    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Group.001"].inputs[5])
-    tree_links.new(new_nodes["Group Input"].outputs[10], new_nodes["Group"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[10], new_nodes["Group.002"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Group.002"].inputs[0])
+    tree_links.new(new_nodes["Group.001"].outputs[0], new_nodes["Join Geometry"].inputs[0])
+    tree_links.new(new_nodes["Domain Size"].outputs[2], new_nodes["Group.002"].inputs[3])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.001"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.003"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[13], new_nodes["Group.001"].inputs[3])
+    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Math"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Group.002"].inputs[4])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Group.002"].inputs[5])
+    tree_links.new(new_nodes["Group Input"].outputs[12], new_nodes["Group"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[12], new_nodes["Group.001"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Group.001"].inputs[0])
     tree_links.new(new_nodes["Position"].outputs[0], new_nodes["Vector Math"].inputs[0])
-    tree_links.new(new_nodes["Edge Neighbors"].outputs[0], new_nodes["Math.004"].inputs[0])
-    tree_links.new(new_nodes["Math.003"].outputs[0], new_nodes["Math.002"].inputs[1])
+    tree_links.new(new_nodes["Edge Neighbors"].outputs[0], new_nodes["Math.002"].inputs[0])
+    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Math.005"].inputs[1])
     tree_links.new(new_nodes["Join Geometry"].outputs[0], new_nodes["Capture Attribute"].inputs[0])
-    tree_links.new(new_nodes["Capture Attribute"].outputs[0], new_nodes["Group Output"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.001"].inputs[0])
-    tree_links.new(new_nodes["Group.003"].outputs[1], new_nodes["Group Output"].inputs[2])
-    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Capture Attribute"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.004"].inputs[0])
+    tree_links.new(new_nodes["Group.003"].outputs[1], new_nodes["Group Output"].inputs[4])
+    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Capture Attribute"].inputs[2])
     tree_links.new(new_nodes["Capture Attribute"].outputs[2], new_nodes["Group Output"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Group.003"].inputs[3])
-    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Math.002"].inputs[0])
-    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Math.001"].inputs[1])
-    tree_links.new(new_nodes["Vector Math"].outputs[1], new_nodes["Math.003"].inputs[0])
-    tree_links.new(new_nodes["Math.005"].outputs[0], new_nodes["Math.003"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Math.005"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Math.005"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Math.006"].inputs[0])
-    tree_links.new(new_nodes["Math.008"].outputs[0], new_nodes["Math.006"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[9], new_nodes["Math.007"].inputs[1])
-    tree_links.new(new_nodes["Math.007"].outputs[0], new_nodes["Group.003"].inputs[1])
-    tree_links.new(new_nodes["Math.006"].outputs[0], new_nodes["Math.007"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Math.008"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[9], new_nodes["Group.003"].inputs[3])
+    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Math.005"].inputs[0])
+    tree_links.new(new_nodes["Math.005"].outputs[0], new_nodes["Math.004"].inputs[1])
+    tree_links.new(new_nodes["Vector Math"].outputs[1], new_nodes["Math.001"].inputs[0])
+    tree_links.new(new_nodes["Math.003"].outputs[0], new_nodes["Math.001"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[10], new_nodes["Math.003"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Math.003"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Math.006"].inputs[0])
+    tree_links.new(new_nodes["Math.007"].outputs[0], new_nodes["Math.006"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[11], new_nodes["Math.008"].inputs[1])
+    tree_links.new(new_nodes["Math.008"].outputs[0], new_nodes["Group.003"].inputs[1])
+    tree_links.new(new_nodes["Math.006"].outputs[0], new_nodes["Math.008"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Math.007"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.001"].outputs[5], new_nodes["Group Output"].inputs[3])
+    tree_links.new(new_nodes["Capture Attribute.002"].outputs[4], new_nodes["Group Output"].inputs[2])
+    tree_links.new(new_nodes["Capture Attribute.002"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute"].outputs[0], new_nodes["Capture Attribute.001"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.001"].outputs[0], new_nodes["Capture Attribute.002"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Map Range"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Map Range"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Map Range"].inputs[3])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Map Range"].inputs[2])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Map Range"].inputs[4])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math.009"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Math.009"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Boolean Math"].inputs[0])
+    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Math.010"].inputs[0])
+    tree_links.new(new_nodes["Map Range"].outputs[0], new_nodes["Math.010"].inputs[1])
+    tree_links.new(new_nodes["Math.009"].outputs[0], new_nodes["Math.011"].inputs[0])
+    tree_links.new(new_nodes["Math.010"].outputs[0], new_nodes["Math.011"].inputs[1])
+    tree_links.new(new_nodes["Math.011"].outputs[0], new_nodes["Capture Attribute.001"].inputs[5])
 
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False
@@ -878,8 +944,9 @@ def create_geo_ng_megasphere():
     new_node_group.inputs.new(type='NodeSocketVector', name="Observer 0e Loc")
     new_node_group.outputs.new(type='NodeSocketGeometry', name="Geometry")
     new_node_group.outputs.new(type='NodeSocketVector', name="MegaSphere Normal")
-    new_node_group.outputs.new(type='NodeSocketFloat', name="LOD inner verts")
-    new_node_group.outputs.new(type='NodeSocketFloat', name="LOD outer verts")
+    new_node_group.outputs.new(type='NodeSocketFloat', name="LOD Inner Verts")
+    new_node_group.outputs.new(type='NodeSocketFloat', name="LOD Outer Verts")
+    new_node_group.outputs.new(type='NodeSocketInt', name="LOD Index")
     new_node_group.outputs.new(type='NodeSocketBool', name="Max Face Count")
     tree_nodes = new_node_group.nodes
     # delete all nodes
@@ -889,80 +956,80 @@ def create_geo_ng_megasphere():
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (-200, -140)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_ITERATE_GEO_NG_NAME)
-    node.inputs[3].default_value = False
-    node.inputs[6].default_value = 9.0
-    node.inputs[8].default_value = 22.0
-    node.inputs[9].default_value = 6.666666507720947
-    node.inputs[10].default_value = 3.3333332538604736
+    node.inputs[5].default_value = False
+    node.inputs[8].default_value = 9.0
+    node.inputs[10].default_value = 22.0
+    node.inputs[11].default_value = 6.666667
+    node.inputs[12].default_value = 3.333333
     new_nodes["Group"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (60, -140)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_ITERATE_GEO_NG_NAME)
-    node.inputs[6].default_value = 11.0
-    node.inputs[8].default_value = 4.75
-    node.inputs[9].default_value = 2.222222328186035
-    node.inputs[10].default_value = 1.1111111640930176
+    node.inputs[8].default_value = 11.0
+    node.inputs[10].default_value = 4.75
+    node.inputs[11].default_value = 2.222222
+    node.inputs[12].default_value = 1.111111
     new_nodes["Group.001"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (1100, -140)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_ITERATE_GEO_NG_NAME)
-    node.inputs[6].default_value = 13.0
-    node.inputs[7].default_value = (0.0, 0.0, 0.0)
-    node.inputs[8].default_value = 1800.0
-    node.inputs[9].default_value = 740.739990234375
-    node.inputs[10].default_value = 370.3699951171875
+    node.inputs[8].default_value = 13.0
+    node.inputs[9].default_value = (0.0, 0.0, 0.0)
+    node.inputs[10].default_value = 1800.0
+    node.inputs[11].default_value = 740.739990
+    node.inputs[12].default_value = 370.369995
     new_nodes["Group.002"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (1320, -140)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_ITERATE_GEO_NG_NAME)
-    node.inputs[6].default_value = 15.0
-    node.inputs[7].default_value = (0.0, 0.0, 0.0)
-    node.inputs[8].default_value = 600.0
-    node.inputs[9].default_value = 246.91400146484375
-    node.inputs[10].default_value = 123.45700073242188
+    node.inputs[8].default_value = 15.0
+    node.inputs[9].default_value = (0.0, 0.0, 0.0)
+    node.inputs[10].default_value = 600.0
+    node.inputs[11].default_value = 246.914001
+    node.inputs[12].default_value = 123.457001
     new_nodes["Group.003"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (1560, -140)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_ITERATE_GEO_NG_NAME)
-    node.inputs[6].default_value = 17.0
-    node.inputs[7].default_value = (0.0, 0.0, 0.0)
-    node.inputs[8].default_value = 200.0
-    node.inputs[9].default_value = 82.30460357666016
-    node.inputs[10].default_value = 41.15230178833008
+    node.inputs[8].default_value = 17.0
+    node.inputs[9].default_value = (0.0, 0.0, 0.0)
+    node.inputs[10].default_value = 200.0
+    node.inputs[11].default_value = 82.304604
+    node.inputs[12].default_value = 41.152302
     new_nodes["Group.004"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (1800, -140)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_ITERATE_GEO_NG_NAME)
-    node.inputs[6].default_value = 19.0
-    node.inputs[7].default_value = (0.0, 0.0, 0.0)
-    node.inputs[8].default_value = 65.0
-    node.inputs[9].default_value = 27.434900283813477
-    node.inputs[10].default_value = 13.717399597167969
+    node.inputs[8].default_value = 19.0
+    node.inputs[9].default_value = (0.0, 0.0, 0.0)
+    node.inputs[10].default_value = 65.0
+    node.inputs[11].default_value = 27.434900
+    node.inputs[12].default_value = 13.717400
     new_nodes["Group.005"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (2040, -140)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_ITERATE_GEO_NG_NAME)
-    node.inputs[6].default_value = 21.0
-    node.inputs[7].default_value = (0.0, 0.0, 0.0)
-    node.inputs[8].default_value = 21.66670036315918
-    node.inputs[9].default_value = 9.144969940185547
-    node.inputs[10].default_value = 4.572470188140869
+    node.inputs[8].default_value = 21.0
+    node.inputs[9].default_value = (0.0, 0.0, 0.0)
+    node.inputs[10].default_value = 21.666700
+    node.inputs[11].default_value = 9.144970
+    node.inputs[12].default_value = 4.572470
     new_nodes["Group.006"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (2280, -140)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_ITERATE_GEO_NG_NAME)
-    node.inputs[6].default_value = 23.0
-    node.inputs[7].default_value = (0.0, 0.0, 0.0)
-    node.inputs[8].default_value = 7.222233295440674
-    node.inputs[9].default_value = 3.048326015472412
-    node.inputs[10].default_value = 1.5241566896438599
+    node.inputs[8].default_value = 23.000000
+    node.inputs[9].default_value = (0.0, 0.0, 0.0)
+    node.inputs[10].default_value = 7.222233
+    node.inputs[11].default_value = 3.048326
+    node.inputs[12].default_value = 1.524157
     new_nodes["Group.007"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
@@ -973,12 +1040,6 @@ def create_geo_ng_megasphere():
     new_nodes["Group.008"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
-    node.location = (3040, -60)
-    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_CULL_DIST_GEO_NG_NAME)
-    node.inputs[2].default_value = 0.0
-    new_nodes["Group.009"] = node
-
-    node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (-800, -240)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_LOD_GEO_NG_NAME)
     node.inputs[1].default_value = 30.0
@@ -986,85 +1047,42 @@ def create_geo_ng_megasphere():
     new_nodes["Group.010"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
-    node.location = (3040, 220)
-    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_CULL_DIST_GEO_NG_NAME)
-    node.inputs[2].default_value = 0.0
-    new_nodes["Group.011"] = node
-
-    node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (860, -540)
-    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_SCALE_FOR_PROXIMITY_GEO_NG_NAME)
+    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_SUBDIV_BY_PROXIMITY_GEO_NG_NAME)
     new_nodes["Group.012"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
     node.location = (-980, -240)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_CULL_DIST_GEO_NG_NAME)
     node.inputs[2].default_value = 15.0
-    new_nodes["Group.015"] = node
+    new_nodes["Group.013"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
-    node.location = (-2100, 100)
+    node.location = (-2600, 100)
     node.node_tree = bpy.data.node_groups.get(MEGASPHERE_CULL_ANGLE_GEO_NG_NAME)
     new_nodes["Group.014"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
-    node.location = (-3600, -340)
-    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_SCALE_FOR_DIST_GEO_NG_NAME)
-    new_nodes["Group.013"] = node
+    node.location = (-4100, -340)
+    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_SUBDIV_BY_DIST_GEO_NG_NAME)
+    new_nodes["Group.015"] = node
 
-    node = tree_nodes.new(type="GeometryNodeMeshIcoSphere")
-    node.location = (-2640, 0)
-    node.inputs[0].default_value = 1.0
-    new_nodes["Ico Sphere"] = node
+    node = tree_nodes.new(type="GeometryNodeGroup")
+    node.location = (3080, 220)
+    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_CULL_DIST_GEO_NG_NAME)
+    node.inputs[2].default_value = 0.0
+    new_nodes["Group.011"] = node
 
-    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
-    node.location = (-420, -320)
-    node.data_type = "FLOAT"
-    node.domain = "POINT"
-    new_nodes["Capture Attribute"] = node
-
-    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
-    node.location = (3600, 120)
-    node.data_type = "FLOAT"
-    node.domain = "POINT"
-    new_nodes["Capture Attribute.001"] = node
-
-    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
-    node.label = "Capture sphere normal"
-    node.location = (-1560, -140)
-    node.data_type = "FLOAT_VECTOR"
-    node.domain = "POINT"
-    new_nodes["Capture Attribute.002"] = node
+    node = tree_nodes.new(type="GeometryNodeGroup")
+    node.location = (3240, 60)
+    node.node_tree = bpy.data.node_groups.get(MEGASPHERE_CULL_DIST_GEO_NG_NAME)
+    node.inputs[2].default_value = 0.0
+    new_nodes["Group.009"] = node
 
     node = tree_nodes.new(type="GeometryNodeAttributeDomainSize")
     node.location = (2540, 60)
     node.component = "MESH"
     new_nodes["Domain Size"] = node
-
-    node = tree_nodes.new(type="GeometryNodeAttributeDomainSize")
-    node.location = (-3580, -20)
-    node.component = "MESH"
-    new_nodes["Domain Size.001"] = node
-
-    node = tree_nodes.new(type="GeometryNodeJoinGeometry")
-    node.location = (3300, 100)
-    new_nodes["Join Geometry"] = node
-
-    node = tree_nodes.new(type="GeometryNodeJoinGeometry")
-    node.location = (-2280, 60)
-    new_nodes["Join Geometry.001"] = node
-
-    node = tree_nodes.new(type="GeometryNodeDeleteGeometry")
-    node.location = (-2460, 180)
-    node.domain = "POINT"
-    node.mode = "ALL"
-    new_nodes["Delete Geometry.001"] = node
-
-    node = tree_nodes.new(type="GeometryNodeDeleteGeometry")
-    node.location = (-2460, 0)
-    node.domain = "POINT"
-    node.mode = "ALL"
-    new_nodes["Delete Geometry"] = node
 
     node = tree_nodes.new(type="GeometryNodeInputPosition")
     node.location = (320, -360)
@@ -1079,16 +1097,8 @@ def create_geo_ng_megasphere():
     new_nodes["Position.002"] = node
 
     node = tree_nodes.new(type="GeometryNodeInputPosition")
-    node.location = (-2100, -220)
-    new_nodes["Position.004"] = node
-
-    node = tree_nodes.new(type="GeometryNodeInputPosition")
     node.location = (-2060, -480)
-    new_nodes["Position.005"] = node
-
-    node = tree_nodes.new(type="GeometryNodeInputPosition")
-    node.location = (-1740, -320)
-    new_nodes["Position.003"] = node
+    new_nodes["Position.004"] = node
 
     node = tree_nodes.new(type="GeometryNodeSetPosition")
     node.location = (680, 60)
@@ -1098,51 +1108,152 @@ def create_geo_ng_megasphere():
     node.location = (680, -380)
     new_nodes["Set Position.001"] = node
 
-    node = tree_nodes.new(type="GeometryNodeSetPosition")
-    node.location = (-1340, -300)
-    new_nodes["Set Position.002"] = node
-
-    node = tree_nodes.new(type="GeometryNodeSetPosition")
-    node.location = (-1740, -80)
-    new_nodes["Set Position.003"] = node
-
     node = tree_nodes.new(type="GeometryNodeInputMeshEdgeNeighbors")
     node.location = (-980, -660)
     new_nodes["Edge Neighbors"] = node
 
-    node = tree_nodes.new(type="GeometryNodeInputMeshEdgeNeighbors")
-    node.location = (3060, -320)
-    new_nodes["Edge Neighbors.001"] = node
+    node = tree_nodes.new(type="GeometryNodeSetPosition")
+    node.location = (-1340, -300)
+    new_nodes["Set Position.002"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMapRange")
+    node.location = (-1700, -260)
+    node.clamp = True
+    node.data_type = "FLOAT"
+    node.interpolation_type = "LINEAR"
+    node.inputs[1].default_value = 1.0
+    node.inputs[2].default_value = 9.0
+    node.inputs[3].default_value = 0.0
+    node.inputs[4].default_value = 9.0
+    new_nodes["Map Range.002"] = node
+
+    node = tree_nodes.new(type="GeometryNodeInputPosition")
+    node.location = (-2240, -320)
+    new_nodes["Position.005"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.label = "Capture sphere normal"
+    node.location = (-2060, -140)
+    node.data_type = "FLOAT_VECTOR"
+    node.domain = "POINT"
+    new_nodes["Capture Attribute.002"] = node
+
+    node = tree_nodes.new(type="GeometryNodeInputPosition")
+    node.location = (-2600, -220)
+    new_nodes["Position.003"] = node
+
+    node = tree_nodes.new(type="GeometryNodeSetPosition")
+    node.location = (-2240, -80)
+    new_nodes["Set Position.003"] = node
 
     node = tree_nodes.new(type="GeometryNodeSubdivisionSurface")
-    node.location = (-1920, 40)
+    node.location = (-2420, 40)
     node.boundary_smooth = "ALL"
     node.uv_smooth = "PRESERVE_BOUNDARIES"
     node.inputs[2].default_value = 0.0
     new_nodes["Subdivision Surface"] = node
 
-    node = tree_nodes.new(type="FunctionNodeBooleanMath")
-    node.location = (-3220, -60)
-    node.operation = "OR"
-    new_nodes["Boolean Math"] = node
+    node = tree_nodes.new(type="GeometryNodeMeshIcoSphere")
+    node.location = (-3140, -0)
+    node.inputs[0].default_value = 1.0
+    new_nodes["Ico Sphere"] = node
 
-    node = tree_nodes.new(type="FunctionNodeBooleanMath")
-    node.label = "If Ico7 and Subdiv 7 or more"
-    node.location = (-3040, 120)
-    node.operation = "NOT"
-    new_nodes["Boolean Math.001"] = node
+    node = tree_nodes.new(type="GeometryNodeAttributeDomainSize")
+    node.location = (-4080, -20)
+    node.component = "MESH"
+    new_nodes["Domain Size.001"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (3240, -220)
-    node.operation = "LESS_THAN"
-    node.inputs[1].default_value = 2.0
-    new_nodes["Math"] = node
+    node = tree_nodes.new(type="GeometryNodeJoinGeometry")
+    node.location = (-2780, 60)
+    new_nodes["Join Geometry.001"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (3420, -60)
-    node.operation = "SUBTRACT"
-    node.use_clamp = True
-    new_nodes["Math.001"] = node
+    node = tree_nodes.new(type="GeometryNodeDeleteGeometry")
+    node.location = (-2960, 180)
+    node.domain = "POINT"
+    node.mode = "ALL"
+    new_nodes["Delete Geometry"] = node
+
+    node = tree_nodes.new(type="GeometryNodeDeleteGeometry")
+    node.location = (-2960, -0)
+    node.domain = "POINT"
+    node.mode = "ALL"
+    new_nodes["Delete Geometry.001"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMapRange")
+    node.location = (-3320, 20)
+    node.clamp = True
+    node.data_type = "FLOAT"
+    node.interpolation_type = "LINEAR"
+    node.inputs[1].default_value = 1.0
+    node.inputs[2].default_value = 7.0
+    node.inputs[3].default_value = 1.0
+    node.inputs[4].default_value = 7.0
+    new_nodes["Map Range.001"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMapRange")
+    node.location = (-2780, -60)
+    node.clamp = True
+    node.data_type = "FLOAT"
+    node.interpolation_type = "LINEAR"
+    node.inputs[1].default_value = 7.0
+    node.inputs[2].default_value = 9.0
+    node.inputs[3].default_value = 0.0
+    node.inputs[4].default_value = 2.0
+    new_nodes["Map Range"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.label = "Capture pre-subdiv"
+    node.location = (-1880, -100)
+    node.data_type = "BOOLEAN"
+    node.domain = "FACE"
+    node.inputs[4].default_value = True
+    new_nodes["Capture Attribute.004"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.location = (-420, -320)
+    node.data_type = "FLOAT"
+    node.domain = "POINT"
+    new_nodes["Capture Attribute"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.label = "Capture LOD Index"
+    node.location = (-1520, -120)
+    node.data_type = "INT"
+    node.domain = "FACE"
+    new_nodes["Capture Attribute.003"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMapRange")
+    node.location = (2460, -580)
+    node.clamp = True
+    node.data_type = "FLOAT"
+    node.interpolation_type = "LINEAR"
+    node.inputs[1].default_value = 25.0
+    node.inputs[2].default_value = 27.0
+    node.inputs[3].default_value = 25.0
+    node.inputs[4].default_value = 27.0
+    new_nodes["Map Range.004"] = node
+
+    node = tree_nodes.new(type="GeometryNodeInputMeshEdgeNeighbors")
+    node.location = (3240, -260)
+    new_nodes["Edge Neighbors.001"] = node
+
+    node = tree_nodes.new(type="GeometryNodeJoinGeometry")
+    node.location = (3500, 120)
+    new_nodes["Join Geometry"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.label = "Capture LOD Index"
+    node.location = (3960, 140)
+    node.data_type = "INT"
+    node.domain = "FACE"
+    new_nodes["Capture Attribute.005"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.label = "Capture LOD Inner Verts"
+    node.location = (3780, 140)
+    node.data_type = "FLOAT"
+    node.domain = "POINT"
+    new_nodes["Capture Attribute.001"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (-620, -560)
@@ -1174,22 +1285,51 @@ def create_geo_ng_megasphere():
     new_nodes["Math.006"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-3400, -200)
+    node.location = (-3900, -200)
     node.operation = "LESS_THAN"
     node.inputs[1].default_value = 7.0
-    new_nodes["Math.009"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-3400, -20)
-    node.operation = "LESS_THAN"
-    node.inputs[1].default_value = 1.0
     new_nodes["Math.007"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.label = "If no Ico7 or Subdiv below 7"
-    node.location = (-3040, -80)
-    node.operation = "MULTIPLY"
+    node.location = (-3900, -20)
+    node.operation = "LESS_THAN"
+    node.inputs[1].default_value = 1.0
     new_nodes["Math.008"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "If no Ico7 or Subdiv below 7"
+    node.location = (-3540, -80)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.009"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "If pre-subdiv"
+    node.location = (2640, -280)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.010"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (2820, -280)
+    node.operation = "ADD"
+    new_nodes["Math.011"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "If subdivided"
+    node.location = (2640, -460)
+    node.operation = "MULTIPLY"
+    new_nodes["Math.012"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (3420, -160)
+    node.operation = "LESS_THAN"
+    node.inputs[1].default_value = 2.0
+    new_nodes["Math"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (3600, 0)
+    node.operation = "SUBTRACT"
+    node.use_clamp = True
+    new_nodes["Math.001"] = node
 
     node = tree_nodes.new(type="ShaderNodeVectorMath")
     node.location = (500, -80)
@@ -1221,11 +1361,6 @@ def create_geo_ng_megasphere():
     new_nodes["Vector Math.004"] = node
 
     node = tree_nodes.new(type="ShaderNodeVectorMath")
-    node.location = (-1920, -160)
-    node.operation = "NORMALIZE"
-    new_nodes["Vector Math.005"] = node
-
-    node = tree_nodes.new(type="ShaderNodeVectorMath")
     node.location = (-1880, -460)
     node.operation = "MULTIPLY"
     new_nodes["Vector Math.006"] = node
@@ -1241,34 +1376,33 @@ def create_geo_ng_megasphere():
     node.inputs[1].default_value = (1000.0, 1000.0, 1000.0)
     new_nodes["Vector Math.008"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMapRange")
-    node.location = (-2280, -60)
-    node.clamp = True
-    node.data_type = "FLOAT"
-    node.interpolation_type = "LINEAR"
-    node.inputs[1].default_value = 7.0
-    node.inputs[2].default_value = 9.0
-    node.inputs[3].default_value = 0.0
-    node.inputs[4].default_value = 2.0
-    new_nodes["Map Range.001"] = node
+    node = tree_nodes.new(type="ShaderNodeVectorMath")
+    node.location = (-2420, -160)
+    node.operation = "NORMALIZE"
+    new_nodes["Vector Math.005"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMapRange")
-    node.location = (-2820, 20)
-    node.clamp = True
-    node.data_type = "FLOAT"
-    node.interpolation_type = "LINEAR"
-    node.inputs[1].default_value = 1.0
-    node.inputs[2].default_value = 7.0
-    node.inputs[3].default_value = 1.0
-    node.inputs[4].default_value = 7.0
-    new_nodes["Map Range"] = node
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (-3720, -60)
+    node.operation = "OR"
+    new_nodes["Boolean Math"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.label = "If Ico7 and Subdiv 7 or more"
+    node.location = (-3540, 120)
+    node.operation = "NOT"
+    new_nodes["Boolean Math.001"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (2460, -460)
+    node.operation = "NOT"
+    new_nodes["Boolean Math.002"] = node
 
     node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (-3860, -380)
+    node.location = (-4360, -380)
     new_nodes["Group Input"] = node
 
     node = tree_nodes.new(type="NodeGroupOutput")
-    node.location = (3960, 360)
+    node.location = (4160, 280)
     new_nodes["Group Output"] = node
 
     # create links
@@ -1277,37 +1411,35 @@ def create_geo_ng_megasphere():
     tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Vector Math.007"].inputs[1])
     tree_links.new(new_nodes["Vector Math.007"].outputs[0], new_nodes["Vector Math.008"].inputs[0])
     tree_links.new(new_nodes["Vector Math.008"].outputs[0], new_nodes["Set Position.002"].inputs[2])
-    tree_links.new(new_nodes["Position.005"].outputs[0], new_nodes["Vector Math.006"].inputs[0])
+    tree_links.new(new_nodes["Position.004"].outputs[0], new_nodes["Vector Math.006"].inputs[0])
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Vector Math.006"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.013"].inputs[1])
-    tree_links.new(new_nodes["Map Range"].outputs[0], new_nodes["Ico Sphere"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.015"].inputs[1])
+    tree_links.new(new_nodes["Map Range.001"].outputs[0], new_nodes["Ico Sphere"].inputs[1])
     tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Group.014"].inputs[3])
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.014"].inputs[1])
     tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Group.014"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Group.013"].inputs[0])
-    tree_links.new(new_nodes["Math.006"].outputs[0], new_nodes["Group.015"].inputs[3])
-    tree_links.new(new_nodes["Math.008"].outputs[0], new_nodes["Map Range"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Group.013"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Group.015"].inputs[0])
+    tree_links.new(new_nodes["Math.006"].outputs[0], new_nodes["Group.013"].inputs[3])
+    tree_links.new(new_nodes["Math.009"].outputs[0], new_nodes["Map Range.001"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Group.015"].inputs[2])
     tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Math.006"].inputs[0])
     tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Set Position.001"].inputs[3])
     tree_links.new(new_nodes["Vector Math.003"].outputs[0], new_nodes["Set Position.001"].inputs[2])
     tree_links.new(new_nodes["Position"].outputs[0], new_nodes["Vector Math.003"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.015"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Group.013"].inputs[4])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.013"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Group.015"].inputs[4])
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.010"].inputs[2])
-    tree_links.new(new_nodes["Group.015"].outputs[0], new_nodes["Group.010"].inputs[0])
+    tree_links.new(new_nodes["Group.013"].outputs[0], new_nodes["Group.010"].inputs[0])
     tree_links.new(new_nodes["Capture Attribute.002"].outputs[1], new_nodes["Group Output"].inputs[1])
-    tree_links.new(new_nodes["Position.003"].outputs[0], new_nodes["Capture Attribute.002"].inputs[1])
-    tree_links.new(new_nodes["Position.004"].outputs[0], new_nodes["Vector Math.005"].inputs[0])
+    tree_links.new(new_nodes["Position.005"].outputs[0], new_nodes["Capture Attribute.002"].inputs[1])
+    tree_links.new(new_nodes["Position.003"].outputs[0], new_nodes["Vector Math.005"].inputs[0])
     tree_links.new(new_nodes["Vector Math.005"].outputs[0], new_nodes["Set Position.003"].inputs[2])
-    tree_links.new(new_nodes["Capture Attribute.002"].outputs[0], new_nodes["Set Position.002"].inputs[0])
     tree_links.new(new_nodes["Set Position.003"].outputs[0], new_nodes["Capture Attribute.002"].inputs[0])
-    tree_links.new(new_nodes["Group.013"].outputs[0], new_nodes["Map Range.001"].inputs[0])
-    tree_links.new(new_nodes["Map Range.001"].outputs[0], new_nodes["Subdivision Surface"].inputs[1])
-    tree_links.new(new_nodes["Set Position.002"].outputs[0], new_nodes["Group.015"].inputs[0])
+    tree_links.new(new_nodes["Group.015"].outputs[0], new_nodes["Map Range"].inputs[0])
+    tree_links.new(new_nodes["Map Range"].outputs[0], new_nodes["Subdivision Surface"].inputs[1])
+    tree_links.new(new_nodes["Set Position.002"].outputs[0], new_nodes["Group.013"].inputs[0])
     tree_links.new(new_nodes["Position.001"].outputs[0], new_nodes["Vector Math.001"].inputs[0])
     tree_links.new(new_nodes["Vector Math.001"].outputs[0], new_nodes["Set Position"].inputs[2])
-    tree_links.new(new_nodes["Group.008"].outputs[0], new_nodes["Group.009"].inputs[0])
     tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.008"].inputs[2])
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.009"].inputs[1])
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.011"].inputs[1])
@@ -1316,67 +1448,67 @@ def create_geo_ng_megasphere():
     tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.009"].inputs[3])
     tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.011"].inputs[3])
     tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Vector Math.002"].inputs[0])
-    tree_links.new(new_nodes["Group.008"].outputs[1], new_nodes["Group Output"].inputs[4])
+    tree_links.new(new_nodes["Group.008"].outputs[1], new_nodes["Group Output"].inputs[5])
     tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Vector Math"].inputs[0])
     tree_links.new(new_nodes["Vector Math"].outputs[0], new_nodes["Set Position"].inputs[3])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.007"].inputs[12])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.007"].inputs[4])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.007"].inputs[11])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.007"].inputs[14])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.007"].inputs[6])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.007"].inputs[13])
     tree_links.new(new_nodes["Group.007"].outputs[0], new_nodes["Domain Size"].inputs[0])
-    tree_links.new(new_nodes["Group.007"].outputs[3], new_nodes["Group.008"].inputs[6])
+    tree_links.new(new_nodes["Group.007"].outputs[5], new_nodes["Group.008"].inputs[6])
     tree_links.new(new_nodes["Domain Size"].outputs[2], new_nodes["Group.008"].inputs[3])
     tree_links.new(new_nodes["Group.007"].outputs[0], new_nodes["Group.011"].inputs[0])
-    tree_links.new(new_nodes["Group.007"].outputs[2], new_nodes["Group.008"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.006"].inputs[12])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.006"].inputs[4])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.006"].inputs[11])
-    tree_links.new(new_nodes["Group.006"].outputs[3], new_nodes["Group.007"].inputs[3])
+    tree_links.new(new_nodes["Group.007"].outputs[4], new_nodes["Group.008"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.006"].inputs[14])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.006"].inputs[6])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.006"].inputs[13])
+    tree_links.new(new_nodes["Group.006"].outputs[5], new_nodes["Group.007"].inputs[5])
     tree_links.new(new_nodes["Group.006"].outputs[0], new_nodes["Group.007"].inputs[0])
-    tree_links.new(new_nodes["Group.006"].outputs[2], new_nodes["Group.007"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.005"].inputs[12])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.005"].inputs[4])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.005"].inputs[11])
-    tree_links.new(new_nodes["Group.005"].outputs[3], new_nodes["Group.006"].inputs[3])
-    tree_links.new(new_nodes["Group.005"].outputs[2], new_nodes["Group.006"].inputs[2])
+    tree_links.new(new_nodes["Group.006"].outputs[4], new_nodes["Group.007"].inputs[4])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.005"].inputs[14])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.005"].inputs[6])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.005"].inputs[13])
+    tree_links.new(new_nodes["Group.005"].outputs[5], new_nodes["Group.006"].inputs[5])
+    tree_links.new(new_nodes["Group.005"].outputs[4], new_nodes["Group.006"].inputs[4])
     tree_links.new(new_nodes["Group.005"].outputs[0], new_nodes["Group.006"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.004"].inputs[12])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.004"].inputs[4])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.004"].inputs[11])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.004"].inputs[14])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.004"].inputs[6])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.004"].inputs[13])
     tree_links.new(new_nodes["Group.004"].outputs[0], new_nodes["Group.005"].inputs[0])
-    tree_links.new(new_nodes["Group.004"].outputs[2], new_nodes["Group.005"].inputs[2])
-    tree_links.new(new_nodes["Group.004"].outputs[3], new_nodes["Group.005"].inputs[3])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.003"].inputs[12])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.003"].inputs[4])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.003"].inputs[11])
+    tree_links.new(new_nodes["Group.004"].outputs[4], new_nodes["Group.005"].inputs[4])
+    tree_links.new(new_nodes["Group.004"].outputs[5], new_nodes["Group.005"].inputs[5])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.003"].inputs[14])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.003"].inputs[6])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.003"].inputs[13])
     tree_links.new(new_nodes["Group.003"].outputs[0], new_nodes["Group.004"].inputs[0])
-    tree_links.new(new_nodes["Group.003"].outputs[2], new_nodes["Group.004"].inputs[2])
-    tree_links.new(new_nodes["Group.003"].outputs[3], new_nodes["Group.004"].inputs[3])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.002"].inputs[12])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.002"].inputs[4])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.002"].inputs[11])
-    tree_links.new(new_nodes["Group.002"].outputs[3], new_nodes["Group.003"].inputs[3])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.001"].inputs[12])
-    tree_links.new(new_nodes["Group.013"].outputs[0], new_nodes["Group.001"].inputs[5])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.001"].inputs[4])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.001"].inputs[11])
-    tree_links.new(new_nodes["Group.001"].outputs[3], new_nodes["Group.002"].inputs[3])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group"].inputs[12])
-    tree_links.new(new_nodes["Group.013"].outputs[0], new_nodes["Group"].inputs[5])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group"].inputs[4])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group"].inputs[11])
-    tree_links.new(new_nodes["Group.010"].outputs[1], new_nodes["Group"].inputs[2])
-    tree_links.new(new_nodes["Group"].outputs[3], new_nodes["Group.001"].inputs[3])
+    tree_links.new(new_nodes["Group.003"].outputs[4], new_nodes["Group.004"].inputs[4])
+    tree_links.new(new_nodes["Group.003"].outputs[5], new_nodes["Group.004"].inputs[5])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.002"].inputs[14])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.002"].inputs[6])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.002"].inputs[13])
+    tree_links.new(new_nodes["Group.002"].outputs[5], new_nodes["Group.003"].inputs[5])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group.001"].inputs[14])
+    tree_links.new(new_nodes["Group.015"].outputs[0], new_nodes["Group.001"].inputs[7])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group.001"].inputs[6])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group.001"].inputs[13])
+    tree_links.new(new_nodes["Group.001"].outputs[5], new_nodes["Group.002"].inputs[5])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Group"].inputs[14])
+    tree_links.new(new_nodes["Group.015"].outputs[0], new_nodes["Group"].inputs[7])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Group"].inputs[6])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Group"].inputs[13])
+    tree_links.new(new_nodes["Group.010"].outputs[1], new_nodes["Group"].inputs[4])
+    tree_links.new(new_nodes["Group"].outputs[5], new_nodes["Group.001"].inputs[5])
     tree_links.new(new_nodes["Group"].outputs[0], new_nodes["Group.001"].inputs[0])
-    tree_links.new(new_nodes["Group"].outputs[2], new_nodes["Group.001"].inputs[2])
+    tree_links.new(new_nodes["Group"].outputs[4], new_nodes["Group.001"].inputs[4])
     tree_links.new(new_nodes["Set Position.001"].outputs[0], new_nodes["Group.012"].inputs[0])
     tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Group.012"].inputs[1])
     tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Group.012"].inputs[2])
-    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.003"].inputs[5])
-    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.004"].inputs[5])
-    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.005"].inputs[5])
-    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.006"].inputs[5])
-    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.007"].inputs[5])
-    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Group.013"].inputs[3])
+    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.003"].inputs[7])
+    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.004"].inputs[7])
+    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.005"].inputs[7])
+    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.006"].inputs[7])
+    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.007"].inputs[7])
+    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Group.015"].inputs[3])
     tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.008"].inputs[1])
     tree_links.new(new_nodes["Group"].outputs[1], new_nodes["Group.001"].inputs[1])
     tree_links.new(new_nodes["Group.001"].outputs[1], new_nodes["Group.002"].inputs[1])
@@ -1390,7 +1522,6 @@ def create_geo_ng_megasphere():
     tree_links.new(new_nodes["Group.007"].outputs[1], new_nodes["Math.001"].inputs[1])
     tree_links.new(new_nodes["Edge Neighbors.001"].outputs[0], new_nodes["Math"].inputs[0])
     tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Math.001"].inputs[0])
-    tree_links.new(new_nodes["Capture Attribute.001"].outputs[0], new_nodes["Group Output"].inputs[0])
     tree_links.new(new_nodes["Position.002"].outputs[0], new_nodes["Vector Math.004"].inputs[0])
     tree_links.new(new_nodes["Group.010"].outputs[0], new_nodes["Capture Attribute"].inputs[0])
     tree_links.new(new_nodes["Capture Attribute"].outputs[0], new_nodes["Group"].inputs[0])
@@ -1401,35 +1532,69 @@ def create_geo_ng_megasphere():
     tree_links.new(new_nodes["Capture Attribute"].outputs[2], new_nodes["Group"].inputs[1])
     tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Capture Attribute.001"].inputs[2])
     tree_links.new(new_nodes["Capture Attribute.001"].outputs[2], new_nodes["Group Output"].inputs[3])
-    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.002"].inputs[5])
-    tree_links.new(new_nodes["Group.001"].outputs[2], new_nodes["Set Position.001"].inputs[0])
+    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Group.002"].inputs[7])
+    tree_links.new(new_nodes["Group.001"].outputs[4], new_nodes["Set Position.001"].inputs[0])
     tree_links.new(new_nodes["Group.001"].outputs[0], new_nodes["Set Position"].inputs[0])
     tree_links.new(new_nodes["Set Position"].outputs[0], new_nodes["Group.002"].inputs[0])
-    tree_links.new(new_nodes["Set Position.001"].outputs[0], new_nodes["Group.002"].inputs[2])
+    tree_links.new(new_nodes["Set Position.001"].outputs[0], new_nodes["Group.002"].inputs[4])
     tree_links.new(new_nodes["Group.002"].outputs[0], new_nodes["Group.003"].inputs[0])
-    tree_links.new(new_nodes["Group.002"].outputs[2], new_nodes["Group.003"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Group"].inputs[7])
-    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Group.001"].inputs[7])
+    tree_links.new(new_nodes["Group.002"].outputs[4], new_nodes["Group.003"].inputs[4])
+    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Group"].inputs[9])
+    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Group.001"].inputs[9])
     tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Math.003"].inputs[1])
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.004"].inputs[0])
     tree_links.new(new_nodes["Edge Neighbors"].outputs[0], new_nodes["Math.005"].inputs[0])
     tree_links.new(new_nodes["Group.014"].outputs[0], new_nodes["Subdivision Surface"].inputs[0])
     tree_links.new(new_nodes["Subdivision Surface"].outputs[0], new_nodes["Set Position.003"].inputs[0])
     tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Domain Size.001"].inputs[0])
-    tree_links.new(new_nodes["Domain Size.001"].outputs[2], new_nodes["Math.007"].inputs[0])
-    tree_links.new(new_nodes["Group.013"].outputs[0], new_nodes["Math.008"].inputs[1])
-    tree_links.new(new_nodes["Group.013"].outputs[0], new_nodes["Math.009"].inputs[0])
-    tree_links.new(new_nodes["Math.007"].outputs[0], new_nodes["Boolean Math"].inputs[0])
-    tree_links.new(new_nodes["Math.009"].outputs[0], new_nodes["Boolean Math"].inputs[1])
-    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Math.008"].inputs[0])
+    tree_links.new(new_nodes["Domain Size.001"].outputs[2], new_nodes["Math.008"].inputs[0])
+    tree_links.new(new_nodes["Group.015"].outputs[0], new_nodes["Math.009"].inputs[1])
+    tree_links.new(new_nodes["Group.015"].outputs[0], new_nodes["Math.007"].inputs[0])
+    tree_links.new(new_nodes["Math.008"].outputs[0], new_nodes["Boolean Math"].inputs[0])
+    tree_links.new(new_nodes["Math.007"].outputs[0], new_nodes["Boolean Math"].inputs[1])
+    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Math.009"].inputs[0])
     tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Boolean Math.001"].inputs[0])
-    tree_links.new(new_nodes["Ico Sphere"].outputs[0], new_nodes["Delete Geometry"].inputs[0])
-    tree_links.new(new_nodes["Boolean Math.001"].outputs[0], new_nodes["Delete Geometry"].inputs[1])
+    tree_links.new(new_nodes["Ico Sphere"].outputs[0], new_nodes["Delete Geometry.001"].inputs[0])
+    tree_links.new(new_nodes["Boolean Math.001"].outputs[0], new_nodes["Delete Geometry.001"].inputs[1])
     tree_links.new(new_nodes["Join Geometry.001"].outputs[0], new_nodes["Group.014"].inputs[0])
-    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Delete Geometry.001"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Delete Geometry.001"].inputs[0])
-    tree_links.new(new_nodes["Delete Geometry.001"].outputs[0], new_nodes["Join Geometry.001"].inputs[0])
+    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Delete Geometry"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Delete Geometry"].inputs[0])
     tree_links.new(new_nodes["Delete Geometry"].outputs[0], new_nodes["Join Geometry.001"].inputs[0])
+    tree_links.new(new_nodes["Delete Geometry.001"].outputs[0], new_nodes["Join Geometry.001"].inputs[0])
+    tree_links.new(new_nodes["Map Range.002"].outputs[0], new_nodes["Capture Attribute.003"].inputs[5])
+    tree_links.new(new_nodes["Group.015"].outputs[0], new_nodes["Map Range.002"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.004"].outputs[0], new_nodes["Capture Attribute.003"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.003"].outputs[0], new_nodes["Set Position.002"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.002"].outputs[0], new_nodes["Capture Attribute.004"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.004"].outputs[4], new_nodes["Group"].inputs[2])
+    tree_links.new(new_nodes["Capture Attribute.003"].outputs[5], new_nodes["Group"].inputs[3])
+    tree_links.new(new_nodes["Group"].outputs[2], new_nodes["Group.001"].inputs[2])
+    tree_links.new(new_nodes["Group"].outputs[3], new_nodes["Group.001"].inputs[3])
+    tree_links.new(new_nodes["Group.001"].outputs[2], new_nodes["Group.002"].inputs[2])
+    tree_links.new(new_nodes["Group.001"].outputs[3], new_nodes["Group.002"].inputs[3])
+    tree_links.new(new_nodes["Group.002"].outputs[2], new_nodes["Group.003"].inputs[2])
+    tree_links.new(new_nodes["Group.002"].outputs[3], new_nodes["Group.003"].inputs[3])
+    tree_links.new(new_nodes["Group.003"].outputs[2], new_nodes["Group.004"].inputs[2])
+    tree_links.new(new_nodes["Group.003"].outputs[3], new_nodes["Group.004"].inputs[3])
+    tree_links.new(new_nodes["Group.004"].outputs[2], new_nodes["Group.005"].inputs[2])
+    tree_links.new(new_nodes["Group.004"].outputs[3], new_nodes["Group.005"].inputs[3])
+    tree_links.new(new_nodes["Group.005"].outputs[2], new_nodes["Group.006"].inputs[2])
+    tree_links.new(new_nodes["Group.005"].outputs[3], new_nodes["Group.006"].inputs[3])
+    tree_links.new(new_nodes["Group.006"].outputs[2], new_nodes["Group.007"].inputs[2])
+    tree_links.new(new_nodes["Group.006"].outputs[3], new_nodes["Group.007"].inputs[3])
+    tree_links.new(new_nodes["Boolean Math.002"].outputs[0], new_nodes["Math.012"].inputs[0])
+    tree_links.new(new_nodes["Math.010"].outputs[0], new_nodes["Math.011"].inputs[0])
+    tree_links.new(new_nodes["Math.012"].outputs[0], new_nodes["Math.011"].inputs[1])
+    tree_links.new(new_nodes["Group.007"].outputs[2], new_nodes["Boolean Math.002"].inputs[0])
+    tree_links.new(new_nodes["Group.007"].outputs[2], new_nodes["Math.010"].inputs[0])
+    tree_links.new(new_nodes["Group.012"].outputs[0], new_nodes["Map Range.004"].inputs[0])
+    tree_links.new(new_nodes["Map Range.004"].outputs[0], new_nodes["Math.012"].inputs[1])
+    tree_links.new(new_nodes["Group.007"].outputs[3], new_nodes["Math.010"].inputs[1])
+    tree_links.new(new_nodes["Math.011"].outputs[0], new_nodes["Capture Attribute.005"].inputs[5])
+    tree_links.new(new_nodes["Capture Attribute.005"].outputs[5], new_nodes["Group Output"].inputs[4])
+    tree_links.new(new_nodes["Group.008"].outputs[0], new_nodes["Group.009"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.001"].outputs[0], new_nodes["Capture Attribute.005"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.005"].outputs[0], new_nodes["Group Output"].inputs[0])
 
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False
@@ -1438,9 +1603,9 @@ def create_geo_ng_megasphere():
 
 # depending on the name passed to function, create the right set of nodes in a group and pass back
 def create_custom_geo_node_group(node_group_name):
-    if node_group_name == MEGASPHERE_SCALE_FOR_DIST_GEO_NG_NAME:
+    if node_group_name == MEGASPHERE_SUBDIV_BY_DIST_GEO_NG_NAME:
         return create_geo_ng_scale_for_dist()
-    if node_group_name == MEGASPHERE_SCALE_FOR_PROXIMITY_GEO_NG_NAME:
+    if node_group_name == MEGASPHERE_SUBDIV_BY_PROXIMITY_GEO_NG_NAME:
         return create_geo_ng_scale_for_proximity()
     elif node_group_name == MEGASPHERE_CULL_ANGLE_GEO_NG_NAME:
         return create_geo_ng_cull_by_angle()
@@ -1473,8 +1638,8 @@ def ensure_geo_node_group(node_group_name, override_create):
     return node_group
 
 def ensure_mega_sphere_geo_nodes(override_create):
-    ensure_geo_node_group(MEGASPHERE_SCALE_FOR_DIST_GEO_NG_NAME, override_create)
-    ensure_geo_node_group(MEGASPHERE_SCALE_FOR_PROXIMITY_GEO_NG_NAME, override_create)
+    ensure_geo_node_group(MEGASPHERE_SUBDIV_BY_DIST_GEO_NG_NAME, override_create)
+    ensure_geo_node_group(MEGASPHERE_SUBDIV_BY_PROXIMITY_GEO_NG_NAME, override_create)
     ensure_geo_node_group(MEGASPHERE_CULL_ANGLE_GEO_NG_NAME, override_create)
     ensure_geo_node_group(MEGASPHERE_CULL_DIST_GEO_NG_NAME, override_create)
     ensure_geo_node_group(MEGASPHERE_LOD_GEO_NG_NAME, override_create)
