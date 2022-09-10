@@ -47,7 +47,7 @@ from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
 from .mat_node_util import (BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode,
     BSR_PlaceOffsetInputCreateDuoNode, BSR_VecDiv3eMod3eCreateDuoNode, BSR_VecDiv6eCreateDuoNode,
-    BSR_SnapVertexLOD_CreateGeoNode, BSR_TileXYZ3eCreateDuoNode)
+    BSR_VecDiv5eCreateDuoNode, BSR_VecDiv4eCreateDuoNode, BSR_SnapVertexLOD_CreateGeoNode, BSR_TileXYZ3eCreateDuoNode)
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -256,6 +256,8 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         box.operator("big_space_rig.tile_xyz_3e_create_duo_node")
         box.operator("big_space_rig.vec_div_3e_mod_3e_create_duo_node")
         box.operator("big_space_rig.vec_div_6e_create_duo_node")
+        box.operator("big_space_rig.vec_div_5e_create_duo_node")
+        box.operator("big_space_rig.vec_div_4e_create_duo_node")
 
 classes = [
     BSR_PT_ActiveRig,
@@ -280,6 +282,8 @@ classes = [
     BSR_PlaceOffsetInputCreateDuoNode,
     BSR_VecDiv3eMod3eCreateDuoNode,
     BSR_VecDiv6eCreateDuoNode,
+    BSR_VecDiv5eCreateDuoNode,
+    BSR_VecDiv4eCreateDuoNode,
     BSR_SnapVertexLOD_CreateGeoNode,
     BSR_ObservePlace,
 ]
