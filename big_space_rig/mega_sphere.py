@@ -1917,7 +1917,7 @@ def create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links, i
     new_nodes["Group.002"] = node
 
     node = tree_nodes.new(type="GeometryNodeGroup")
-    node.location = (1240, -20)
+    node.location = (1480, -40)
     node.node_tree = bpy.data.node_groups.get(SNAP_VERT_LOD_GEO_NG_NAME)
     new_nodes["Group.001"] = node
 
@@ -1927,11 +1927,11 @@ def create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links, i
                                                                                 'GeometryNodeTree'))
     node.inputs[1].default_value = (0.0, 0.0, 0.0)
     new_nodes["Group.003"] = node
-#
+
     node = tree_nodes.new(type="GeometryNodeInputPosition")
     node.location = (-220, -580)
     new_nodes["Position"] = node
-#
+
     node = tree_nodes.new(type="GeometryNodeObjectInfo")
     node.location = (-220, -40)
     node.transform_space = "ORIGINAL"
@@ -1943,24 +1943,24 @@ def create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links, i
     new_nodes["Set Position"] = node
 
     node = tree_nodes.new(type="GeometryNodeSubdivisionSurface")
-    node.location = (760, -40)
+    node.location = (1300, -40)
     node.boundary_smooth = "ALL"
     node.uv_smooth = "PRESERVE_BOUNDARIES"
     node.inputs[1].default_value = 0
     new_nodes["Subdivision Surface"] = node
 
     node = tree_nodes.new(type="GeometryNodeMergeByDistance")
-    node.location = (1440, -20)
+    node.location = (1660, -40)
     node.inputs[2].default_value = 0.01
     new_nodes["Merge by Distance"] = node
 
     node = tree_nodes.new(type="GeometryNodeSetShadeSmooth")
-    node.location = (1600, -20)
+    node.location = (1840, -40)
     node.inputs[2].default_value = True
     new_nodes["Set Shade Smooth"] = node
 
     node = tree_nodes.new(type="GeometryNodeSetMaterial")
-    node.location = (1780, -20)
+    node.location = (2020, -40)
     new_nodes["Set Material"] = node
 
     node = tree_nodes.new(type="ShaderNodeTexNoise")
@@ -1973,7 +1973,7 @@ def create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links, i
     new_nodes["Noise Texture"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (580, -40)
+    node.location = (1060, 20)
     node.operation = "ADD"
     new_nodes["Math.002"] = node
 
@@ -1995,11 +1995,11 @@ def create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links, i
     new_nodes["Vector Math"] = node
 
     node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (1600, -160)
+    node.location = (1840, -180)
     new_nodes["Group Input"] = node
 
     node = tree_nodes.new(type="NodeGroupOutput")
-    node.location = (1960, -20)
+    node.location = (2200, -40)
     new_nodes["Group Output"] = node
 
     # create links
@@ -2016,10 +2016,10 @@ def create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links, i
     tree_links.new(new_nodes["Vector Math"].outputs[0], new_nodes["Set Position"].inputs[3])
     tree_links.new(new_nodes["MegaSphere.Group"].outputs[2], new_nodes["Group.001"].inputs[1])
     tree_links.new(new_nodes["MegaSphere.Group"].outputs[3], new_nodes["Group.001"].inputs[2])
-    tree_links.new(new_nodes["Subdivision Surface"].outputs[0], new_nodes["Set Position"].inputs[0])
-    tree_links.new(new_nodes["Set Position"].outputs[0], new_nodes["Group.001"].inputs[0])
+    tree_links.new(new_nodes["Subdivision Surface"].outputs[0], new_nodes["Group.001"].inputs[0])
+    tree_links.new(new_nodes["Set Position"].outputs[0], new_nodes["Subdivision Surface"].inputs[0])
+    tree_links.new(new_nodes["MegaSphere.Group"].outputs[0], new_nodes["Set Position"].inputs[0])
     tree_links.new(new_nodes["Merge by Distance"].outputs[0], new_nodes["Set Shade Smooth"].inputs[0])
-    tree_links.new(new_nodes["MegaSphere.Group"].outputs[0], new_nodes["Subdivision Surface"].inputs[0])
     tree_links.new(new_nodes["Set Shade Smooth"].outputs[0], new_nodes["Set Material"].inputs[0])
     tree_links.new(new_nodes["Set Material"].outputs[0], new_nodes["Group Output"].inputs[0])
     tree_links.new(new_nodes["Group.001"].outputs[0], new_nodes["Merge by Distance"].inputs[0])
@@ -2058,7 +2058,7 @@ def create_individual_geo_ng(new_node_group, ico7_wgt, override_create, use_nois
                                  proxy_place_bone_name_0e, proxy_place_bone_name_6e)
 
     # deselect all new nodes
-    for n in new_nodes.values(): n.select = False
+    for n in tree_nodes: n.select = False
 
     return new_node_group
 

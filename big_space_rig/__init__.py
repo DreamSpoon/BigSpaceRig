@@ -112,7 +112,9 @@ class BSR_PT_Observer(bpy.types.Panel):
         box.active = is_bsr_active
         box.label(text="Observe Place")
         box.prop(scn, "BSR_ObservePlaceBoneName")
-        box.operator("big_space_rig.observe_place")
+        col = box.column()
+        col.active = (scn.BSR_ObservePlaceBoneName != BLANK_ITEM_STR)
+        col.operator("big_space_rig.observe_place")
         box = layout.box()
         box.active = is_bsr_active
         box.label(text="Observe MegaSphere")
@@ -126,14 +128,12 @@ class BSR_PT_Observer(bpy.types.Panel):
         if scn.BSR_ObserveSphereAngleType == ANGLE_TYPE_DEG_MIN_SEC_FRAC:
             box.label(text="Latitude")
             col = box.column(align=True)
-#            col.active = is_bsr_active
             col.prop(scn, "BSR_ObserveMegaSphereLatDMSF_Degrees")
             col.prop(scn, "BSR_ObserveMegaSphereLatDMSF_Minutes")
             col.prop(scn, "BSR_ObserveMegaSphereLatDMSF_Seconds")
             col.prop(scn, "BSR_ObserveMegaSphereLatDMSF_FracSec")
             box.label(text="Longitude")
             col = box.column(align=True)
-#            col.active = is_bsr_active
             col.prop(scn, "BSR_ObserveMegaSphereLongDMSF_Degrees")
             col.prop(scn, "BSR_ObserveMegaSphereLongDMSF_Minutes")
             col.prop(scn, "BSR_ObserveMegaSphereLongDMSF_Seconds")
@@ -159,12 +159,16 @@ class BSR_PT_Place(bpy.types.Panel):
     def draw(self, context):
         scn = context.scene
         layout = self.layout
+        is_bsr_active = is_big_space_rig(context.active_object)
         box = layout.box()
+        box.active = is_bsr_active
         box.label(text="Quick Select")
         box.prop(scn, "BSR_QuickSelectPlaceBoneName")
-        box.operator("big_space_rig.quick_select_place_6e")
-        box.operator("big_space_rig.quick_select_place_0e")
-        box.operator("big_space_rig.quick_select_place_proxy")
+        col = box.column()
+        col.active = (str(scn.BSR_QuickSelectPlaceBoneName) != BLANK_ITEM_STR)
+        col.operator("big_space_rig.quick_select_place_6e")
+        col.operator("big_space_rig.quick_select_place_0e")
+        col.operator("big_space_rig.quick_select_place_proxy")
         box = layout.box()
         box.label(text="Create")
         box.operator("big_space_rig.create_place")
@@ -177,9 +181,12 @@ class BSR_PT_Place(bpy.types.Panel):
         box.prop(scn, "BSR_CreatePlaceNoReParent")
         box.prop(scn, "BSR_CreatePlaceUseFP")
         box = layout.box()
+        box.active = is_bsr_active
         box.label(text="Parent to Place")
         box.prop(scn, "BSR_ParentPlaceBoneName")
-        box.operator("big_space_rig.parent_to_place")
+        col = box.column()
+        col.active = (str(scn.BSR_ParentPlaceBoneName) != BLANK_ITEM_STR)
+        col.operator("big_space_rig.parent_to_place")
 
 class BSR_PT_GeoNodes(bpy.types.Panel):
     bl_label = "FP Geometry Nodes"
@@ -191,7 +198,9 @@ class BSR_PT_GeoNodes(bpy.types.Panel):
     def draw(self, context):
         scn = context.scene
         layout = self.layout
+        is_bsr_active = is_big_space_rig(context.active_object)
         box = layout.box()
+        box.active = is_bsr_active
         box.label(text="Forced Perspective Geo Nodes")
         box.operator("big_space_rig.add_place_fp_geo_nodes")
         box.prop(scn, "BSR_GeoNodesOverrideCreate")
@@ -345,9 +354,13 @@ def place_bone_items(self, context):
     ob = context.active_object
     if not is_big_space_rig(ob):
         return [(BLANK_ITEM_STR, "", "")]
+
+    bone_items = [(BLANK_ITEM_STR+bone.name, bone.name, "") for bone in ob.data.bones if \
+            bone.get(OBJ_PROP_BONE_PLACE) == True]
+    if len(bone_items) < 1:
+        return [(BLANK_ITEM_STR, "", "")]
     else:
-        return [(BLANK_ITEM_STR+bone.name, bone.name, "") for bone in ob.data.bones if \
-                bone.get(OBJ_PROP_BONE_PLACE) == True]
+        return bone_items
 
 def obs_input_rig_items(self, context):
     ob = context.active_object
@@ -363,7 +376,8 @@ def obs_input_rig_items(self, context):
         return rig_name_items
 
 def place_input_rig_items(self, context):
-    ob = bpy.data.objects.get(context.scene.BSR_NodeGetInputFromRig)
+    scn = context.scene
+    ob = bpy.data.objects.get(scn.BSR_NodeGetInputFromRig[1:len(scn.BSR_NodeGetInputFromRig)])
     if not is_big_space_rig(ob):
         return [(BLANK_ITEM_STR, "", "")]
     place_item_list = [(BLANK_ITEM_STR+bone.name, bone.name, "") for bone in ob.data.bones if \
