@@ -20,9 +20,10 @@ import math
 
 import bpy
 
-from .node_other import (ensure_node_groups, node_group_name_for_name_and_type, get_node_group_for_type)
-from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME)
-from .rig import get_0e_6e_from_place_bone_name
+from .node_other import (is_duo_node_group_name, ensure_node_groups, node_group_name_for_name_and_type,
+    get_node_group_for_type)
+from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME, OBSERVER_FOCUS_BNAME)
+from .rig import get_6e_0e_from_place_bone_name
 
 VEC_DIV_3E_MOD_3E_DUO_NG_NAME = "VecDiv3eMod3e.BSR"
 VEC_DIV_6E_DUO_NG_NAME = "VecDiv6e.BSR"
@@ -35,15 +36,15 @@ SNAP_VERT_LOD_GEO_NG_NAME = "SnapVertexLOD.BSR.GeoNG"
 
 # depending on the name passed to function, create the right set of nodes in a group and pass back
 def create_prereq_util_node_group(node_group_name, node_tree_type):
-    if node_group_name == VEC_DIV_3E_MOD_3E_DUO_NG_NAME:
+    if is_duo_node_group_name(node_group_name, VEC_DIV_3E_MOD_3E_DUO_NG_NAME):
         return create_duo_vec_div3e_mod_3e(node_tree_type)
-    elif node_group_name == VEC_DIV_6E_DUO_NG_NAME:
+    elif is_duo_node_group_name(node_group_name, VEC_DIV_6E_DUO_NG_NAME):
         return create_duo_vec_div_6e(node_tree_type)
-    elif node_group_name == VEC_DIV_5E_DUO_NG_NAME:
+    elif is_duo_node_group_name(node_group_name, VEC_DIV_5E_DUO_NG_NAME):
         return create_duo_vec_div_5e(node_tree_type)
-    elif node_group_name == VEC_DIV_4E_DUO_NG_NAME:
+    elif is_duo_node_group_name(node_group_name, VEC_DIV_4E_DUO_NG_NAME):
         return create_duo_vec_div_4e(node_tree_type)
-    elif node_group_name == TILE_XYZ_3E_DUO_NG_NAME:
+    elif is_duo_node_group_name(node_group_name, TILE_XYZ_3E_DUO_NG_NAME):
         return create_duo_ng_tile_xyz_3e(node_tree_type)
 
     if node_group_name == SNAP_VERT_LOD_GEO_NG_NAME and node_tree_type == 'GeometryNodeTree':
@@ -142,7 +143,7 @@ def create_duo_node_observer_input(context, node_tree_type, big_space_rig, node_
     node = tree_nodes.new(type=node_input_type)
     node.label = "0e Observer"
     node.location.x = node.location.x + node_loc_offset[0]
-    node.location.y = node.location.y + node_loc_offset[1] - 120
+    node.location.y = node.location.y + node_loc_offset[1] - 125
     if node_tree_type in ['CompositorNodeTree', 'ShaderNodeTree', 'TextureNodeTree']:
         # combine XYZ driver X
         drv_loc_x = node.inputs[0].driver_add('default_value').driver
@@ -213,6 +214,80 @@ def create_duo_node_observer_input(context, node_tree_type, big_space_rig, node_
         drv_loc_z.expression = v_obs_loc_z.name
     new_nodes.append(node)
 
+    node = tree_nodes.new(type=node_input_type)
+    node.label = "Observer Focus"
+    node.location.x = node.location.x + node_loc_offset[0]
+    node.location.y = node.location.y + node_loc_offset[1] - 250
+    if node_tree_type in ['CompositorNodeTree', 'ShaderNodeTree', 'TextureNodeTree']:
+        # combine XYZ driver X
+        drv_loc_x = node.inputs[0].driver_add('default_value').driver
+        v_obs_loc_x = drv_loc_x.variables.new()
+        v_obs_loc_x.type = 'TRANSFORMS'
+        v_obs_loc_x.name = "var"
+        v_obs_loc_x.targets[0].id = big_space_rig
+        v_obs_loc_x.targets[0].bone_target = OBSERVER_FOCUS_BNAME
+        v_obs_loc_x.targets[0].transform_type = 'LOC_X'
+        v_obs_loc_x.targets[0].transform_space = 'TRANSFORM_SPACE'
+        v_obs_loc_x.targets[0].data_path = "location.x"
+        drv_loc_x.expression = v_obs_loc_x.name
+        # combine XYZ driver Y
+        drv_loc_x = node.inputs[1].driver_add('default_value').driver
+        v_obs_loc_y = drv_loc_x.variables.new()
+        v_obs_loc_y.type = 'TRANSFORMS'
+        v_obs_loc_y.name = "var"
+        v_obs_loc_y.targets[0].id = big_space_rig
+        v_obs_loc_y.targets[0].bone_target = OBSERVER_FOCUS_BNAME
+        v_obs_loc_y.targets[0].transform_type = 'LOC_Y'
+        v_obs_loc_y.targets[0].transform_space = 'TRANSFORM_SPACE'
+        v_obs_loc_y.targets[0].data_path = "location.y"
+        drv_loc_x.expression = v_obs_loc_y.name
+        # combine XYZ driver Z
+        drv_loc_x = node.inputs[2].driver_add('default_value').driver
+        v_obs_loc_z = drv_loc_x.variables.new()
+        v_obs_loc_z.type = 'TRANSFORMS'
+        v_obs_loc_z.name = "var"
+        v_obs_loc_z.targets[0].id = big_space_rig
+        v_obs_loc_z.targets[0].bone_target = OBSERVER_FOCUS_BNAME
+        v_obs_loc_z.targets[0].transform_type = 'LOC_Z'
+        v_obs_loc_z.targets[0].transform_space = 'TRANSFORM_SPACE'
+        v_obs_loc_z.targets[0].data_path = "location.z"
+        drv_loc_x.expression = v_obs_loc_z.name
+    elif node_tree_type == 'GeometryNodeTree':
+        # vector input driver X
+        drv_loc_x = node.driver_add('vector', 0).driver
+        v_obs_loc_x = drv_loc_x.variables.new()
+        v_obs_loc_x.type = 'TRANSFORMS'
+        v_obs_loc_x.name = "var"
+        v_obs_loc_x.targets[0].id = big_space_rig
+        v_obs_loc_x.targets[0].bone_target = OBSERVER_FOCUS_BNAME
+        v_obs_loc_x.targets[0].transform_type = 'LOC_X'
+        v_obs_loc_x.targets[0].transform_space = 'TRANSFORM_SPACE'
+        v_obs_loc_x.targets[0].data_path = "location.x"
+        drv_loc_x.expression = v_obs_loc_x.name
+        # vector input driver Y
+        drv_loc_y = node.driver_add('vector', 1).driver
+        v_obs_loc_y = drv_loc_y.variables.new()
+        v_obs_loc_y.type = 'TRANSFORMS'
+        v_obs_loc_y.name = "var"
+        v_obs_loc_y.targets[0].id = big_space_rig
+        v_obs_loc_y.targets[0].bone_target = OBSERVER_FOCUS_BNAME
+        v_obs_loc_y.targets[0].transform_type = 'LOC_Y'
+        v_obs_loc_y.targets[0].transform_space = 'TRANSFORM_SPACE'
+        v_obs_loc_y.targets[0].data_path = "location.y"
+        drv_loc_y.expression = v_obs_loc_y.name
+        # vector input driver Z
+        drv_loc_z = node.driver_add('vector', 2).driver
+        v_obs_loc_z = drv_loc_z.variables.new()
+        v_obs_loc_z.type = 'TRANSFORMS'
+        v_obs_loc_z.name = "var"
+        v_obs_loc_z.targets[0].id = big_space_rig
+        v_obs_loc_z.targets[0].bone_target = OBSERVER_FOCUS_BNAME
+        v_obs_loc_z.targets[0].transform_type = 'LOC_Z'
+        v_obs_loc_z.targets[0].transform_space = 'TRANSFORM_SPACE'
+        v_obs_loc_z.targets[0].data_path = "location.z"
+        drv_loc_z.expression = v_obs_loc_z.name
+    new_nodes.append(node)
+
     return new_nodes
 
 class BSR_ObserverInputCreateDuoNode(bpy.types.Operator):
@@ -251,7 +326,7 @@ def create_duo_node_place_input(context, node_tree_type, big_space_rig, bsr_plac
         print("Error, unknown Place input node tree type: " + str(node_tree_type))
         return None
 
-    place_bone_name_0e, place_bone_name_6e = get_0e_6e_from_place_bone_name(big_space_rig, bsr_place)
+    place_bone_name_6e, place_bone_name_0e = get_6e_0e_from_place_bone_name(big_space_rig, bsr_place)
     if place_bone_name_0e is None or place_bone_name_6e is None:
         return
 
@@ -332,7 +407,7 @@ def create_duo_node_place_input(context, node_tree_type, big_space_rig, bsr_plac
     node = tree_nodes.new(type=node_input_type)
     node.label = "0e Place - " + place_bone_name_0e
     node.location.x = node.location.x + node_loc_offset[0]
-    node.location.y = node.location.y + node_loc_offset[1] - 120
+    node.location.y = node.location.y + node_loc_offset[1] - 125
     if node_tree_type in ['CompositorNodeTree', 'ShaderNodeTree', 'TextureNodeTree']:
         # combine XYZ driver X
         drv_loc_x = node.inputs[0].driver_add('default_value').driver
@@ -595,7 +670,8 @@ def create_duo_vec_div3e_mod_3e(node_tree_type):
     return new_node_group
 
 def create_duo_node_vec_div_3e_mod_3e(context, override_create, node_tree_type):
-    ensure_node_groups(override_create, [VEC_DIV_3E_MOD_3E_DUO_NG_NAME],
+    ensure_node_groups(override_create, [node_group_name_for_name_and_type(VEC_DIV_3E_MOD_3E_DUO_NG_NAME,
+                                                                           node_tree_type)],
         node_tree_type, create_prereq_util_node_group)
     node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(VEC_DIV_3E_MOD_3E_DUO_NG_NAME,
@@ -616,8 +692,9 @@ class BSR_VecDiv3eMod3eCreateDuoNode(bpy.types.Operator):
         return False
 
     def execute(self, context):
+        scn = context.scene
         bpy.ops.node.select_all(action='DESELECT')
-        create_duo_node_vec_div_3e_mod_3e(context, False, context.space_data.edit_tree.bl_idname)
+        create_duo_node_vec_div_3e_mod_3e(context, scn.BSR_NodesOverrideCreate, context.space_data.edit_tree.bl_idname)
         return {'FINISHED'}
 
 def create_duo_vec_div_6e(node_tree_type):
@@ -736,7 +813,7 @@ def create_duo_vec_div_6e(node_tree_type):
     return new_node_group
 
 def create_duo_node_vec_div_6e(context, override_create, node_tree_type):
-    ensure_node_groups(override_create, [VEC_DIV_6E_DUO_NG_NAME],
+    ensure_node_groups(override_create, [node_group_name_for_name_and_type(VEC_DIV_6E_DUO_NG_NAME, node_tree_type)],
         node_tree_type, create_prereq_util_node_group)
     node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(VEC_DIV_6E_DUO_NG_NAME,
@@ -757,8 +834,9 @@ class BSR_VecDiv6eCreateDuoNode(bpy.types.Operator):
         return False
 
     def execute(self, context):
+        scn = context.scene
         bpy.ops.node.select_all(action='DESELECT')
-        create_duo_node_vec_div_6e(context, False, context.space_data.edit_tree.bl_idname)
+        create_duo_node_vec_div_6e(context, scn.BSR_NodesOverrideCreate, context.space_data.edit_tree.bl_idname)
         return {'FINISHED'}
 
 def create_duo_vec_div_5e(node_tree_type):
@@ -883,7 +961,7 @@ def create_duo_vec_div_5e(node_tree_type):
     return new_node_group
 
 def create_duo_node_vec_div_5e(context, override_create, node_tree_type):
-    ensure_node_groups(override_create, [VEC_DIV_5E_DUO_NG_NAME],
+    ensure_node_groups(override_create, [node_group_name_for_name_and_type(VEC_DIV_5E_DUO_NG_NAME, node_tree_type)],
         node_tree_type, create_prereq_util_node_group)
     node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(VEC_DIV_5E_DUO_NG_NAME,
@@ -904,8 +982,9 @@ class BSR_VecDiv5eCreateDuoNode(bpy.types.Operator):
         return False
 
     def execute(self, context):
+        scn = context.scene
         bpy.ops.node.select_all(action='DESELECT')
-        create_duo_node_vec_div_5e(context, False, context.space_data.edit_tree.bl_idname)
+        create_duo_node_vec_div_5e(context, scn.BSR_NodesOverrideCreate, context.space_data.edit_tree.bl_idname)
         return {'FINISHED'}
 
 def create_duo_vec_div_4e(node_tree_type):
@@ -1030,7 +1109,7 @@ def create_duo_vec_div_4e(node_tree_type):
     return new_node_group
 
 def create_duo_node_vec_div_4e(context, override_create, node_tree_type):
-    ensure_node_groups(override_create, [VEC_DIV_4E_DUO_NG_NAME],
+    ensure_node_groups(override_create, [node_group_name_for_name_and_type(VEC_DIV_4E_DUO_NG_NAME, node_tree_type)],
         node_tree_type, create_prereq_util_node_group)
     node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(VEC_DIV_4E_DUO_NG_NAME,
@@ -1051,8 +1130,9 @@ class BSR_VecDiv4eCreateDuoNode(bpy.types.Operator):
         return False
 
     def execute(self, context):
+        scn = context.scene
         bpy.ops.node.select_all(action='DESELECT')
-        create_duo_node_vec_div_4e(context, False, context.space_data.edit_tree.bl_idname)
+        create_duo_node_vec_div_4e(context, scn.BSR_NodesOverrideCreate, context.space_data.edit_tree.bl_idname)
         return {'FINISHED'}
 
 def create_geo_ng_snap_vertex_lod():
@@ -1177,7 +1257,8 @@ def create_geo_ng_snap_vertex_lod():
     return new_node_group
 
 def create_geo_node_snap_vertex_lod(context, override_create):
-    ensure_node_groups(override_create, [SNAP_VERT_LOD_GEO_NG_NAME], 'GeometryNodeTree', create_prereq_util_node_group)
+    ensure_node_groups(override_create, [SNAP_VERT_LOD_GEO_NG_NAME],
+                       'GeometryNodeTree', create_prereq_util_node_group)
     node = context.space_data.edit_tree.nodes.new(type='GeometryNodeGroup')
     node.node_tree = bpy.data.node_groups.get(SNAP_VERT_LOD_GEO_NG_NAME)
 
@@ -1207,7 +1288,7 @@ class BSR_SnapVertexLOD_CreateGeoNode(bpy.types.Operator):
             self.report({'ERROR'}, "Unable to create Snap Vertex LOD node because no Place given.")
             return {'CANCELLED'}
         bpy.ops.node.select_all(action='DESELECT')
-        create_geo_node_snap_vertex_lod(context, False)
+        create_geo_node_snap_vertex_lod(context, scn.BSR_NodesOverrideCreate)
         return {'FINISHED'}
 
 def create_duo_ng_tile_xyz_3e(node_tree_type):
@@ -1471,7 +1552,8 @@ def create_duo_ng_tile_xyz_3e(node_tree_type):
     return new_node_group
 
 def create_duo_node_tile_xyz_3e(context, override_create, node_tree_type):
-    ensure_node_groups(override_create, [TILE_XYZ_3E_DUO_NG_NAME], node_tree_type, create_prereq_util_node_group)
+    ensure_node_groups(override_create, [node_group_name_for_name_and_type(TILE_XYZ_3E_DUO_NG_NAME, node_tree_type)],
+                       node_tree_type, create_prereq_util_node_group)
     node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
     node.node_tree = bpy.data.node_groups.get(node_group_name_for_name_and_type(TILE_XYZ_3E_DUO_NG_NAME,
                                                                                 node_tree_type))
@@ -1491,6 +1573,7 @@ class BSR_TileXYZ3eCreateDuoNode(bpy.types.Operator):
         return False
 
     def execute(self, context):
+        scn = context.scene
         bpy.ops.node.select_all(action='DESELECT')
-        create_duo_node_tile_xyz_3e(context, False, context.space_data.edit_tree.bl_idname)
+        create_duo_node_tile_xyz_3e(context, scn.BSR_NodesOverrideCreate, context.space_data.edit_tree.bl_idname)
         return {'FINISHED'}

@@ -100,24 +100,24 @@ def bone_name_from_datapath(datapath_str):
     right = datapath_str.rfind("\"")
     return datapath_str[left+1:right]
 
-def get_0e_6e_from_place_bone_name(big_space_rig, place_bone_name):
+def get_6e_0e_from_place_bone_name(big_space_rig, place_bone_name):
     if big_space_rig.animation_data is None:
         return None, None
-    proxy_place_bone_name_0e = None
     proxy_place_bone_name_6e = None
+    proxy_place_bone_name_0e = None
     # search all drivers of Big Space Rig object, looking for named variables with bone targets - place proxies
     for drv in big_space_rig.animation_data.drivers:
         if bone_name_from_datapath(drv.data_path) != place_bone_name:
             continue
         d = drv.driver
         for v in d.variables:
-            if v.name.startswith(PROXY_PLACE_0E_VAR_NAME_PREPEND):
-                proxy_place_bone_name_0e = v.targets[0].bone_target
-            elif v.name.startswith(PROXY_PLACE_6E_VAR_NAME_PREPEND):
+            if v.name.startswith(PROXY_PLACE_6E_VAR_NAME_PREPEND):
                 proxy_place_bone_name_6e = v.targets[0].bone_target
-    return proxy_place_bone_name_0e, proxy_place_bone_name_6e
+            elif v.name.startswith(PROXY_PLACE_0E_VAR_NAME_PREPEND):
+                proxy_place_bone_name_0e = v.targets[0].bone_target
+    return proxy_place_bone_name_6e, proxy_place_bone_name_0e
 
-# returns False if 'ob' is not a Big Space Rig, otherwise returns True
+# returns False if 'armature' is not a Big Space Rig, otherwise returns True
 # TODO: enhance the check - e.g. if bones are renamed, then how to check? rig/bones w/ custom props?
 def is_big_space_rig(ob):
     if ob is None or not hasattr(ob, 'type') or ob.type != 'ARMATURE' or \
@@ -257,20 +257,20 @@ def create_bsr_widgets(context):
 
 def get_widget_objs_from_rig(big_space_rig):
     widget_objs = {}
-    for ob in bpy.data.objects:
-        if ob.parent == big_space_rig or (ob.parent != None and ob.parent.parent == big_space_rig):
-            if WIDGET_TRIANGLE_OBJNAME in ob.name:
-                widget_objs[TRI_WIDGET_NAME] = ob
-            elif WIDGET_PINCH_TRIANGLE_OBJNAME in ob.name:
-                widget_objs[TRI_PINCH_WIDGET_NAME] = ob
-            elif WIDGET_QUAD_OBJNAME in ob.name:
-                widget_objs[QUAD_WIDGET_NAME] = ob
-            elif WIDGET_PINCH_QUAD_OBJNAME in ob.name:
-                widget_objs[PINCH_QUAD_WIDGET_NAME] = ob
-            elif WIDGET_CIRCLE_OBJNAME in ob.name:
-                widget_objs[CIRCLE_WIDGET_NAME] = ob
-            elif WIDGET_ICOSPHERE7_OBJNAME in ob.name:
-                widget_objs[ICOSPHERE7_WIDGET_NAME] = ob
+    for armature in bpy.data.objects:
+        if armature.parent == big_space_rig or (armature.parent != None and armature.parent.parent == big_space_rig):
+            if WIDGET_TRIANGLE_OBJNAME in armature.name:
+                widget_objs[TRI_WIDGET_NAME] = armature
+            elif WIDGET_PINCH_TRIANGLE_OBJNAME in armature.name:
+                widget_objs[TRI_PINCH_WIDGET_NAME] = armature
+            elif WIDGET_QUAD_OBJNAME in armature.name:
+                widget_objs[QUAD_WIDGET_NAME] = armature
+            elif WIDGET_PINCH_QUAD_OBJNAME in armature.name:
+                widget_objs[PINCH_QUAD_WIDGET_NAME] = armature
+            elif WIDGET_CIRCLE_OBJNAME in armature.name:
+                widget_objs[CIRCLE_WIDGET_NAME] = armature
+            elif WIDGET_ICOSPHERE7_OBJNAME in armature.name:
+                widget_objs[ICOSPHERE7_WIDGET_NAME] = armature
     return widget_objs
 
 def add_widgets_to_big_space_rig(big_space_rig, new_wgt_list):
@@ -503,7 +503,7 @@ class BSR_QuickSelectPlace6e(bpy.types.Operator):
         if place_bone_name == "":
             self.report({'ERROR'}, "Unable to Quick Select Place 6e because Place is blank")
             return {'CANCELLED'}
-        place_bone_name_0e, place_bone_name_6e = get_0e_6e_from_place_bone_name(big_space_rig, place_bone_name)
+        place_bone_name_6e, place_bone_name_0e = get_6e_0e_from_place_bone_name(big_space_rig, place_bone_name)
         quick_select_armature_bone(big_space_rig, place_bone_name_6e)
         return {'FINISHED'}
 
@@ -523,7 +523,7 @@ class BSR_QuickSelectPlace0e(bpy.types.Operator):
         if place_bone_name == "":
             self.report({'ERROR'}, "Unable to Quick Select Place 0e because Place is blank")
             return {'CANCELLED'}
-        place_bone_name_0e, place_bone_name_6e = get_0e_6e_from_place_bone_name(big_space_rig, place_bone_name)
+        place_bone_name_6e, place_bone_name_0e = get_6e_0e_from_place_bone_name(big_space_rig, place_bone_name)
         quick_select_armature_bone(big_space_rig, place_bone_name_0e)
         return {'FINISHED'}
 

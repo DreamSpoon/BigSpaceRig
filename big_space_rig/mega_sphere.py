@@ -19,7 +19,7 @@
 import bpy
 
 from .rig import (is_big_space_rig, get_widget_objs_from_rig, add_widgets_to_big_space_rig,
-    get_0e_6e_from_place_bone_name)
+    get_6e_0e_from_place_bone_name)
 from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME, ICOSPHERE7_WIDGET_NAME, WIDGET_ICOSPHERE7_OBJNAME,
     PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
 from .node_other import (ensure_node_groups, node_group_name_for_name_and_type)
@@ -2033,6 +2033,7 @@ def create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links, i
 def create_individual_geo_ng(new_node_group, ico7_wgt, override_create, use_noise, big_space_rig, sphere_radius,
                              proxy_place_bone_name_0e=None, proxy_place_bone_name_6e=None):
     # initialize variables
+    node_tree_type = 'GeometryNodeTree'
     new_nodes = {}
     new_node_group.inputs.new(type='NodeSocketMaterial', name="Material")
     new_node_group.outputs.new(type='NodeSocketVector', name="MegaSphere Normal")
@@ -2043,10 +2044,11 @@ def create_individual_geo_ng(new_node_group, ico7_wgt, override_create, use_nois
 
     # create nodes to implement MegaSphere
     if use_noise:
-        ensure_node_groups(override_create, [VEC_DIV_3E_MOD_3E_DUO_NG_NAME,
-                                             SNAP_VERT_LOD_GEO_NG_NAME,
-                                             TILE_XYZ_3E_DUO_NG_NAME],
-                           'GeometryNodeTree', create_prereq_util_node_group)
+        ensure_node_groups(override_create,
+                           [node_group_name_for_name_and_type(VEC_DIV_3E_MOD_3E_DUO_NG_NAME, node_tree_type),
+                            SNAP_VERT_LOD_GEO_NG_NAME,
+                            node_group_name_for_name_and_type(TILE_XYZ_3E_DUO_NG_NAME, node_tree_type)],
+                           node_tree_type, create_prereq_util_node_group)
         megasphere_node, vec_d3em3e_node = create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links,
                                                                                ico7_wgt)
     else:
@@ -2096,10 +2098,10 @@ def create_mega_sphere(context, big_space_rig, sphere_radius, override_create, u
     ob.name = MEGASPHERE_OBJ_NAME
     ob.parent = big_space_rig
     if place_bone_name != "":
-        proxy_place_bone_name_0e, proxy_place_bone_name_6e = get_0e_6e_from_place_bone_name(big_space_rig,
+        proxy_place_bone_name_6e, proxy_place_bone_name_0e = get_6e_0e_from_place_bone_name(big_space_rig,
                                                                                             place_bone_name)
     else:
-        proxy_place_bone_name_0e, proxy_place_bone_name_6e = None, None
+        proxy_place_bone_name_6e, proxy_place_bone_name_0e = None, None
 
     add_mega_sphere_geo_nodes_to_object(ob, big_space_rig, ico7_wgt, sphere_radius, proxy_place_bone_name_0e,
                                         proxy_place_bone_name_6e, override_create, use_noise)
@@ -2120,6 +2122,6 @@ class BSR_MegaSphereCreate(bpy.types.Operator):
         place_bone_name = ""
         if scn.BSR_MegaSphereUsePlace:
             place_bone_name = scn.BSR_MegaSpherePlaceBoneName[1:len(scn.BSR_MegaSpherePlaceBoneName)]
-        create_mega_sphere(context, active_ob, scn.BSR_MegaSphereRadius, scn.BSR_MegaSphereOverrideCreateNG,
+        create_mega_sphere(context, active_ob, scn.BSR_MegaSphereRadius, scn.BSR_NodesOverrideCreate,
                            scn.BSR_MegaSphereWithNoise, place_bone_name)
         return {'FINISHED'}

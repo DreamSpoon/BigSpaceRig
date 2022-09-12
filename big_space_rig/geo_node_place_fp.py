@@ -688,6 +688,5 @@ class BSR_AddPlaceFP_GeoNodes(bpy.types.Operator):
                     self.report({'ERROR'}, "Unable to create geometry nodes because Alternate Group not found.")
                     return {'CANCELLED'}
                 alt_group_name = scn.BSR_GeoNodesCreateAltGroup.name
-            add_place_fp_geo_nodes_to_object(ob, scn.BSR_GeoNodesOverrideCreate, alt_group_name, mm_rig,
-                                              mm_rig_bone)
+            add_place_fp_geo_nodes_to_object(ob, scn.BSR_NodesOverrideCreate, alt_group_name, mm_rig, mm_rig_bone)
         return {'FINISHED'}

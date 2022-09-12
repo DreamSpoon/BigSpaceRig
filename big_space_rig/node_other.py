@@ -21,6 +21,9 @@ import bpy
 MAT_NAME_SUFFIX = ".MatNG"
 GEO_NAME_SUFFIX = ".GeoNG"
 
+def is_duo_node_group_name(node_group_name, base_name):
+    return (node_group_name == base_name + MAT_NAME_SUFFIX or node_group_name == base_name + GEO_NAME_SUFFIX)
+
 def ensure_node_group(override_create, node_group_name, node_tree_type, create_group_func):
     # check if custom node group already exists, and create/override if necessary
     node_group = bpy.data.node_groups.get(node_group_name)

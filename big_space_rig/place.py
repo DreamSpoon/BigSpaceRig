@@ -30,7 +30,7 @@ from .rig import (TRI_WIDGET_NAME, TRI_PINCH_WIDGET_NAME, QUAD_WIDGET_NAME, PINC
     WIDGET_PINCH_QUAD_OBJNAME, WIDGET_CIRCLE_OBJNAME)
 from .rig import (OBJ_PROP_BONE_SCL_MULT, OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE,
     OBJ_PROP_BONE_PLACE, PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
-from .rig import (create_bsr_armature, is_big_space_rig, get_widget_objs_from_rig)
+from .rig import (create_bsr_armature, is_big_space_rig, get_widget_objs_from_rig, get_6e_0e_from_place_bone_name)
 
 if bpy.app.version < (2,80,0):
     from .imp_v27 import (select_object, get_cursor_location)
@@ -866,7 +866,6 @@ def parent_objects_to_place(context, big_space_rig, place_bone_name):
     bpy.ops.object.parent_set(type='BONE')
     bpy.ops.object.mode_set(mode=old_3dview_mode)
 
-
 class BSR_PlaceParentObject(bpy.types.Operator):
     bl_description = "Attach selected object(s) to selected Place of active Big Space Rig. Big Space Rig must be " \
         "selected last"
@@ -889,4 +888,37 @@ class BSR_PlaceParentObject(bpy.types.Operator):
             self.report({'ERROR'}, "Unable to Parent to Place because Place is blank")
             return {'CANCELLED'}
         parent_objects_to_place(context, big_space_rig, place_bone_name)
+        return {'FINISHED'}
+
+# TODO: remove drivers before delete place, to prevent error:
+#  WARN (bke.anim_sys): C:\Users\blender\git\blender-v310\blender.git\source\blender\blenkernel\intern\anim_sys.c:3533
+#  BKE_animsys_eval_driver: invalid driver - pose.bones["Place"].location[0]
+def delete_place(context, big_space_rig, place_bone_name):
+    old_3dview_mode = context.mode
+    # switch to EDIT mode to allow removal of edit_bones
+    bpy.ops.object.mode_set(mode='EDIT')
+    bone_name_6e, bone_name_0e = get_6e_0e_from_place_bone_name(big_space_rig, place_bone_name)
+    big_space_rig.data.edit_bones.remove(big_space_rig.data.edit_bones.get(place_bone_name))
+    big_space_rig.data.edit_bones.remove(big_space_rig.data.edit_bones.get(bone_name_6e))
+    big_space_rig.data.edit_bones.remove(big_space_rig.data.edit_bones.get(bone_name_0e))
+    bpy.ops.object.mode_set(mode=old_3dview_mode)
+
+class BSR_DeletePlace(bpy.types.Operator):
+    bl_description = "Delete selected Place of active Big Space Rig"
+    bl_idname = "big_space_rig.delete_place"
+    bl_label = "Delete Place"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        scn = context.scene
+        big_space_rig = context.active_object
+        # error checks
+        if not is_big_space_rig(big_space_rig):
+            self.report({'ERROR'}, "Unable to Delete Place because Active Object is not a Big Space Rig.")
+            return {'CANCELLED'}
+        place_bone_name = scn.BSR_DeletePlaceBoneName[1:len(scn.BSR_DeletePlaceBoneName)]
+        if place_bone_name == "":
+            self.report({'ERROR'}, "Unable to Delete Place because Place is blank")
+            return {'CANCELLED'}
+        delete_place(context, big_space_rig, place_bone_name)
         return {'FINISHED'}

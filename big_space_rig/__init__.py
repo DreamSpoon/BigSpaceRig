@@ -23,7 +23,7 @@ bl_info = {
         ", per Place) to create 'condensed space' for viewing large objects that are separated by very large " \
         "distances, at correct scale (e.g. planets, moons, stars).",
     "author": "Dave",
-    "version": (0, 2, 1),
+    "version": (0, 2, 5),
     "blender": (2, 80, 0),
     "location": "View 3D -> Tools -> BigSpaceRig",
     "category": "Shader/Geometry Nodes, Other",
@@ -41,13 +41,16 @@ from .rig import (is_big_space_rig, BSR_CreateBigSpaceRig, BSR_QuickSelectObserv
     BSR_QuickSelectObserverFocus, BSR_QuickSelectPlace6e,
     BSR_QuickSelectPlace0e, BSR_QuickSelectPlaceProxy)
 from .observer import (ANGLE_TYPE_ITEMS, ANGLE_TYPE_DEG_MIN_SEC_FRAC, ANGLE_TYPE_DEGREES, ANGLE_TYPE_RADIANS)
-from .observer import (BSR_ObserveMegaSphere, BSR_ObservePlace)
-from .place import (BSR_PlaceCreate, BSR_PlaceCreateAttachSingle, BSR_PlaceCreateAttachMulti, BSR_PlaceParentObject)
+from .observer import (BSR_ObserveMegaSphere, BSR_ObservePlace, BSR_AddObsFocusDrivers)
+from .place import (BSR_PlaceCreate, BSR_PlaceCreateAttachSingle, BSR_PlaceCreateAttachMulti, BSR_PlaceParentObject,
+    BSR_DeletePlace)
 from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
 from .mat_node_util import (BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode,
     BSR_PlaceOffsetInputCreateDuoNode, BSR_VecDiv3eMod3eCreateDuoNode, BSR_VecDiv6eCreateDuoNode,
     BSR_VecDiv5eCreateDuoNode, BSR_VecDiv4eCreateDuoNode, BSR_SnapVertexLOD_CreateGeoNode, BSR_TileXYZ3eCreateDuoNode)
+from .utility import SNAP_LOCATION_TYPES
+from .utility import (BSR_SnapLocation6e0eObserver, BSR_SnapLocation6e0ePlace)
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -149,6 +152,11 @@ class BSR_PT_Observer(bpy.types.Panel):
             box.label(text="Longitude")
             box.prop(scn, "BSR_ObserveMegaSphereLongRadians")
 
+        box = layout.box()
+        box.active = is_bsr_active
+        box.label(text="Observer Focus Drivers")
+        box.operator("big_space_rig.add_obs_focus_drivers")
+
 class BSR_PT_Place(bpy.types.Panel):
     bl_label = "Place"
     bl_space_type = "VIEW_3D"
@@ -181,12 +189,17 @@ class BSR_PT_Place(bpy.types.Panel):
         box.prop(scn, "BSR_CreatePlaceNoReParent")
         box.prop(scn, "BSR_CreatePlaceUseFP")
         box = layout.box()
-        box.active = is_bsr_active
         box.label(text="Parent to Place")
         box.prop(scn, "BSR_ParentPlaceBoneName")
         col = box.column()
         col.active = (str(scn.BSR_ParentPlaceBoneName) != BLANK_ITEM_STR)
         col.operator("big_space_rig.parent_to_place")
+
+        box = layout.box()
+        col = box.column()
+        col.active = (str(scn.BSR_DeletePlaceBoneName) != BLANK_ITEM_STR)
+        col.operator("big_space_rig.delete_place")
+        box.prop(scn, "BSR_DeletePlaceBoneName")
 
 class BSR_PT_GeoNodes(bpy.types.Panel):
     bl_label = "FP Geometry Nodes"
@@ -203,7 +216,7 @@ class BSR_PT_GeoNodes(bpy.types.Panel):
         box.active = is_bsr_active
         box.label(text="Forced Perspective Geo Nodes")
         box.operator("big_space_rig.add_place_fp_geo_nodes")
-        box.prop(scn, "BSR_GeoNodesOverrideCreate")
+        box.prop(scn, "BSR_NodesOverrideCreate")
         box.prop(scn, "BSR_GeoNodesCreateUseAltGroup")
         col = box.column()
         col.active = scn.BSR_GeoNodesCreateUseAltGroup
@@ -226,7 +239,7 @@ class BSR_PT_MegaSphere(bpy.types.Panel):
         col = box.column()
         col.operator("big_space_rig.create_mega_sphere")
         col.prop(scn, "BSR_MegaSphereRadius")
-        col.prop(scn, "BSR_MegaSphereOverrideCreateNG")
+        box.prop(scn, "BSR_NodesOverrideCreate")
         col.prop(scn, "BSR_MegaSphereUsePlace")
         if col.active:
             subcol = col.column()
@@ -234,6 +247,34 @@ class BSR_PT_MegaSphere(bpy.types.Panel):
             subcol.prop(scn, "BSR_MegaSpherePlaceBoneName")
         box.label(text="Add Noise")
         box.prop(scn, "BSR_MegaSphereWithNoise")
+
+class BSR_PT_Utility(bpy.types.Panel):
+    bl_label = "Utility"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = Region
+    bl_category = "BigSpaceRig"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        active_ob = context.active_object
+        is_bsr_active = is_big_space_rig(active_ob)
+        scn = context.scene
+        layout = self.layout
+        box = layout.box()
+        box.active = is_bsr_active
+        box.label(text="Snap Location (6e, 0e)")
+        box.prop(scn, "BSR_SnapLocationType")
+        box.prop(scn, "BSR_SnapLocationDeleteKeyframes")
+        sub_box = box.box()
+        sub_box.label(text="Observer")
+        sub_box.operator("big_space_rig.snap_location_6e_0e_observer")
+        sub_box = box.box()
+        sub_box.label(text="Place")
+        sub_box.active = is_bsr_active
+        col = sub_box.column()
+        col.active = (str(scn.BSR_SnapPlaceName) != BLANK_ITEM_STR)
+        col.operator("big_space_rig.snap_location_6e_0e_place")
+        sub_box.prop(scn, "BSR_SnapPlaceName")
 
 class BSR_PT_CreateDuoNodes(bpy.types.Panel):
     bl_idname = "NODE_PT_BigSpaceRig"
@@ -246,6 +287,8 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         scn = context.scene
         layout = self.layout
 
+        box = layout.box()
+        box.prop(scn, "BSR_NodesOverrideCreate")
         box = layout.box()
         box.label(text="Input")
         box.prop(scn, "BSR_NodeGetInputFromRig")
@@ -277,13 +320,14 @@ classes = [
     BSR_QuickSelectObserver0e,
     BSR_QuickSelectObserverFocus,
     BSR_PT_Place,
+    BSR_QuickSelectPlace6e,
+    BSR_QuickSelectPlace0e,
+    BSR_QuickSelectPlaceProxy,
     BSR_PlaceCreate,
     BSR_PlaceCreateAttachMulti,
     BSR_PlaceCreateAttachSingle,
     BSR_PlaceParentObject,
-    BSR_QuickSelectPlace6e,
-    BSR_QuickSelectPlace0e,
-    BSR_QuickSelectPlaceProxy,
+    BSR_DeletePlace,
     BSR_PT_CreateDuoNodes,
     BSR_TileXYZ3eCreateDuoNode,
     BSR_ObserverInputCreateDuoNode,
@@ -295,6 +339,9 @@ classes = [
     BSR_VecDiv4eCreateDuoNode,
     BSR_SnapVertexLOD_CreateGeoNode,
     BSR_ObservePlace,
+    BSR_AddObsFocusDrivers,
+    BSR_SnapLocation6e0eObserver,
+    BSR_SnapLocation6e0ePlace,
 ]
 # geometry node support is only for Blender v2.9+ (or maybe v3.0+ ...)
 # TODO: check what version is needed for current geometry nodes setup
@@ -306,6 +353,9 @@ if bpy.app.version >= (2,90,0):
         BSR_MegaSphereCreate,
         BSR_ObserveMegaSphere,
     ])
+classes.extend([
+    BSR_PT_Utility,
+])
 
 def register():
     for cls in classes:
@@ -317,6 +367,10 @@ def unregister():
         bpy.utils.unregister_class(cls)
     bts = bpy.types.Scene
 
+    del bts.BSR_DeletePlaceBoneName
+    del bts.BSR_SnapPlaceName
+    del bts.BSR_SnapLocationDeleteKeyframes
+    del bts.BSR_SnapLocationType
     del bts.BSR_ParentPlaceBoneName
     del bts.BSR_QuickSelectPlaceBoneName
     del bts.BSR_ObserveMegaSphereLongFracSec
@@ -338,7 +392,7 @@ def unregister():
     del bts.BSR_MegaSphereRadius
     del bts.BSR_GeoNodesCreateAltGroup
     del bts.BSR_GeoNodesCreateUseAltGroup
-    del bts.BSR_GeoNodesOverrideCreate
+    del bts.BSR_NodesOverrideCreate
     del bts.BSR_CreatePlaceUseFP
     del bts.BSR_CreatePlaceNoReParent
     del bts.BSR_CreatePlaceUseObserverOffset
@@ -413,7 +467,7 @@ def register_props():
     bts.BSR_CreatePlaceUseFP =  bp.BoolProperty(name="Use Place Scaling", description="Apply a 'forced perspective' " +
         "scaling effect to places as they move away from the observer - farther away objects 'shrink' to maintain " +
         "close range to observer. Some accuracy is lost due to greater floating point rounding error", default=False)
-    bts.BSR_GeoNodesOverrideCreate = bp.BoolProperty(name="Override Create", description="Big Space Rig Geometry " +
+    bts.BSR_NodesOverrideCreate = bp.BoolProperty(name="Override Create", description="Big Space Rig Geometry " +
         "Nodes custom node group is re-created when geometry nodes are added to object(s), and any previous custom " +
         "group with the same name is deprecated", default=False)
     bts.BSR_GeoNodesCreateUseAltGroup = bp.BoolProperty(name="Use Alt Group", description="Add Big Space Rig " +
@@ -471,6 +525,14 @@ def register_props():
         description="Place to select for quick pose", items=place_bone_items)
     bts.BSR_ParentPlaceBoneName = bpy.props.EnumProperty(name="Parent Place",
         description="Parent selected object(s) to this place", items=place_bone_items)
+    bts.BSR_DeletePlaceBoneName = bpy.props.EnumProperty(name="Delete Place",
+        description="Delete this place from active Big Space Rig", items=place_bone_items)
+    bts.BSR_SnapLocationType = bpy.props.EnumProperty(name="Snap Type",
+        description="Type of location snapping to perform", items=SNAP_LOCATION_TYPES)
+    bts.BSR_SnapLocationDeleteKeyframes = bp.BoolProperty(name="Delete Keyframes", description="Delete location " +
+        "keyframes of Observer/Place (6e, 0e) before adding keyframes to hold snapped location", default=False)
+    bts.BSR_SnapPlaceName = bpy.props.EnumProperty(name="Place", description="Place with location (6e, 0e) to be " +
+        "snapped to precision boundaries", items=place_bone_items)
 
 if __name__ == "__main__":
     register()
