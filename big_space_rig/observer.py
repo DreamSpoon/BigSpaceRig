@@ -209,6 +209,5 @@ class BSR_AddObsFocusDrivers(bpy.types.Operator):
             self.report({'ERROR'}, "Unable to Add Observer Focus Copy Rig Location Drivers because active object " +
                         "is not a Big Space Rig")
             return {'CANCELLED'}
-        scn = context.scene
         add_obs_focus_copy_rig_location_drivers(big_space_rig)
         return {'FINISHED'}

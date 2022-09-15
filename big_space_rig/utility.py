@@ -26,13 +26,14 @@ from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME)
 SNAP_TYPE_6E_DOWN_0E = "6E_DOWN_0E"
 SNAP_TYPE_0E_UP_6E = "0E_UP_6E"
 SNAP_TYPE_BOTH = "6E_AND_0E"
+# BOTH is default
 SNAP_LOCATION_TYPES = [
-    (SNAP_TYPE_6E_DOWN_0E, "6e down to 0e", "Transfer (subtract from 6e location and add to 0e location) the 6e " +
-     "location digits less than 0.001 down to the 0e location"),
     (SNAP_TYPE_0E_UP_6E, "0e up to 6e", "Transfer (subtract from 0e location and add to 6e location) the 0e " +
-     "location digits greater than 1000 up to the 6e location"),
+     "location digits, greater than 1000, up to the 6e location"),
+    (SNAP_TYPE_6E_DOWN_0E, "6e down to 0e", "Transfer (subtract from 6e location and add to 0e location) the 6e " +
+     "location digits, less than 0.001, down to the 0e location"),
     (SNAP_TYPE_BOTH, "Both", "Ensure 6e and 0e locations are aligned to their respective 'precision' boundaries. " +
-     "In other words, abs(6e) is 0.001 and above while abs(0e) is less than 1000"),
+     "In other words, abs(6e) is 0.001 or greater, while abs(0e) is 1000 or less"),
 ]
 
 def delete_bone_keyframes(armature, bone_name):

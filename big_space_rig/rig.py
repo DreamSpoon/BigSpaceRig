@@ -18,14 +18,13 @@
 
 import bpy
 import math
-import mathutils
 from mathutils import Vector
 
 if bpy.app.version < (2,80,0):
-    from .imp_v27 import (create_mesh_obj_from_pydata, get_cursor_location)
+    from .imp_v27 import (create_mesh_obj_from_pydata, get_cursor_location, set_object_hide)
     from rna_prop_ui import rna_idprop_ui_prop_get
 else:
-    from .imp_v28 import (create_mesh_obj_from_pydata, get_cursor_location)
+    from .imp_v28 import (create_mesh_obj_from_pydata, get_cursor_location, set_object_hide)
 
 RIG_BASENAME = "BigSpaceRig"
 PROXY_SPACE_0E_BNAME = "ProxySpace0e"
@@ -253,6 +252,10 @@ def create_bsr_widgets(context):
                       PINCH_QUAD_WIDGET_NAME : pinch_quad_obj,
                       CIRCLE_WIDGET_NAME: circle_obj,
                      }
+    # hide widgets from Render and Viewport
+    for w in widget_ob_dict.values():
+        w.hide_render = True
+        set_object_hide(w, True)
     return widget_ob_dict
 
 def get_widget_objs_from_rig(big_space_rig):
@@ -297,6 +300,9 @@ def add_widgets_to_big_space_rig(big_space_rig, new_wgt_list):
     if bpy.app.version < (2,80,0):
             for new_wgt in new_wgt_list:
                 set_widget_view_layer(new_wgt)
+                # hide widget from Render and Viewport
+                new_wgt.hide_render = True
+                set_object_hide(new_wgt, True)
     # else v2.8 or later
     else:
         bsrh_collection = bpy.data.collections.get(BSRH_COLLECTION_NAME)
@@ -311,6 +317,9 @@ def add_widgets_to_big_space_rig(big_space_rig, new_wgt_list):
                         coll.objects.unlink(new_wgt)
                 # add the BSR Hidden collection
                 bsrh_collection.objects.link(new_wgt)
+                # hide widget from Render and Viewport
+                new_wgt.hide_render = True
+                set_object_hide(new_wgt, True)
 
 # TODO: delete Notes and redo
 # Notes:

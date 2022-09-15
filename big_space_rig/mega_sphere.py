@@ -20,11 +20,15 @@ import bpy
 
 from .rig import (is_big_space_rig, get_widget_objs_from_rig, add_widgets_to_big_space_rig,
     get_6e_0e_from_place_bone_name)
-from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME, ICOSPHERE7_WIDGET_NAME, WIDGET_ICOSPHERE7_OBJNAME,
-    PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
+from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME, ICOSPHERE7_WIDGET_NAME, WIDGET_ICOSPHERE7_OBJNAME)
 from .node_other import (ensure_node_groups, node_group_name_for_name_and_type)
 from .mat_node_util import (SNAP_VERT_LOD_GEO_NG_NAME, VEC_DIV_3E_MOD_3E_DUO_NG_NAME, TILE_XYZ_3E_DUO_NG_NAME,
     create_prereq_util_node_group)
+
+if bpy.app.version < (2,80,0):
+    from .imp_v27 import (create_mesh_obj_from_pydata)
+else:
+    from .imp_v28 import (create_mesh_obj_from_pydata)
 
 MEGASPHERE_SUBDIV_BY_DIST_GEO_NG_NAME = "MegaSphere.NumSubdivByDist.BSR.GeoNG"
 MEGASPHERE_SUBDIV_BY_PROXIMITY_GEO_NG_NAME = "MegaSphere.NumSubdivByProximity.BSR.GeoNG"
@@ -2034,7 +2038,6 @@ def create_individual_geo_ng(new_node_group, ico7_wgt, override_create, use_nois
                              proxy_place_bone_name_0e=None, proxy_place_bone_name_6e=None):
     # initialize variables
     node_tree_type = 'GeometryNodeTree'
-    new_nodes = {}
     new_node_group.inputs.new(type='NodeSocketMaterial', name="Material")
     new_node_group.outputs.new(type='NodeSocketVector', name="MegaSphere Normal")
     tree_nodes = new_node_group.nodes
@@ -2085,6 +2088,15 @@ def add_mega_sphere_geo_nodes_to_object(ob, big_space_rig, ico7_wgt, sphere_radi
     create_individual_geo_ng(geo_nodes_mod.node_group, ico7_wgt, override_create, use_noise, big_space_rig,
                              sphere_radius, proxy_place_bone_name_0e, proxy_place_bone_name_6e)
 
+def create_megasphere_obj(collection_name=None):
+    verts = []
+    edges = []
+    if collection_name is None:
+        return create_mesh_obj_from_pydata(verts, edges=edges, obj_name=MEGASPHERE_OBJ_NAME)
+    else:
+        return create_mesh_obj_from_pydata(verts, edges=edges, obj_name=MEGASPHERE_OBJ_NAME,
+                                           collection_name=collection_name)
+
 def create_mega_sphere(context, big_space_rig, sphere_radius, override_create, use_noise, place_bone_name):
     # ensure that node groups exist that will be used later by the Mega Sphere geometry nodes modifier
     ensure_mega_sphere_geo_nodes(override_create)
@@ -2092,10 +2104,22 @@ def create_mega_sphere(context, big_space_rig, sphere_radius, override_create, u
     # ensure that the Icosphere7 widget mesh object is available
     ico7_wgt = get_create_icosphere7_widget(context, big_space_rig)
 
-    # create mesh object, that will receive Mega Sphere geometry nodes which overwrite geometry
-    bpy.ops.mesh.primitive_plane_add(size=1)
-    ob = context.active_object
-    ob.name = MEGASPHERE_OBJ_NAME
+    # if v2.79
+    if bpy.app.version < (2,80,0):
+        ob = create_megasphere_obj()
+        ob.layers[0] = True
+        for i in range(1, 20):
+            ob.layers[i] = False
+    # else v2.8 or later
+    else:
+        # try to put MegaSphere into Big Space Rig's collection
+        if len(big_space_rig.users_collection) > 0:
+            print("put in bsr collection")
+            ob = create_megasphere_obj(collection_name=big_space_rig.users_collection[0].name)
+        else:
+            print("put in none collection")
+            ob = create_megasphere_obj(collection_name=None)
+
     ob.parent = big_space_rig
     if place_bone_name != "":
         proxy_place_bone_name_6e, proxy_place_bone_name_0e = get_6e_0e_from_place_bone_name(big_space_rig,

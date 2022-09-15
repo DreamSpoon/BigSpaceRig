@@ -56,3 +56,6 @@ def create_mesh_obj_from_pydata(verts=[], faces=[], edges=[], obj_name=None, mes
     bm.free()
 
     return obj
+
+def set_object_hide(obj, hide_val):
+    obj.hide = hide_val

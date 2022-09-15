@@ -401,8 +401,8 @@ def unregister():
     del bts.BSR_NewObserverFP_MinDist
     del bts.BSR_NewObserverFP_Power
 
-def only_geo_node_group_poll(self, object):
-    return object.type == 'GEOMETRY'
+def only_geo_node_group_poll(self, ob):
+    return ob.type == 'GEOMETRY'
 
 def place_bone_items(self, context):
     ob = context.active_object

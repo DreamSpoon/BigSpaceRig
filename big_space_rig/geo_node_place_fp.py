@@ -19,7 +19,7 @@
 import bpy
 
 from .rig import (OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT,
-    is_big_space_rig, get_parent_big_space_rig)
+    get_parent_big_space_rig)
 
 PLACE_FP_GEO_NG_NAME = "PlaceFP.BSR.GeoNG"
 

@@ -25,17 +25,15 @@ from .rig import (PROXY_SPACE_0E_BNAME, PROXY_SPACE_6E_BNAME, OBSERVER_FOCUS_BNA
     PROXY_OBSERVER_6E_BNAME, PLACE_BNAME, PROXY_PLACE_0E_BNAME, PROXY_PLACE_6E_BNAME, PLACE_BONEHEAD, PLACE_BONETAIL,
     PROXY_PLACE_0E_BONEHEAD, PROXY_PLACE_6E_BONEHEAD, PROXY_PLACE_0E_BONETAIL, PROXY_PLACE_6E_BONETAIL,
     PLACE_BONELAYERS, PROXY_PLACE_0E_BONELAYERS, PROXY_PLACE_6E_BONELAYERS)
-from .rig import (TRI_WIDGET_NAME, TRI_PINCH_WIDGET_NAME, QUAD_WIDGET_NAME, PINCH_QUAD_WIDGET_NAME, CIRCLE_WIDGET_NAME,
-    WIDGET_TRIANGLE_OBJNAME, WIDGET_PINCH_TRIANGLE_OBJNAME, WIDGET_QUAD_OBJNAME,
-    WIDGET_PINCH_QUAD_OBJNAME, WIDGET_CIRCLE_OBJNAME)
+from .rig import (QUAD_WIDGET_NAME, PINCH_QUAD_WIDGET_NAME)
 from .rig import (OBJ_PROP_BONE_SCL_MULT, OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE,
     OBJ_PROP_BONE_PLACE, PROXY_PLACE_0E_VAR_NAME_PREPEND, PROXY_PLACE_6E_VAR_NAME_PREPEND)
 from .rig import (create_bsr_armature, is_big_space_rig, get_widget_objs_from_rig, get_6e_0e_from_place_bone_name)
 
 if bpy.app.version < (2,80,0):
-    from .imp_v27 import (select_object, get_cursor_location)
+    from .imp_v27 import select_object
 else:
-    from .imp_v28 import (select_object, get_cursor_location)
+    from .imp_v28 import select_object
 
 # "edit bones" must be created at origin (head at origin, ...), so that pose bone locations can be used by drivers
 # to perform offsets, distance calculations, etc.

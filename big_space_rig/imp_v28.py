@@ -17,7 +17,6 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-import bmesh
 
 def get_cursor_location(context):
     # error check
@@ -42,3 +41,6 @@ def create_mesh_obj_from_pydata(verts=[], faces=[], edges=[], obj_name=None, mes
     bpy.context.view_layer.objects.active = obj
     mesh.from_pydata(verts, edges, faces)
     return obj
+
+def set_object_hide(obj, hide_val):
+    obj.hide_set(hide_val)
