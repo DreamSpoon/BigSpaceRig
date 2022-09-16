@@ -23,7 +23,7 @@ bl_info = {
         ", per Place) to create 'condensed space' for viewing large objects that are separated by very large " \
         "distances, at correct scale (e.g. planets, moons, stars).",
     "author": "Dave",
-    "version": (0, 2, 5),
+    "version": (0, 2, 6),
     "blender": (2, 80, 0),
     "location": "View 3D -> Tools -> BigSpaceRig",
     "category": "Shader/Geometry Nodes, Other",
@@ -373,14 +373,18 @@ def unregister():
     del bts.BSR_SnapLocationType
     del bts.BSR_ParentPlaceBoneName
     del bts.BSR_QuickSelectPlaceBoneName
-    del bts.BSR_ObserveMegaSphereLongFracSec
-    del bts.BSR_ObserveMegaSphereLongSeconds
-    del bts.BSR_ObserveMegaSphereLongMinutes
     del bts.BSR_ObserveMegaSphereLongDegrees
-    del bts.BSR_ObserveMegaSphereLatFracSec
-    del bts.BSR_ObserveMegaSphereLatSeconds
-    del bts.BSR_ObserveMegaSphereLatMinutes
     del bts.BSR_ObserveMegaSphereLatDegrees
+    del bts.BSR_ObserveMegaSphereLatDMSF_Degrees
+    del bts.BSR_ObserveMegaSphereLatDMSF_Minutes
+    del bts.BSR_ObserveMegaSphereLatDMSF_Seconds
+    del bts.BSR_ObserveMegaSphereLatDMSF_FracSec
+    del bts.BSR_ObserveMegaSphereLongDMSF_Degrees
+    del bts.BSR_ObserveMegaSphereLongDMSF_Minutes
+    del bts.BSR_ObserveMegaSphereLongDMSF_Seconds
+    del bts.BSR_ObserveMegaSphereLongDMSF_FracSec
+    del bts.BSR_ObserveMegaSphereLongRadians
+    del bts.BSR_ObserveMegaSphereLatRadians
     del bts.BSR_ObserveMegaSphereRad0e
     del bts.BSR_ObserveMegaSphereRad6e
     del bts.BSR_ObservePlaceBoneName

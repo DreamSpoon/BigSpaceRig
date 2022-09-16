@@ -26,7 +26,7 @@ from .rig import (PROXY_OBSERVER_0E_BNAME, PROXY_OBSERVER_6E_BNAME)
 SNAP_TYPE_6E_DOWN_0E = "6E_DOWN_0E"
 SNAP_TYPE_0E_UP_6E = "0E_UP_6E"
 SNAP_TYPE_BOTH = "6E_AND_0E"
-# BOTH is default
+# SNAP_TYPE_0E_UP_6E is default
 SNAP_LOCATION_TYPES = [
     (SNAP_TYPE_0E_UP_6E, "0e up to 6e", "Transfer (subtract from 0e location and add to 6e location) the 0e " +
      "location digits, greater than 1000, up to the 6e location"),
