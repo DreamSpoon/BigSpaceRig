@@ -26,15 +26,6 @@ Done! The addon is now installed, but **you need to enable it by clicking the ch
 The addon uses a "proxy-actual" system. This allows the user to place objects at very large distances apart, using proxies to relate a small "proxy" place to a large "actual" place.
 E.g. a 1 : 1,000,000 scale proxy, where a movement of 1 meter in any direction equals an "actual" movement of 1,000,000 meters (thousand kilometers).
 
-Example, with Forced Perspective effect used:
-  - a "place" is created at the center, objects are added to the place (in Blender speak, the objects are "parented" to the place)
-  - the "observer" is moved 10,000 units away and a new "place" is created
-  - when the observer is moved, the original "place" is moved away, and the place is scaled using "forced perspective" effect
-  - the new "place" has objects added (i.e. parented to the "place")
-  - the "observer" can now be moved between "places", and the objects will always look like they are the right size - even though they are actually much closer together
-  - the distance between "places" is compressed, and the "observer" is used to determine the scale of each "place"
-  - when the "observer" is positioned exactly at the same location as the "place", then the place be full scale (i.e. one-to-one scale)
-
 The main method of moving around within the rig is to move the ProxyObserver0e and ProxyObserver6e bones.
 Moving the ProxyObserver0e bone results in the rig's Places moving to offset the observer's movements.
 E.g. if the ProxyObserver0e moves +1 along the Y axis, then all the rig's Places move -1 along the Y axis.
