@@ -41,153 +41,30 @@ def create_geo_ng_camera_cull():
     tree_nodes.clear()
 
     # create nodes
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.label = "Greater than clip"
-    node.location = (520, -280)
-    node.operation = "GREATER_THAN"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.002"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.label = "Less than clip"
-    node.location = (520, -120)
-    node.operation = "LESS_THAN"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.001"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (520, -460)
-    node.operation = "ABSOLUTE"
-    node.use_clamp = False
-    node.inputs[1].default_value = 0.500000
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.009"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (520, -800)
-    node.operation = "ABSOLUTE"
-    node.use_clamp = False
-    node.inputs[1].default_value = 0.500000
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.012"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (520, -940)
-    node.operation = "DIVIDE"
-    node.use_clamp = True
-    node.inputs[0].default_value = 1.000000
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.016"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (520, -600)
-    node.operation = "ADD"
-    node.use_clamp = True
-    node.inputs[1].default_value = 0.000000
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.014"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (700, -800)
-    node.operation = "DIVIDE"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.017"] = node
-
-    node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
-    node.location = (140, -700)
-    new_nodes["Separate XYZ"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.label = "x / z"
-    node.location = (340, -620)
-    node.operation = "DIVIDE"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.006"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.label = "y / z"
-    node.location = (340, -780)
-    node.operation = "DIVIDE"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.013"] = node
-
     node = tree_nodes.new(type="ShaderNodeVectorMath")
     node.location = (520, 200)
     node.operation = "DISTANCE"
     node.inputs[2].default_value = (0.0, 0.0, 0.0)
     node.inputs[3].default_value = 1.000000
-    new_nodes["Vector Math.001"] = node
+    new_nodes["Vector Math"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (520, 60)
     node.operation = "ADD"
     node.use_clamp = False
     node.inputs[2].default_value = 0.500000
-    new_nodes["Math.003"] = node
+    new_nodes["Math"] = node
 
     node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
     node.location = (340, -260)
-    new_nodes["Separate XYZ.001"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (700, 160)
-    node.operation = "GREATER_THAN"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math"] = node
-
-    node = tree_nodes.new(type="FunctionNodeBooleanMath")
-    node.location = (700, -200)
-    node.operation = "OR"
-    new_nodes["Boolean Math.003"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (700, -460)
-    node.operation = "DIVIDE"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.015"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (880, -460)
-    node.operation = "GREATER_THAN"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.007"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (880, -680)
-    node.operation = "GREATER_THAN"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.010"] = node
-
-    node = tree_nodes.new(type="FunctionNodeBooleanMath")
-    node.location = (1060, -420)
-    node.operation = "OR"
-    new_nodes["Boolean Math.002"] = node
-
-    node = tree_nodes.new(type="FunctionNodeBooleanMath")
-    node.location = (1240, -280)
-    node.operation = "AND"
-    new_nodes["Boolean Math"] = node
-
-    node = tree_nodes.new(type="FunctionNodeBooleanMath")
-    node.location = (1420, -240)
-    node.operation = "OR"
-    new_nodes["Boolean Math.001"] = node
+    new_nodes["Separate XYZ"] = node
 
     node = tree_nodes.new(type="ShaderNodeVectorMath")
     node.location = (-40, -460)
     node.operation = "ADD"
     node.inputs[2].default_value = (0.0, 0.0, 0.0)
     node.inputs[3].default_value = 1.000000
-    new_nodes["Vector Math.002"] = node
+    new_nodes["Vector Math.001"] = node
 
     node = tree_nodes.new(type="ShaderNodeVectorRotate")
     node.location = (-220, -460)
@@ -203,7 +80,7 @@ def create_geo_ng_camera_cull():
     node.operation = "DIVIDE"
     node.use_clamp = False
     node.inputs[2].default_value = 0.500000
-    new_nodes["Math.004"] = node
+    new_nodes["Math.002"] = node
 
     node = tree_nodes.new(type="ShaderNodeCombineXYZ")
     node.location = (-220, -720)
@@ -216,11 +93,7 @@ def create_geo_ng_camera_cull():
     node.operation = "SUBTRACT"
     node.inputs[2].default_value = (0.0, 0.0, 0.0)
     node.inputs[3].default_value = 1.000000
-    new_nodes["Vector Math"] = node
-
-    node = tree_nodes.new(type="NodeGroupOutput")
-    node.location = (1600, -240)
-    new_nodes["Group Output"] = node
+    new_nodes["Vector Math.002"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (-760, -860)
@@ -228,7 +101,7 @@ def create_geo_ng_camera_cull():
     node.use_clamp = False
     node.inputs[1].default_value = 0.500000
     node.inputs[2].default_value = 0.500000
-    new_nodes["Math.005"] = node
+    new_nodes["Math.003"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (-580, -860)
@@ -236,62 +109,205 @@ def create_geo_ng_camera_cull():
     node.use_clamp = False
     node.inputs[1].default_value = 0.500000
     node.inputs[2].default_value = 0.500000
-    new_nodes["Math.008"] = node
+    new_nodes["Math.004"] = node
 
     node = tree_nodes.new(type="NodeGroupInput")
     node.location = (-980, -160)
     new_nodes["Group Input"] = node
 
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "Less than clip"
+    node.location = (520, -120)
+    node.operation = "LESS_THAN"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.005"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "Greater than clip"
+    node.location = (520, -280)
+    node.operation = "GREATER_THAN"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.006"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (700, -200)
+    node.operation = "OR"
+    new_nodes["Boolean Math"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (520, -480)
+    node.operation = "ABSOLUTE"
+    node.use_clamp = False
+    node.inputs[1].default_value = 0.500000
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.007"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (700, -480)
+    node.operation = "DIVIDE"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.008"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (880, -480)
+    node.operation = "GREATER_THAN"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.009"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (520, -820)
+    node.operation = "ABSOLUTE"
+    node.use_clamp = False
+    node.inputs[1].default_value = 0.500000
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.010"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (520, -960)
+    node.operation = "DIVIDE"
+    node.use_clamp = True
+    node.inputs[0].default_value = 1.000000
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.011"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (520, -620)
+    node.operation = "ADD"
+    node.use_clamp = True
+    node.inputs[1].default_value = 0.000000
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.012"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (700, -820)
+    node.operation = "DIVIDE"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.013"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "x / z"
+    node.location = (340, -640)
+    node.operation = "DIVIDE"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.014"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.label = "y / z"
+    node.location = (340, -800)
+    node.operation = "DIVIDE"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.015"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (700, 160)
+    node.operation = "GREATER_THAN"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.001"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (880, -700)
+    node.operation = "GREATER_THAN"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.016"] = node
+
+    node = tree_nodes.new(type="ShaderNodeSeparateXYZ")
+    node.location = (140, -720)
+    new_nodes["Separate XYZ.001"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (1060, -440)
+    node.operation = "OR"
+    new_nodes["Boolean Math.001"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (1240, -440)
+    node.operation = "OR"
+    new_nodes["Boolean Math.002"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (1420, -340)
+    node.operation = "OR"
+    new_nodes["Boolean Math.004"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (1600, -340)
+    node.operation = "AND"
+    new_nodes["Boolean Math.003"] = node
+
+    node = tree_nodes.new(type="NodeGroupOutput")
+    node.location = (1780, -340)
+    new_nodes["Group Output"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (1060, -580)
+    node.operation = "LESS_THAN"
+    node.use_clamp = False
+    node.inputs[1].default_value = 0.000000
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.017"] = node
+
     # create links
     tree_links = new_node_group.links
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math"].inputs[0])
-    tree_links.new(new_nodes["Math.003"].outputs[0], new_nodes["Math"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Math.001"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Vector Math.001"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Math.002"].inputs[1])
-    tree_links.new(new_nodes["Vector Math.001"].outputs[1], new_nodes["Math"].inputs[0])
-    tree_links.new(new_nodes["Vector Math"].outputs[0], new_nodes["Vector Rotate"].inputs[0])
-    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Boolean Math.003"].inputs[0])
-    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Boolean Math.003"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math.002"].inputs[0])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Math.001"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["Math.005"].inputs[1])
     tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Vector Math"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math.001"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ"].outputs[2], new_nodes["Math.006"].inputs[1])
-    tree_links.new(new_nodes["Separate XYZ"].outputs[0], new_nodes["Math.006"].inputs[0])
-    tree_links.new(new_nodes["Math.006"].outputs[0], new_nodes["Math.009"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ"].outputs[2], new_nodes["Math.013"].inputs[1])
-    tree_links.new(new_nodes["Math.013"].outputs[0], new_nodes["Math.012"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ"].outputs[1], new_nodes["Math.013"].inputs[0])
-    tree_links.new(new_nodes["Math.007"].outputs[0], new_nodes["Boolean Math.002"].inputs[0])
-    tree_links.new(new_nodes["Math.010"].outputs[0], new_nodes["Boolean Math.002"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["Math.006"].inputs[1])
+    tree_links.new(new_nodes["Vector Math"].outputs[1], new_nodes["Math.001"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Vector Rotate"].inputs[0])
+    tree_links.new(new_nodes["Math.005"].outputs[0], new_nodes["Boolean Math"].inputs[0])
+    tree_links.new(new_nodes["Math.006"].outputs[0], new_nodes["Boolean Math"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Vector Math.002"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Vector Math"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[2], new_nodes["Math.014"].inputs[1])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[0], new_nodes["Math.014"].inputs[0])
+    tree_links.new(new_nodes["Math.014"].outputs[0], new_nodes["Math.007"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[2], new_nodes["Math.015"].inputs[1])
+    tree_links.new(new_nodes["Math.015"].outputs[0], new_nodes["Math.010"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[1], new_nodes["Math.015"].inputs[0])
+    tree_links.new(new_nodes["Math.009"].outputs[0], new_nodes["Boolean Math.001"].inputs[0])
+    tree_links.new(new_nodes["Math.016"].outputs[0], new_nodes["Boolean Math.001"].inputs[1])
     tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Vector Rotate"].inputs[4])
-    tree_links.new(new_nodes["Math.014"].outputs[0], new_nodes["Math.015"].inputs[1])
-    tree_links.new(new_nodes["Math.016"].outputs[0], new_nodes["Math.017"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Math.016"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Math.014"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.001"].outputs[2], new_nodes["Math.001"].inputs[0])
-    tree_links.new(new_nodes["Separate XYZ.001"].outputs[2], new_nodes["Math.002"].inputs[0])
-    tree_links.new(new_nodes["Math.012"].outputs[0], new_nodes["Math.017"].inputs[0])
-    tree_links.new(new_nodes["Math.017"].outputs[0], new_nodes["Math.010"].inputs[0])
-    tree_links.new(new_nodes["Math.009"].outputs[0], new_nodes["Math.015"].inputs[0])
-    tree_links.new(new_nodes["Math.015"].outputs[0], new_nodes["Math.007"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Math.003"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.003"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Separate XYZ.001"].inputs[0])
-    tree_links.new(new_nodes["Vector Math.002"].outputs[0], new_nodes["Separate XYZ"].inputs[0])
-    tree_links.new(new_nodes["Vector Rotate"].outputs[0], new_nodes["Vector Math.002"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.004"].inputs[0])
-    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Combine XYZ"].inputs[2])
-    tree_links.new(new_nodes["Combine XYZ"].outputs[0], new_nodes["Vector Math.002"].inputs[1])
-    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Boolean Math"].inputs[0])
-    tree_links.new(new_nodes["Boolean Math.002"].outputs[0], new_nodes["Boolean Math"].inputs[1])
-    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Boolean Math.001"].inputs[0])
-    tree_links.new(new_nodes["Boolean Math.003"].outputs[0], new_nodes["Boolean Math.001"].inputs[1])
-    tree_links.new(new_nodes["Boolean Math.001"].outputs[0], new_nodes["Group Output"].inputs[0])
-    tree_links.new(new_nodes["Math.005"].outputs[0], new_nodes["Math.008"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Math.005"].inputs[0])
-    tree_links.new(new_nodes["Math.008"].outputs[0], new_nodes["Math.004"].inputs[1])
-    tree_links.new(new_nodes["Math.008"].outputs[0], new_nodes["Math.010"].inputs[1])
-    tree_links.new(new_nodes["Math.008"].outputs[0], new_nodes["Math.007"].inputs[1])
+    tree_links.new(new_nodes["Math.012"].outputs[0], new_nodes["Math.008"].inputs[1])
+    tree_links.new(new_nodes["Math.011"].outputs[0], new_nodes["Math.013"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Math.011"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[8], new_nodes["Math.012"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[2], new_nodes["Math.005"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ"].outputs[2], new_nodes["Math.006"].inputs[0])
+    tree_links.new(new_nodes["Math.010"].outputs[0], new_nodes["Math.013"].inputs[0])
+    tree_links.new(new_nodes["Math.013"].outputs[0], new_nodes["Math.016"].inputs[0])
+    tree_links.new(new_nodes["Math.007"].outputs[0], new_nodes["Math.008"].inputs[0])
+    tree_links.new(new_nodes["Math.008"].outputs[0], new_nodes["Math.009"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Math"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.001"].outputs[0], new_nodes["Separate XYZ"].inputs[0])
+    tree_links.new(new_nodes["Vector Math.001"].outputs[0], new_nodes["Separate XYZ.001"].inputs[0])
+    tree_links.new(new_nodes["Vector Rotate"].outputs[0], new_nodes["Vector Math.001"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.002"].inputs[0])
+    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Combine XYZ"].inputs[2])
+    tree_links.new(new_nodes["Combine XYZ"].outputs[0], new_nodes["Vector Math.001"].inputs[1])
+    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Boolean Math.003"].inputs[0])
+    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Boolean Math.004"].inputs[0])
+    tree_links.new(new_nodes["Math.003"].outputs[0], new_nodes["Math.004"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["Math.003"].inputs[0])
+    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Math.002"].inputs[1])
+    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Math.016"].inputs[1])
+    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Math.009"].inputs[1])
+    tree_links.new(new_nodes["Boolean Math.004"].outputs[0], new_nodes["Boolean Math.003"].inputs[1])
+    tree_links.new(new_nodes["Boolean Math.003"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Separate XYZ.001"].outputs[2], new_nodes["Math.017"].inputs[0])
+    tree_links.new(new_nodes["Boolean Math.001"].outputs[0], new_nodes["Boolean Math.002"].inputs[0])
+    tree_links.new(new_nodes["Math.017"].outputs[0], new_nodes["Boolean Math.002"].inputs[1])
+    tree_links.new(new_nodes["Boolean Math.002"].outputs[0], new_nodes["Boolean Math.004"].inputs[1])
 
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False
