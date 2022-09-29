@@ -51,6 +51,8 @@ from .mat_node_util import (BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreate
     BSR_VecDiv5eCreateDuoNode, BSR_VecDiv4eCreateDuoNode, BSR_SnapVertexLOD_CreateGeoNode, BSR_TileXYZ3eCreateDuoNode)
 from .utility import SNAP_LOCATION_TYPES
 from .utility import (BSR_SnapLocation6e0eObserver, BSR_SnapLocation6e0ePlace)
+from .culls import BSR_CameraCullCreateNodes
+from .lods import (BSR_GeometryLODsCreateNodes, BSR_InstanceLODsCreateNodes)
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -277,7 +279,7 @@ class BSR_PT_Utility(bpy.types.Panel):
         sub_box.prop(scn, "BSR_SnapPlaceName")
 
 class BSR_PT_CreateDuoNodes(bpy.types.Panel):
-    bl_idname = "NODE_PT_BigSpaceRig"
+    bl_idname = "BSR_PT_CreateDuoNodes"
     bl_label = "BigSpaceRig"
     bl_space_type = "NODE_EDITOR"
     bl_region_type = Region
@@ -311,6 +313,41 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         box.operator("big_space_rig.vec_div_5e_create_duo_node")
         box.operator("big_space_rig.vec_div_4e_create_duo_node")
 
+class BSR_PT_Culls(bpy.types.Panel):
+    bl_idname = "BSR_PT_Culls"
+    bl_label = "Culls"
+    bl_space_type = "NODE_EDITOR"
+    bl_region_type = Region
+    bl_category = "BigSpaceRig"
+
+    def draw(self, context):
+        scn = context.scene
+        layout = self.layout
+
+        box = layout.box()
+        box.label(text="Camera Cull")
+        box.prop(scn, "BSR_CullCamera")
+        box.operator("big_space_rig.camera_cull_create_geo_node")
+        box.prop(scn, "BSR_NodesOverrideCreate")
+
+class BSR_PT_LODs(bpy.types.Panel):
+    bl_idname = "BSR_PT_LODs"
+    bl_label = "LODs"
+    bl_space_type = "NODE_EDITOR"
+    bl_region_type = Region
+    bl_category = "BigSpaceRig"
+
+    def draw(self, context):
+        scn = context.scene
+        layout = self.layout
+
+        box = layout.box()
+        box.label(text="Level Of Detail")
+        box.prop(scn, "BSR_LODsCamera")
+        box.operator("big_space_rig.geometry_lods_create_geo_node")
+        box.operator("big_space_rig.instance_lods_create_geo_node")
+        box.prop(scn, "BSR_NodesOverrideCreate")
+
 classes = [
     BSR_PT_ActiveRig,
     BSR_PT_CreateRig,
@@ -342,6 +379,11 @@ classes = [
     BSR_AddObsFocusDrivers,
     BSR_SnapLocation6e0eObserver,
     BSR_SnapLocation6e0ePlace,
+    BSR_PT_Culls,
+    BSR_CameraCullCreateNodes,
+    BSR_PT_LODs,
+    BSR_GeometryLODsCreateNodes,
+    BSR_InstanceLODsCreateNodes,
 ]
 # geometry node support is only for Blender v2.9+ (or maybe v3.0+ ...)
 # TODO: check what version is needed for current geometry nodes setup
@@ -446,6 +488,19 @@ def place_input_rig_items(self, context):
     else:
         return place_item_list
 
+def camera_object_items(self, context):
+    ob = context.active_object
+    cam_list = []
+    for ob in bpy.data.objects:
+        if ob.type == 'CAMERA':
+            cam_list.append(ob)
+    cam_name_items = [(BLANK_ITEM_STR+cam.name, cam.name, "") for cam in cam_list]
+    # if list is empty then return the "blank" list
+    if len(cam_name_items) < 1:
+        return [(BLANK_ITEM_STR, "", "")]
+    else:
+        return cam_name_items
+
 def register_props():
     bts = bpy.types.Scene
     bp = bpy.props
@@ -537,6 +592,10 @@ def register_props():
         "keyframes of Observer/Place (6e, 0e) before adding keyframes to hold snapped location", default=False)
     bts.BSR_SnapPlaceName = bpy.props.EnumProperty(name="Place", description="Place with location (6e, 0e) to be " +
         "snapped to precision boundaries", items=place_bone_items)
+    bts.BSR_CullCamera = bpy.props.EnumProperty(name="Camera", description="Camera to use with cull nodes",
+        items=camera_object_items)
+    bts.BSR_LODsCamera = bpy.props.EnumProperty(name="Camera", description="Camera to use with LODs nodes",
+        items=camera_object_items)
 
 if __name__ == "__main__":
     register()
