@@ -34,6 +34,9 @@ TILE_XYZ_3E_DUO_NG_NAME = "TileXYZ3e.BSR"
 
 SNAP_VERT_LOD_GEO_NG_NAME = "SnapVertexLOD.BSR.GeoNG"
 
+SUBDIV_SURF_WITH_INDEX_GEO_NG_NAME = "SubdivSurfWithIndex.BSR.GeoNG"
+SUBDIV_MESH_WITH_INDEX_GEO_NG_NAME = "SubdivMeshWithIndex.BSR.GeoNG"
+
 # depending on the name passed to function, create the right set of nodes in a group and pass back
 def create_prereq_util_node_group(node_group_name, node_tree_type):
     if is_duo_node_group_name(node_group_name, VEC_DIV_3E_MOD_3E_DUO_NG_NAME):
@@ -47,8 +50,13 @@ def create_prereq_util_node_group(node_group_name, node_tree_type):
     elif is_duo_node_group_name(node_group_name, TILE_XYZ_3E_DUO_NG_NAME):
         return create_duo_ng_tile_xyz_3e(node_tree_type)
 
-    if node_group_name == SNAP_VERT_LOD_GEO_NG_NAME and node_tree_type == 'GeometryNodeTree':
-        return create_geo_ng_snap_vertex_lod()
+    if node_tree_type == 'GeometryNodeTree':
+        if node_group_name == SNAP_VERT_LOD_GEO_NG_NAME:
+            return create_geo_ng_snap_vertex_lod()
+        elif node_group_name ==  SUBDIV_MESH_WITH_INDEX_GEO_NG_NAME:
+            return create_geo_ng_subdiv_mesh_with_index()
+        elif node_group_name ==  SUBDIV_SURF_WITH_INDEX_GEO_NG_NAME:
+            return create_geo_ng_subdiv_surf_with_index()
 
     # error
     print("Unknown name passed to create_custom_duo_node_group: " + str(node_group_name))
@@ -1272,8 +1280,7 @@ class BSR_SnapVertexLOD_CreateGeoNode(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         s = context.space_data
-        if s.type == 'NODE_EDITOR' and s.node_tree != None and \
-            s.tree_type in ['GeometryNodeTree']:
+        if s.type == 'NODE_EDITOR' and s.node_tree != None and s.tree_type == 'GeometryNodeTree':
             return True
         return False
 
@@ -1576,4 +1583,244 @@ class BSR_TileXYZ3eCreateDuoNode(bpy.types.Operator):
         scn = context.scene
         bpy.ops.node.select_all(action='DESELECT')
         create_duo_node_tile_xyz_3e(context, scn.BSR_NodesOverrideCreate, context.space_data.edit_tree.bl_idname)
+        return {'FINISHED'}
+
+def create_geo_ng_subdiv_mesh_with_index():
+    # initialize variables
+    new_nodes = {}
+    new_node_group = bpy.data.node_groups.new(name=SUBDIV_MESH_WITH_INDEX_GEO_NG_NAME, type='GeometryNodeTree')
+    new_node_group.inputs.new(type='NodeSocketGeometry', name="Mesh")
+    new_node_group.inputs.new(type='NodeSocketInt', name="Level")
+    new_node_group.inputs.new(type='NodeSocketFloat', name="Subdiv Index")
+    new_node_group.outputs.new(type='NodeSocketGeometry', name="Mesh")
+    new_node_group.outputs.new(type='NodeSocketFloat', name="Subdiv Index")
+    tree_nodes = new_node_group.nodes
+    # delete all nodes
+    tree_nodes.clear()
+
+    # create nodes
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (40, 0)
+    node.operation = "MULTIPLY_ADD"
+    node.use_clamp = False
+    new_nodes["Math"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-140, 0)
+    node.operation = "MULTIPLY"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.001"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (-320, 0)
+    node.operation = "NOT"
+    node.inputs[1].default_value = False
+    new_nodes["Boolean Math"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-320, -120)
+    node.operation = "ADD"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.002"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.location = (220, 180)
+    node.data_type = "FLOAT"
+    node.domain = "POINT"
+    node.inputs[1].default_value = (0.0, 0.0, 0.0)
+    node.inputs[3].default_value = (0.0, 0.0, 0.0, 0.0)
+    node.inputs[4].default_value = False
+    node.inputs[5].default_value = 0
+    new_nodes["Capture Attribute"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.location = (-500, 180)
+    node.data_type = "BOOLEAN"
+    node.domain = "POINT"
+    node.inputs[1].default_value = (0.0, 0.0, 0.0)
+    node.inputs[2].default_value = 0.000000
+    node.inputs[3].default_value = (0.0, 0.0, 0.0, 0.0)
+    node.inputs[4].default_value = True
+    node.inputs[5].default_value = 0
+    new_nodes["Capture Attribute.001"] = node
+
+    node = tree_nodes.new(type="GeometryNodeSubdivideMesh")
+    node.location = (40, 180)
+    new_nodes["Subdivide Mesh"] = node
+
+    node = tree_nodes.new(type="NodeGroupInput")
+    node.location = (-680, 0)
+    new_nodes["Group Input"] = node
+
+    node = tree_nodes.new(type="NodeGroupOutput")
+    node.location = (400, 180)
+    new_nodes["Group Output"] = node
+
+    # create links
+    tree_links = new_node_group.links
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Capture Attribute.001"].inputs[0])
+    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Math"].inputs[2])
+    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Math.001"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.001"].outputs[4], new_nodes["Boolean Math"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.001"].outputs[4], new_nodes["Math"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math.002"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.002"].inputs[1])
+    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Math.001"].inputs[1])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Capture Attribute"].inputs[2])
+    tree_links.new(new_nodes["Capture Attribute"].outputs[2], new_nodes["Group Output"].inputs[1])
+    tree_links.new(new_nodes["Capture Attribute.001"].outputs[0], new_nodes["Subdivide Mesh"].inputs[0])
+    tree_links.new(new_nodes["Subdivide Mesh"].outputs[0], new_nodes["Capture Attribute"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Subdivide Mesh"].inputs[1])
+
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
+    return new_node_group
+
+def create_geo_ng_subdiv_surf_with_index():
+    # initialize variables
+    new_nodes = {}
+    new_node_group = bpy.data.node_groups.new(name=SUBDIV_SURF_WITH_INDEX_GEO_NG_NAME, type='GeometryNodeTree')
+    new_node_group.inputs.new(type='NodeSocketGeometry', name="Mesh")
+    new_node_group.inputs.new(type='NodeSocketInt', name="Level")
+    new_node_group.inputs.new(type='NodeSocketFloatFactor', name="Crease")
+    new_node_group.inputs.new(type='NodeSocketFloat', name="Subdiv Index")
+    new_node_group.outputs.new(type='NodeSocketGeometry', name="Mesh")
+    new_node_group.outputs.new(type='NodeSocketFloat', name="Subdiv Index")
+    tree_nodes = new_node_group.nodes
+    # delete all nodes
+    tree_nodes.clear()
+
+    # create nodes
+    node = tree_nodes.new(type="GeometryNodeSubdivisionSurface")
+    node.location = (40, 180)
+    node.boundary_smooth = "ALL"
+    node.uv_smooth = "PRESERVE_BOUNDARIES"
+    new_nodes["Subdivision Surface.001"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (40, 0)
+    node.operation = "MULTIPLY_ADD"
+    node.use_clamp = False
+    new_nodes["Math.012"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-140, 0)
+    node.operation = "MULTIPLY"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.013"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (-320, 0)
+    node.operation = "NOT"
+    node.inputs[1].default_value = False
+    new_nodes["Boolean Math.001"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-320, -120)
+    node.operation = "ADD"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.location = (220, 180)
+    node.data_type = "FLOAT"
+    node.domain = "POINT"
+    node.inputs[1].default_value = (0.0, 0.0, 0.0)
+    node.inputs[3].default_value = (0.0, 0.0, 0.0, 0.0)
+    node.inputs[4].default_value = False
+    node.inputs[5].default_value = 0
+    new_nodes["Capture Attribute.005"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.location = (-500, 180)
+    node.data_type = "BOOLEAN"
+    node.domain = "POINT"
+    node.inputs[1].default_value = (0.0, 0.0, 0.0)
+    node.inputs[2].default_value = 0.000000
+    node.inputs[3].default_value = (0.0, 0.0, 0.0, 0.0)
+    node.inputs[4].default_value = True
+    node.inputs[5].default_value = 0
+    new_nodes["Capture Attribute"] = node
+
+    node = tree_nodes.new(type="NodeGroupInput")
+    node.location = (-680, 0)
+    new_nodes["Group Input"] = node
+
+    node = tree_nodes.new(type="NodeGroupOutput")
+    node.location = (400, 180)
+    new_nodes["Group Output"] = node
+
+    # create links
+    tree_links = new_node_group.links
+    tree_links.new(new_nodes["Capture Attribute"].outputs[0], new_nodes["Subdivision Surface.001"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Subdivision Surface.001"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Subdivision Surface.001"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Capture Attribute"].inputs[0])
+    tree_links.new(new_nodes["Math.013"].outputs[0], new_nodes["Math.012"].inputs[2])
+    tree_links.new(new_nodes["Boolean Math.001"].outputs[0], new_nodes["Math.013"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute"].outputs[4], new_nodes["Boolean Math.001"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute"].outputs[4], new_nodes["Math.012"].inputs[0])
+    tree_links.new(new_nodes["Subdivision Surface.001"].outputs[0], new_nodes["Capture Attribute.005"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.005"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Math.012"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Math"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math"].inputs[1])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Math.013"].inputs[1])
+    tree_links.new(new_nodes["Math.012"].outputs[0], new_nodes["Capture Attribute.005"].inputs[2])
+    tree_links.new(new_nodes["Capture Attribute.005"].outputs[2], new_nodes["Group Output"].inputs[1])
+
+    # deselect all new nodes
+    for n in new_nodes.values(): n.select = False
+    return new_node_group
+
+def create_single_node_subdiv_surf_with_index(context, override_create, node_tree_type):
+    ensure_node_groups(override_create, [SUBDIV_SURF_WITH_INDEX_GEO_NG_NAME], node_tree_type, create_prereq_util_node_group)
+    node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
+    node.node_tree = bpy.data.node_groups.get(SUBDIV_SURF_WITH_INDEX_GEO_NG_NAME)
+
+class BSR_SubdivSurfWithIndexCreateGeoNode(bpy.types.Operator):
+    bl_description = "Add a 'Subdivide Surface With Index' node"
+    bl_idname = "big_space_rig.subdiv_surf_with_index_create_duo_node"
+    bl_label = "Subdiv Surface w/ Index"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        s = context.space_data
+        return s.type == 'NODE_EDITOR' and s.node_tree != None and s.tree_type == 'GeometryNodeTree'
+
+    def execute(self, context):
+        scn = context.scene
+        bpy.ops.node.select_all(action='DESELECT')
+        create_single_node_subdiv_surf_with_index(context, scn.BSR_NodesOverrideCreate,
+                                                  context.space_data.edit_tree.bl_idname)
+        return {'FINISHED'}
+
+def create_single_node_subdiv_mesh_with_index(context, override_create, node_tree_type):
+    ensure_node_groups(override_create, [SUBDIV_MESH_WITH_INDEX_GEO_NG_NAME], node_tree_type, create_prereq_util_node_group)
+    node = context.space_data.edit_tree.nodes.new(type=get_node_group_for_type(node_tree_type))
+    node.node_tree = bpy.data.node_groups.get(SUBDIV_MESH_WITH_INDEX_GEO_NG_NAME)
+
+class BSR_SubdivMeshWithIndexCreateGeoNode(bpy.types.Operator):
+    bl_description = "Add a 'Subdivide Mesh With Index' node"
+    bl_idname = "big_space_rig.subdiv_mesh_with_index_create_duo_node"
+    bl_label = "Subdiv Mesh w/ Index"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        s = context.space_data
+        return s.type == 'NODE_EDITOR' and s.node_tree != None and s.tree_type == 'GeometryNodeTree'
+
+    def execute(self, context):
+        scn = context.scene
+        bpy.ops.node.select_all(action='DESELECT')
+        create_single_node_subdiv_mesh_with_index(context, scn.BSR_NodesOverrideCreate,
+                                                  context.space_data.edit_tree.bl_idname)
         return {'FINISHED'}

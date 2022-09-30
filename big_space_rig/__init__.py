@@ -48,7 +48,8 @@ from .geo_node_place_fp import BSR_AddPlaceFP_GeoNodes
 from .mega_sphere import BSR_MegaSphereCreate
 from .mat_node_util import (BSR_ObserverInputCreateDuoNode, BSR_PlaceInputCreateDuoNode,
     BSR_PlaceOffsetInputCreateDuoNode, BSR_VecDiv3eMod3eCreateDuoNode, BSR_VecDiv6eCreateDuoNode,
-    BSR_VecDiv5eCreateDuoNode, BSR_VecDiv4eCreateDuoNode, BSR_SnapVertexLOD_CreateGeoNode, BSR_TileXYZ3eCreateDuoNode)
+    BSR_VecDiv5eCreateDuoNode, BSR_VecDiv4eCreateDuoNode, BSR_SnapVertexLOD_CreateGeoNode, BSR_TileXYZ3eCreateDuoNode,
+    BSR_SubdivSurfWithIndexCreateGeoNode, BSR_SubdivMeshWithIndexCreateGeoNode)
 from .utility import SNAP_LOCATION_TYPES
 from .utility import (BSR_SnapLocation6e0eObserver, BSR_SnapLocation6e0ePlace)
 from .culls import BSR_CameraCullCreateNodes
@@ -313,6 +314,12 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
         box.operator("big_space_rig.vec_div_5e_create_duo_node")
         box.operator("big_space_rig.vec_div_4e_create_duo_node")
 
+        if context.space_data.tree_type == 'GeometryNodeTree':
+            box = layout.box()
+            box.label(text="Geometry")
+            box.operator("big_space_rig.subdiv_mesh_with_index_create_duo_node")
+            box.operator("big_space_rig.subdiv_surf_with_index_create_duo_node")
+
 class BSR_PT_Culls(bpy.types.Panel):
     bl_idname = "BSR_PT_Culls"
     bl_label = "Culls"
@@ -367,6 +374,8 @@ classes = [
     BSR_DeletePlace,
     BSR_PT_CreateDuoNodes,
     BSR_TileXYZ3eCreateDuoNode,
+    BSR_SubdivSurfWithIndexCreateGeoNode,
+    BSR_SubdivMeshWithIndexCreateGeoNode,
     BSR_ObserverInputCreateDuoNode,
     BSR_PlaceInputCreateDuoNode,
     BSR_PlaceOffsetInputCreateDuoNode,
