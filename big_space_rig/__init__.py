@@ -439,6 +439,7 @@ def unregister():
     del bts.BSR_ObserveMegaSphereRad0e
     del bts.BSR_ObserveMegaSphereRad6e
     del bts.BSR_ObservePlaceBoneName
+    del bts.BSR_MegaSphereWithNoise
     del bts.BSR_NodeGetInputFromRigPlace
     del bts.BSR_NodeGetInputFromRig
     del bts.BSR_MegaSpherePlaceBoneName
@@ -455,6 +456,8 @@ def unregister():
     del bts.BSR_NewObserverFP_MinScale
     del bts.BSR_NewObserverFP_MinDist
     del bts.BSR_NewObserverFP_Power
+    del bts.BSR_LODsCamera
+    del bts.BSR_CullCamera
 
 def only_geo_node_group_poll(self, ob):
     return ob.type == 'GEOMETRY'

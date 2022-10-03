@@ -1592,6 +1592,7 @@ def create_geo_ng_subdiv_mesh_with_index():
     new_node_group.inputs.new(type='NodeSocketGeometry', name="Mesh")
     new_node_group.inputs.new(type='NodeSocketInt', name="Level")
     new_node_group.inputs.new(type='NodeSocketFloat', name="Subdiv Index")
+    new_node_group.inputs.new(type='NodeSocketFloat', name="Level 0 Index")
     new_node_group.outputs.new(type='NodeSocketGeometry', name="Mesh")
     new_node_group.outputs.new(type='NodeSocketFloat', name="Subdiv Index")
     tree_nodes = new_node_group.nodes
@@ -1599,32 +1600,6 @@ def create_geo_ng_subdiv_mesh_with_index():
     tree_nodes.clear()
 
     # create nodes
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (40, 0)
-    node.operation = "MULTIPLY_ADD"
-    node.use_clamp = False
-    new_nodes["Math"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-140, 0)
-    node.operation = "MULTIPLY"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.001"] = node
-
-    node = tree_nodes.new(type="FunctionNodeBooleanMath")
-    node.location = (-320, 0)
-    node.operation = "NOT"
-    node.inputs[1].default_value = False
-    new_nodes["Boolean Math"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-320, -120)
-    node.operation = "ADD"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math.002"] = node
-
     node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
     node.location = (220, 180)
     node.data_type = "FLOAT"
@@ -1634,6 +1609,32 @@ def create_geo_ng_subdiv_mesh_with_index():
     node.inputs[4].default_value = False
     node.inputs[5].default_value = 0
     new_nodes["Capture Attribute"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-140, 60)
+    node.operation = "MULTIPLY"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.001"] = node
+
+    node = tree_nodes.new(type="FunctionNodeBooleanMath")
+    node.location = (-320, 60)
+    node.operation = "NOT"
+    node.inputs[1].default_value = False
+    new_nodes["Boolean Math"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-320, -60)
+    node.operation = "ADD"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.002"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (40, 60)
+    node.operation = "MULTIPLY_ADD"
+    node.use_clamp = False
+    new_nodes["Math"] = node
 
     node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
     node.location = (-500, 180)
@@ -1647,7 +1648,7 @@ def create_geo_ng_subdiv_mesh_with_index():
     new_nodes["Capture Attribute.001"] = node
 
     node = tree_nodes.new(type="GeometryNodeSubdivideMesh")
-    node.location = (40, 180)
+    node.location = (-140, 180)
     new_nodes["Subdivide Mesh"] = node
 
     node = tree_nodes.new(type="NodeGroupInput")
@@ -1667,14 +1668,14 @@ def create_geo_ng_subdiv_mesh_with_index():
     tree_links.new(new_nodes["Capture Attribute.001"].outputs[4], new_nodes["Math"].inputs[0])
     tree_links.new(new_nodes["Capture Attribute"].outputs[0], new_nodes["Group Output"].inputs[0])
     tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math.002"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.002"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.002"].inputs[0])
     tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Math.001"].inputs[1])
     tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Capture Attribute"].inputs[2])
     tree_links.new(new_nodes["Capture Attribute"].outputs[2], new_nodes["Group Output"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Math.002"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Subdivide Mesh"].inputs[1])
     tree_links.new(new_nodes["Capture Attribute.001"].outputs[0], new_nodes["Subdivide Mesh"].inputs[0])
     tree_links.new(new_nodes["Subdivide Mesh"].outputs[0], new_nodes["Capture Attribute"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Subdivide Mesh"].inputs[1])
 
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False
@@ -1688,6 +1689,7 @@ def create_geo_ng_subdiv_surf_with_index():
     new_node_group.inputs.new(type='NodeSocketInt', name="Level")
     new_node_group.inputs.new(type='NodeSocketFloatFactor', name="Crease")
     new_node_group.inputs.new(type='NodeSocketFloat', name="Subdiv Index")
+    new_node_group.inputs.new(type='NodeSocketFloat', name="Level 0 Index")
     new_node_group.outputs.new(type='NodeSocketGeometry', name="Mesh")
     new_node_group.outputs.new(type='NodeSocketFloat', name="Subdiv Index")
     tree_nodes = new_node_group.nodes
@@ -1699,43 +1701,24 @@ def create_geo_ng_subdiv_surf_with_index():
     node.location = (40, 180)
     node.boundary_smooth = "ALL"
     node.uv_smooth = "PRESERVE_BOUNDARIES"
-    new_nodes["Subdivision Surface.001"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (40, 0)
-    node.operation = "MULTIPLY_ADD"
-    node.use_clamp = False
-    new_nodes["Math.012"] = node
+    new_nodes["Subdivision Surface"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (-140, 0)
     node.operation = "MULTIPLY"
     node.use_clamp = False
     node.inputs[2].default_value = 0.500000
-    new_nodes["Math.013"] = node
+    new_nodes["Math.001"] = node
 
     node = tree_nodes.new(type="FunctionNodeBooleanMath")
     node.location = (-320, 0)
     node.operation = "NOT"
     node.inputs[1].default_value = False
-    new_nodes["Boolean Math.001"] = node
+    new_nodes["Boolean Math"] = node
 
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-320, -120)
-    node.operation = "ADD"
-    node.use_clamp = False
-    node.inputs[2].default_value = 0.500000
-    new_nodes["Math"] = node
-
-    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
-    node.location = (220, 180)
-    node.data_type = "FLOAT"
-    node.domain = "POINT"
-    node.inputs[1].default_value = (0.0, 0.0, 0.0)
-    node.inputs[3].default_value = (0.0, 0.0, 0.0, 0.0)
-    node.inputs[4].default_value = False
-    node.inputs[5].default_value = 0
-    new_nodes["Capture Attribute.005"] = node
+    node = tree_nodes.new(type="NodeGroupOutput")
+    node.location = (400, 180)
+    new_nodes["Group Output"] = node
 
     node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
     node.location = (-500, 180)
@@ -1746,34 +1729,53 @@ def create_geo_ng_subdiv_surf_with_index():
     node.inputs[3].default_value = (0.0, 0.0, 0.0, 0.0)
     node.inputs[4].default_value = True
     node.inputs[5].default_value = 0
+    new_nodes["Capture Attribute.001"] = node
+
+    node = tree_nodes.new(type="GeometryNodeCaptureAttribute")
+    node.location = (220, 180)
+    node.data_type = "FLOAT"
+    node.domain = "POINT"
+    node.inputs[1].default_value = (0.0, 0.0, 0.0)
+    node.inputs[3].default_value = (0.0, 0.0, 0.0, 0.0)
+    node.inputs[4].default_value = False
+    node.inputs[5].default_value = 0
     new_nodes["Capture Attribute"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-320, -120)
+    node.operation = "ADD"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.002"] = node
+
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (40, 0)
+    node.operation = "MULTIPLY_ADD"
+    node.use_clamp = False
+    new_nodes["Math"] = node
 
     node = tree_nodes.new(type="NodeGroupInput")
     node.location = (-680, 0)
     new_nodes["Group Input"] = node
 
-    node = tree_nodes.new(type="NodeGroupOutput")
-    node.location = (400, 180)
-    new_nodes["Group Output"] = node
-
     # create links
     tree_links = new_node_group.links
-    tree_links.new(new_nodes["Capture Attribute"].outputs[0], new_nodes["Subdivision Surface.001"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Subdivision Surface.001"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Subdivision Surface.001"].inputs[2])
-    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Capture Attribute"].inputs[0])
-    tree_links.new(new_nodes["Math.013"].outputs[0], new_nodes["Math.012"].inputs[2])
-    tree_links.new(new_nodes["Boolean Math.001"].outputs[0], new_nodes["Math.013"].inputs[0])
-    tree_links.new(new_nodes["Capture Attribute"].outputs[4], new_nodes["Boolean Math.001"].inputs[0])
-    tree_links.new(new_nodes["Capture Attribute"].outputs[4], new_nodes["Math.012"].inputs[0])
-    tree_links.new(new_nodes["Subdivision Surface.001"].outputs[0], new_nodes["Capture Attribute.005"].inputs[0])
-    tree_links.new(new_nodes["Capture Attribute.005"].outputs[0], new_nodes["Group Output"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Math.012"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Math"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math"].inputs[1])
-    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Math.013"].inputs[1])
-    tree_links.new(new_nodes["Math.012"].outputs[0], new_nodes["Capture Attribute.005"].inputs[2])
-    tree_links.new(new_nodes["Capture Attribute.005"].outputs[2], new_nodes["Group Output"].inputs[1])
+    tree_links.new(new_nodes["Capture Attribute.001"].outputs[0], new_nodes["Subdivision Surface"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Subdivision Surface"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Subdivision Surface"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Capture Attribute.001"].inputs[0])
+    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Math"].inputs[2])
+    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Math.001"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.001"].outputs[4], new_nodes["Boolean Math"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute.001"].outputs[4], new_nodes["Math"].inputs[0])
+    tree_links.new(new_nodes["Subdivision Surface"].outputs[0], new_nodes["Capture Attribute"].inputs[0])
+    tree_links.new(new_nodes["Capture Attribute"].outputs[0], new_nodes["Group Output"].inputs[0])
+    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["Math"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.002"].inputs[0])
+    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Math.001"].inputs[1])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Capture Attribute"].inputs[2])
+    tree_links.new(new_nodes["Capture Attribute"].outputs[2], new_nodes["Group Output"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["Math.002"].inputs[1])
 
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False
