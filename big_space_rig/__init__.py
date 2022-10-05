@@ -54,6 +54,7 @@ from .utility import SNAP_LOCATION_TYPES
 from .utility import (BSR_SnapLocation6e0eObserver, BSR_SnapLocation6e0ePlace)
 from .culls import BSR_CameraCullCreateNodes
 from .lods import (BSR_GeometryLODsCreateNodes, BSR_InstanceLODsCreateNodes)
+from .easy import BSR_EasyCreateLandscapeNoise
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -251,6 +252,21 @@ class BSR_PT_MegaSphere(bpy.types.Panel):
         box.label(text="Add Noise")
         box.prop(scn, "BSR_MegaSphereWithNoise")
 
+class BSR_PT_Easy(bpy.types.Panel):
+    bl_label = "Easy"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = Region
+    bl_category = "BigSpaceRig"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        scn = context.scene
+        layout = self.layout
+        box = layout.box()
+        box.prop(scn, "BSR_NodesOverrideCreate")
+        box.label(text="Landscape")
+        box.operator("big_space_rig.easy_create_landscape_noise")
+
 class BSR_PT_Utility(bpy.types.Panel):
     bl_label = "Utility"
     bl_space_type = "VIEW_3D"
@@ -388,11 +404,6 @@ classes = [
     BSR_AddObsFocusDrivers,
     BSR_SnapLocation6e0eObserver,
     BSR_SnapLocation6e0ePlace,
-    BSR_PT_Culls,
-    BSR_CameraCullCreateNodes,
-    BSR_PT_LODs,
-    BSR_GeometryLODsCreateNodes,
-    BSR_InstanceLODsCreateNodes,
 ]
 # geometry node support is only for Blender v2.9+ (or maybe v3.0+ ...)
 # TODO: check what version is needed for current geometry nodes setup
@@ -403,6 +414,13 @@ if bpy.app.version >= (2,90,0):
         BSR_PT_MegaSphere,
         BSR_MegaSphereCreate,
         BSR_ObserveMegaSphere,
+        BSR_PT_Culls,
+        BSR_CameraCullCreateNodes,
+        BSR_PT_LODs,
+        BSR_GeometryLODsCreateNodes,
+        BSR_InstanceLODsCreateNodes,
+        BSR_PT_Easy,
+        BSR_EasyCreateLandscapeNoise,
     ])
 classes.extend([
     BSR_PT_Utility,
@@ -444,7 +462,6 @@ def unregister():
     del bts.BSR_NodeGetInputFromRig
     del bts.BSR_MegaSpherePlaceBoneName
     del bts.BSR_MegaSphereUsePlace
-    del bts.BSR_MegaSphereOverrideCreateNG
     del bts.BSR_MegaSphereRadius
     del bts.BSR_GeoNodesCreateAltGroup
     del bts.BSR_GeoNodesCreateUseAltGroup
@@ -538,18 +555,15 @@ def register_props():
     bts.BSR_CreatePlaceUseFP =  bp.BoolProperty(name="Use Place Scaling", description="Apply a 'forced perspective' " +
         "scaling effect to places as they move away from the observer - farther away objects 'shrink' to maintain " +
         "close range to observer. Some accuracy is lost due to greater floating point rounding error", default=False)
-    bts.BSR_NodesOverrideCreate = bp.BoolProperty(name="Override Create", description="Big Space Rig Geometry " +
-        "Nodes custom node group is re-created when geometry nodes are added to object(s), and any previous custom " +
-        "group with the same name is deprecated", default=False)
+    bts.BSR_NodesOverrideCreate = bp.BoolProperty(name="Override Create", description="Geometry Nodes and " +
+        "Shader Nodes custom Node Groups will be re-created if this option is enabled. When custom Node Groups are " +
+        "override created, old Node Groups of the same name are deprecated", default=False)
     bts.BSR_GeoNodesCreateUseAltGroup = bp.BoolProperty(name="Use Alt Group", description="Add Big Space Rig " +
         "Geometry Nodes group to alternate geometry node group (click to unlock)", default=False)
     bts.BSR_GeoNodesCreateAltGroup = bp.PointerProperty(name="Alt Group", description="Alternative Geometry Nodes " +
         "group to receive Big Space Rig new Geometry Nodes", type=bpy.types.NodeTree, poll=only_geo_node_group_poll)
     bts.BSR_MegaSphereRadius = bp.FloatProperty(name="Mega Sphere Radius", description="Radius of sphere, in " +
         "mega-meters", default=1.0, min=0.0)
-    bts.BSR_MegaSphereOverrideCreateNG = bp.BoolProperty(name="Override Create", description="Mega Sphere Geometry " +
-        "Nodes custom node group is re-created when Mega Sphere is created, and any previous custom group with the " +
-        "same name is deprecated", default=False)
     bts.BSR_MegaSphereUsePlace = bp.BoolProperty(name="Use Place Offset", description="Create MegaSphere centered " +
         "at given Place in Big Space Rig", default=False)
     bts.BSR_MegaSpherePlaceBoneName = bpy.props.EnumProperty(name="Place", description="Sphere center " +
