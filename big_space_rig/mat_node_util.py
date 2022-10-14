@@ -59,7 +59,7 @@ def create_prereq_util_node_group(node_group_name, node_tree_type):
             return create_geo_ng_subdiv_surf_with_index()
 
     # error
-    print("Unknown name passed to create_custom_duo_node_group: " + str(node_group_name))
+    print("Unknown name passed to create_prereq_util_node_group: " + str(node_group_name))
     return None
 
 def create_duo_node_observer_input(context, node_tree_type, big_space_rig, node_loc_offset):

@@ -55,3 +55,22 @@ def get_node_group_for_type(ng_type):
     elif ng_type == 'GeometryNodeTree':
         return 'GeometryNodeGroup'
     return None
+
+def ensure_material(override_create, material_name, create_material_func):
+    material = bpy.data.materials.get(material_name)
+    if material is None or override_create:
+        # create the custom node group
+        material = bpy.data.materials.new(material_name)
+        if material is None:
+            return None
+        # if override create is enabled, then ensure new group name will be "first", meaning:
+        #     group name does not have suffix like '.001', '.002', etc.
+        if override_create:
+            material.name = material_name
+        material.use_nodes = True
+        create_material_func(material_name, material)
+    return material
+
+def ensure_materials(override_create, mat_name_list, create_material_func):
+    for mat_name in mat_name_list:
+        ensure_material(override_create, mat_name, create_material_func)

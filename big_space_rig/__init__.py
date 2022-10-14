@@ -23,7 +23,7 @@ bl_info = {
         ", per Place) to create 'condensed space' for viewing large objects that are separated by very large " \
         "distances, at correct scale (e.g. planets, moons, stars).",
     "author": "Dave",
-    "version": (0, 2, 6),
+    "version": (0, 3, 0),
     "blender": (2, 80, 0),
     "location": "View 3D -> Tools -> BigSpaceRig",
     "category": "Shader/Geometry Nodes, Other",
@@ -55,6 +55,7 @@ from .utility import (BSR_SnapLocation6e0eObserver, BSR_SnapLocation6e0ePlace)
 from .culls import BSR_CameraCullCreateNodes
 from .lods import (BSR_GeometryLODsCreateNodes, BSR_InstanceLODsCreateNodes)
 from .easy import BSR_EasyCreateLandscapeNoise
+from .potpourri import BSR_PotCreateGhost, BSR_PotCreatePumpkin
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -267,6 +268,22 @@ class BSR_PT_Easy(bpy.types.Panel):
         box.label(text="Landscape")
         box.operator("big_space_rig.easy_create_landscape_noise")
 
+class BSR_PT_Potpourri(bpy.types.Panel):
+    bl_label = "Potpourri"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = Region
+    bl_category = "BigSpaceRig"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        scn = context.scene
+        layout = self.layout
+        box = layout.box()
+        box.prop(scn, "BSR_NodesOverrideCreate")
+        box.label(text="Character")
+        box.operator("big_space_rig.pot_create_character_ghost")
+        box.operator("big_space_rig.pot_create_character_pumpkin")
+
 class BSR_PT_Utility(bpy.types.Panel):
     bl_label = "Utility"
     bl_space_type = "VIEW_3D"
@@ -421,6 +438,9 @@ if bpy.app.version >= (2,90,0):
         BSR_InstanceLODsCreateNodes,
         BSR_PT_Easy,
         BSR_EasyCreateLandscapeNoise,
+        BSR_PT_Potpourri,
+        BSR_PotCreateGhost,
+        BSR_PotCreatePumpkin,
     ])
 classes.extend([
     BSR_PT_Utility,

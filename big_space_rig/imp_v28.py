@@ -27,8 +27,23 @@ def get_cursor_location(context):
 def select_object(ob, s):
     ob.select_set(s == True)
 
+
+def get_root_collection():
+    # create an array of False values, one for each collection
+    has_parent = {}
+    for c in bpy.data.collections:
+        has_parent[c] = False
+    # do parent check for each collection
+    for col in bpy.data.collections:
+        for sub_col in col.children:
+            has_parent[sub_col] = True
+    # get the one item where "has parent" is False
+    for d in has_parent:
+        if not has_parent[d]:
+            return d
+
 def create_mesh_obj_from_pydata(verts=[], faces=[], edges=[], obj_name=None, mesh_name=None,
-                                collection_name="Collection"):
+                                collection_name=None):
     if obj_name is None:
         obj_name = "Object"
     if mesh_name is None:
@@ -36,9 +51,20 @@ def create_mesh_obj_from_pydata(verts=[], faces=[], edges=[], obj_name=None, mes
 
     mesh = bpy.data.meshes.new(mesh_name)
     obj = bpy.data.objects.new(obj_name, mesh)
-    col = bpy.data.collections.get(collection_name)
+    # check that a collection exists for this new mesh object
+    if collection_name is None:
+        col = get_root_collection()
+    else:
+        col = bpy.data.collections.get(collection_name)
+        if col is None:
+            col = get_root_collection()
+    if col is None:
+        return None
+    # link object to a collection
     col.objects.link(obj)
+    # set new object as the active object
     bpy.context.view_layer.objects.active = obj
+    # create object mesh from input data
     mesh.from_pydata(verts, edges, faces)
     return obj
 
