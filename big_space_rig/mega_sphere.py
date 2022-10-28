@@ -2193,7 +2193,7 @@ def create_obs_place_input_nodes(tree_nodes, tree_links, megasphere_node, vec_d3
             tree_links.new(new_nodes["Vector Math.001"].outputs[0], vec_d3em3e_node.inputs[1])
         return new_nodes["Vector Math"], new_nodes["Vector Math.001"]
 
-def create_apply_megasphere_nodes_regular(sphere_radius, tree_nodes, tree_links, ico7_wgt):
+def create_apply_mega_sphere_nodes(sphere_radius, tree_nodes, tree_links, ico7_wgt):
     new_nodes = {}
 
     # create nodes
@@ -2397,7 +2397,7 @@ def create_individual_geo_ng(new_node_group, ico7_wgt, override_create, use_nois
         megasphere_node, vec_d3em3e_node = create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links,
                                                                                ico7_wgt)
     else:
-        megasphere_node = create_apply_megasphere_nodes_regular(sphere_radius, tree_nodes, tree_links, ico7_wgt)
+        megasphere_node = create_apply_mega_sphere_nodes(sphere_radius, tree_nodes, tree_links, ico7_wgt)
         vec_d3em3e_node = None
 
     # create observer/place input nodes and links

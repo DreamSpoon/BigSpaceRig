@@ -55,7 +55,10 @@ from .utility import (BSR_SnapLocation6e0eObserver, BSR_SnapLocation6e0ePlace)
 from .culls import BSR_CameraCullCreateNodes
 from .lods import (BSR_GeometryLODsCreateNodes, BSR_InstanceLODsCreateNodes)
 from .easy import BSR_EasyCreateLandscapeNoise
-from .potpourri import BSR_PotCreateGhost, BSR_PotCreatePumpkin
+from .potpourri.character.ghost import BSR_PotCreateGhost
+from .potpourri.object.pumpkin import BSR_PotCreatePumpkin
+from .potpourri.object.mushroom import BSR_PotCreateMushroom
+from .potpourri.object.rock import BSR_PotCreateRock
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
@@ -282,7 +285,10 @@ class BSR_PT_Potpourri(bpy.types.Panel):
         box.prop(scn, "BSR_NodesOverrideCreate")
         box.label(text="Character")
         box.operator("big_space_rig.pot_create_character_ghost")
+        box.label(text="Object")
         box.operator("big_space_rig.pot_create_character_pumpkin")
+        box.operator("big_space_rig.pot_create_character_mushroom")
+        box.operator("big_space_rig.pot_create_character_rock")
 
 class BSR_PT_Utility(bpy.types.Panel):
     bl_label = "Utility"
@@ -441,6 +447,8 @@ if bpy.app.version >= (2,90,0):
         BSR_PT_Potpourri,
         BSR_PotCreateGhost,
         BSR_PotCreatePumpkin,
+        BSR_PotCreateMushroom,
+        BSR_PotCreateRock,
     ])
 classes.extend([
     BSR_PT_Utility,
@@ -577,7 +585,7 @@ def register_props():
         "close range to observer. Some accuracy is lost due to greater floating point rounding error", default=False)
     bts.BSR_NodesOverrideCreate = bp.BoolProperty(name="Override Create", description="Geometry Nodes and " +
         "Shader Nodes custom Node Groups will be re-created if this option is enabled. When custom Node Groups are " +
-        "override created, old Node Groups of the same name are deprecated", default=False)
+        "override created, old Node Groups of the same name are renamed and deprecated", default=False)
     bts.BSR_GeoNodesCreateUseAltGroup = bp.BoolProperty(name="Use Alt Group", description="Add Big Space Rig " +
         "Geometry Nodes group to alternate geometry node group (click to unlock)", default=False)
     bts.BSR_GeoNodesCreateAltGroup = bp.PointerProperty(name="Alt Group", description="Alternative Geometry Nodes " +
