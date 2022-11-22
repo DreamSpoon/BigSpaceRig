@@ -2220,7 +2220,7 @@ def create_apply_mega_sphere_nodes(sphere_radius, tree_nodes, tree_links, ico7_w
     new_nodes["Object Info"] = node
 
     node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (-220, 80)
+    node.location = (-400, -20)
     new_nodes["Group Input"] = node
 
     node = tree_nodes.new(type="NodeGroupOutput")
@@ -2229,6 +2229,12 @@ def create_apply_mega_sphere_nodes(sphere_radius, tree_nodes, tree_links, ico7_w
 
     # create links
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Set Material"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["MegaSphere.Group"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["MegaSphere.Group"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["MegaSphere.Group"].inputs[3])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["MegaSphere.Group"].inputs[4])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["MegaSphere.Group"].inputs[5])
+    tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["MegaSphere.Group"].inputs[6])
     tree_links.new(new_nodes["MegaSphere.Group"].outputs[1], new_nodes["Group Output"].inputs[1])
     tree_links.new(new_nodes["MegaSphere.Group"].outputs[0], new_nodes["Set Material"].inputs[0])
     tree_links.new(new_nodes["Set Material"].outputs[0], new_nodes["Group Output"].inputs[0])
@@ -2336,7 +2342,7 @@ def create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links, i
     new_nodes["Vector Math"] = node
 
     node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (1760, -180)
+    node.location = (-400, -20)
     new_nodes["Group Input"] = node
 
     node = tree_nodes.new(type="NodeGroupOutput")
@@ -2345,6 +2351,12 @@ def create_apply_megasphere_nodes_noise(sphere_radius, tree_nodes, tree_links, i
 
     # create links
     tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Set Material"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["MegaSphere.Group"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[3], new_nodes["MegaSphere.Group"].inputs[2])
+    tree_links.new(new_nodes["Group Input"].outputs[4], new_nodes["MegaSphere.Group"].inputs[3])
+    tree_links.new(new_nodes["Group Input"].outputs[5], new_nodes["MegaSphere.Group"].inputs[4])
+    tree_links.new(new_nodes["Group Input"].outputs[6], new_nodes["MegaSphere.Group"].inputs[5])
+    tree_links.new(new_nodes["Group Input"].outputs[7], new_nodes["MegaSphere.Group"].inputs[6])
     tree_links.new(new_nodes["MegaSphere.Group"].outputs[1], new_nodes["Group Output"].inputs[1])
     tree_links.new(new_nodes["Position"].outputs[0], new_nodes["Group.002"].inputs[2])
     tree_links.new(new_nodes["Group.002"].outputs[0], new_nodes["Group.003"].inputs[0])
@@ -2379,6 +2391,12 @@ def create_individual_geo_ng(new_node_group, ico7_wgt, override_create, use_nois
     # initialize variables
     node_tree_type = 'GeometryNodeTree'
     new_node_group.inputs.new(type='NodeSocketMaterial', name="Material")
+    new_node_group.inputs.new(type='NodeSocketFloat', name="Mega Sphere Radius")
+    new_node_group.inputs.new(type='NodeSocketFloat', name="Subdivision Scale")
+    new_node_group.inputs.new(type='NodeSocketFloat', name="Max Subdiv")
+    new_node_group.inputs.new(type='NodeSocketFloat', name="Vis Angle Adjust")
+    new_node_group.inputs.new(type='NodeSocketFloat', name="Cull Distance")
+    new_node_group.inputs.new(type='NodeSocketInt', name="Max Face Count")
     new_node_group.outputs.new(type='NodeSocketVector', name="MegaSphere Normal")
     new_node_group.outputs.new(type='NodeSocketInt', name="LOD Index")
     new_node_group.outputs.new(type='NodeSocketFloat', name="Subdiv Index")
@@ -2429,6 +2447,17 @@ def add_mega_sphere_geo_nodes_to_object(ob, big_space_rig, ico7_wgt, sphere_radi
     geo_nodes_mod = ob.modifiers.new(name="MegaSphere.GeometryNodes", type='NODES')
     create_individual_geo_ng(geo_nodes_mod.node_group, ico7_wgt, override_create, use_noise, big_space_rig,
                              sphere_radius, proxy_place_bone_name_0e, proxy_place_bone_name_6e)
+    # set default values of inputs to Geometry Nodes Modifier
+    geo_nodes_mod["Input_3"] = 1.0
+    geo_nodes_mod["Input_4"] = 10.0
+    geo_nodes_mod["Input_5"] = 9999.0
+    geo_nodes_mod["Input_6"] = 0.0
+    geo_nodes_mod["Input_7"] = 0.0
+    geo_nodes_mod["Input_8"] = 64000
+
+    geo_nodes_mod["Output_9_attribute_name"] = "mega_sphere_normal"
+    geo_nodes_mod["Output_10_attribute_name"] = "mega_sphere_lod_index"
+    geo_nodes_mod["Output_11_attribute_name"] = "mega_sphere_subdiv_index"
 
 def create_megasphere_obj(collection_name=None):
     verts = []
