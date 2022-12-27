@@ -319,7 +319,6 @@ class BSR_PT_Utility(bpy.types.Panel):
         sub_box.prop(scn, "BSR_SnapPlaceName")
 
 class BSR_PT_CreateDuoNodes(bpy.types.Panel):
-    bl_idname = "BSR_PT_CreateDuoNodes"
     bl_label = "BigSpaceRig"
     bl_space_type = "NODE_EDITOR"
     bl_region_type = Region
@@ -360,7 +359,6 @@ class BSR_PT_CreateDuoNodes(bpy.types.Panel):
             box.operator("big_space_rig.subdiv_surf_with_index_create_duo_node")
 
 class BSR_PT_Culls(bpy.types.Panel):
-    bl_idname = "BSR_PT_Culls"
     bl_label = "Culls"
     bl_space_type = "NODE_EDITOR"
     bl_region_type = Region
@@ -377,7 +375,6 @@ class BSR_PT_Culls(bpy.types.Panel):
         box.prop(scn, "BSR_NodesOverrideCreate")
 
 class BSR_PT_LODs(bpy.types.Panel):
-    bl_idname = "BSR_PT_LODs"
     bl_label = "LODs"
     bl_space_type = "NODE_EDITOR"
     bl_region_type = Region

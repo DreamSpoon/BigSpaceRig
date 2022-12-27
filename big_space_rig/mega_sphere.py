@@ -2390,6 +2390,13 @@ def create_individual_geo_ng(new_node_group, ico7_wgt, override_create, use_nois
                              proxy_place_bone_name_0e=None, proxy_place_bone_name_6e=None):
     # initialize variables
     node_tree_type = 'GeometryNodeTree'
+    # check number of inputs, due to changes between versions of Blender (somewhere between 3.1 to 3.3)
+    if len(new_node_group.inputs) < 1:
+        new_node_group.inputs.new(type='NodeSocketGeometry', name="Geometry")
+        modifier_input_offset = 0
+    else:
+        modifier_input_offset = 1
+
     new_node_group.inputs.new(type='NodeSocketMaterial', name="Material")
     new_node_group.inputs.new(type='NodeSocketFloat', name="Mega Sphere Radius")
     new_node_group.inputs.new(type='NodeSocketFloat', name="Subdivision Scale")
@@ -2397,6 +2404,8 @@ def create_individual_geo_ng(new_node_group, ico7_wgt, override_create, use_nois
     new_node_group.inputs.new(type='NodeSocketFloat', name="Vis Angle Adjust")
     new_node_group.inputs.new(type='NodeSocketFloat', name="Cull Distance")
     new_node_group.inputs.new(type='NodeSocketInt', name="Max Face Count")
+    if len(new_node_group.outputs) < 1:
+        new_node_group.outputs.new(type='NodeSocketGeometry', name="Geometry")
     new_node_group.outputs.new(type='NodeSocketVector', name="MegaSphere Normal")
     new_node_group.outputs.new(type='NodeSocketInt', name="LOD Index")
     new_node_group.outputs.new(type='NodeSocketFloat', name="Subdiv Index")
@@ -2425,7 +2434,7 @@ def create_individual_geo_ng(new_node_group, ico7_wgt, override_create, use_nois
     # deselect all new nodes
     for n in tree_nodes: n.select = False
 
-    return new_node_group
+    return modifier_input_offset
 
 def get_create_icosphere7_widget(context, big_space_rig):
     wgt_list = get_widget_objs_from_rig(big_space_rig)
@@ -2445,15 +2454,18 @@ def get_create_icosphere7_widget(context, big_space_rig):
 def add_mega_sphere_geo_nodes_to_object(ob, big_space_rig, ico7_wgt, sphere_radius, proxy_place_bone_name_0e,
                                         proxy_place_bone_name_6e, override_create, use_noise):
     geo_nodes_mod = ob.modifiers.new(name="MegaSphere.GeometryNodes", type='NODES')
-    create_individual_geo_ng(geo_nodes_mod.node_group, ico7_wgt, override_create, use_noise, big_space_rig,
-                             sphere_radius, proxy_place_bone_name_0e, proxy_place_bone_name_6e)
+    if geo_nodes_mod.node_group is None:
+        geo_nodes_mod.node_group = bpy.data.node_groups.new(name="MegaSphere Geometry Nodes",
+                                                            type='GeometryNodeTree')
+    mod_input_offset = create_individual_geo_ng(geo_nodes_mod.node_group, ico7_wgt, override_create, use_noise,
+        big_space_rig, sphere_radius, proxy_place_bone_name_0e, proxy_place_bone_name_6e)
     # set default values of inputs to Geometry Nodes Modifier
-    geo_nodes_mod["Input_3"] = 1.0
-    geo_nodes_mod["Input_4"] = 10.0
-    geo_nodes_mod["Input_5"] = 9999.0
-    geo_nodes_mod["Input_6"] = 0.0
-    geo_nodes_mod["Input_7"] = 0.0
-    geo_nodes_mod["Input_8"] = 64000
+    geo_nodes_mod["Input_"+str(2+mod_input_offset)] = 1.0
+    geo_nodes_mod["Input_"+str(3+mod_input_offset)] = 10.0
+    geo_nodes_mod["Input_"+str(4+mod_input_offset)] = 9999.0
+    geo_nodes_mod["Input_"+str(5+mod_input_offset)] = 0.0
+    geo_nodes_mod["Input_"+str(6+mod_input_offset)] = 0.0
+    geo_nodes_mod["Input_"+str(7+mod_input_offset)] = 64000
 
     geo_nodes_mod["Output_9_attribute_name"] = "mega_sphere_normal"
     geo_nodes_mod["Output_10_attribute_name"] = "mega_sphere_lod_index"

@@ -3212,6 +3212,11 @@ class BSR_PotCreateMushroom(bpy.types.Operator):
     bl_label = "Mushroom"
     bl_options = {'REGISTER', 'UNDO'}
 
+    @classmethod
+    def poll(cls, context):
+        s = context.space_data
+        return s.type == 'NODE_EDITOR' and s.node_tree != None and s.tree_type == 'GeometryNodeTree'
+
     def execute(self, context):
         scn = context.scene
         pot_create_mushroom(scn.BSR_NodesOverrideCreate)

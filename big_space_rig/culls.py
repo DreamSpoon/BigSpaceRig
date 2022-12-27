@@ -399,20 +399,25 @@ def create_camera_cull_geo_nodes(context, cam_obj_name, override_create):
     ensure_node_groups(override_create, [CAMERA_CULL_GEO_NG_NAME], 'GeometryNodeTree', create_prereq_util_node_group)
 
     # create group node that will do the work
-    node = context.space_data.edit_tree.nodes.new(type='GeometryNodeGroup')
-    node.location = (-160, -120)
+    node_tree = context.space_data.edit_tree
+    node = node_tree.nodes.new(type='GeometryNodeGroup')
+    node.location = (node_tree.view_center[0]/2.5, node_tree.view_center[1]/2.5)
     node.node_tree = bpy.data.node_groups.get(CAMERA_CULL_GEO_NG_NAME)
     node.inputs[8].default_value = 16.0 / 9.0
 
     # create the 'input' nodes
-    tr = context.space_data.edit_tree
-    create_input_camera_cull_nodes(tr.nodes, tr.links, cam_obj_name, node)
+    create_input_camera_cull_nodes(node_tree.nodes, node_tree.links, cam_obj_name, node)
 
 class BSR_CameraCullCreateNodes(bpy.types.Operator):
     bl_description = "Add nodes to current node tree that "
     bl_idname = "big_space_rig.camera_cull_create_geo_node"
     bl_label = "Camera Cull"
     bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        s = context.space_data
+        return s.type == 'NODE_EDITOR' and s.node_tree != None and s.tree_type == 'GeometryNodeTree'
 
     def execute(self, context):
         scn = context.scene

@@ -661,6 +661,16 @@ def add_place_fp_geo_nodes_to_object(ob, override_create, alt_group_name, big_sp
         add_place_fp_to_existing_group(alt_group_name, False, big_space_rig, big_space_rig_bone, ob)
         geo_nodes_mod.node_group = bpy.data.node_groups.get(alt_group_name)
         return  # success, return
+
+    if geo_nodes_mod.node_group is None:
+        new_node_group = bpy.data.node_groups.new(name="Place FP Geometry Nodes",
+                                                            type='GeometryNodeTree')
+        # check number of inputs, due to changes between versions of Blender (somewhere between 3.1 to 3.3)
+        if len(new_node_group.inputs) < 1:
+            new_node_group.inputs.new(type='NodeSocketGeometry', name="Geometry")
+        if len(new_node_group.outputs) < 1:
+            new_node_group.outputs.new(type='NodeSocketGeometry', name="Geometry")
+        geo_nodes_mod.node_group = new_node_group
     # create nodes, and clear node tree before creating new nodes
     add_place_fp_to_existing_group(geo_nodes_mod.node_group.name, True, big_space_rig, big_space_rig_bone, ob)
 
