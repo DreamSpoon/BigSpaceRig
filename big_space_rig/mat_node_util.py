@@ -1149,7 +1149,6 @@ def create_geo_ng_snap_vertex_lod():
     new_node_group = bpy.data.node_groups.new(name=SNAP_VERT_LOD_GEO_NG_NAME, type='GeometryNodeTree')
     new_node_group.inputs.new(type='NodeSocketGeometry', name="Geometry")
     new_node_group.inputs.new(type='NodeSocketFloat', name="LOD inner verts")
-    new_node_group.inputs.new(type='NodeSocketFloat', name="LOD outer verts")
     new_node_group.outputs.new(type='NodeSocketGeometry', name="Geometry")
     tree_nodes = new_node_group.nodes
     # delete all nodes
@@ -1158,7 +1157,7 @@ def create_geo_ng_snap_vertex_lod():
     # create nodes
     node = tree_nodes.new(type="GeometryNodeProximity")
     node.location = (-200, -320)
-    node.target_element = 'POINTS'
+    node.target_element = "POINTS"
     new_nodes["Geometry Proximity"] = node
 
     node = tree_nodes.new(type="GeometryNodeInputPosition")
@@ -1171,93 +1170,111 @@ def create_geo_ng_snap_vertex_lod():
 
     node = tree_nodes.new(type="GeometryNodeSetPosition")
     node.location = (520, -120)
+    node.inputs[3].default_value = (0.0, 0.0, 0.0)
     new_nodes["Set Position"] = node
 
     node = tree_nodes.new(type="GeometryNodeSeparateGeometry")
     node.label = "Separate inner verts"
     node.location = (-380, -300)
-    node.domain = 'POINT'
+    node.domain = "POINT"
     new_nodes["Separate Geometry"] = node
 
     node = tree_nodes.new(type="GeometryNodeAttributeDomainSize")
     node.location = (-20, 20)
+    node.component = "MESH"
     new_nodes["Domain Size"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (-20, -400)
     node.operation = "LESS_THAN"
-    node.inputs[2].default_value = 0.5
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
     new_nodes["Math"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (-200, -540)
     node.operation = "MULTIPLY"
-    node.inputs[1].default_value = 0.15
-    new_nodes["Math.002"] = node
+    node.use_clamp = False
+    node.inputs[1].default_value = 0.150000
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.001"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (160, 0)
     node.operation = "GREATER_THAN"
-    node.inputs[1].default_value = 0.0
-    new_nodes["Math.004"] = node
-
-    node = tree_nodes.new(type="ShaderNodeMath")
-    node.location = (-20, -180)
-    node.operation = "GREATER_THAN"
-    node.inputs[1].default_value = 0.5
-    new_nodes["Math.001"] = node
+    node.use_clamp = False
+    node.inputs[1].default_value = 0.000000
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.002"] = node
 
     node = tree_nodes.new(type="ShaderNodeMath")
     node.location = (-580, -380)
     node.operation = "GREATER_THAN"
-    node.inputs[1].default_value = 0.5
-    new_nodes["Math.003"] = node
+    node.use_clamp = False
+    node.inputs[1].default_value = 0.500000
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.004"] = node
 
     node = tree_nodes.new(type="FunctionNodeBooleanMath")
     node.location = (340, -180)
-    node.operation = 'AND'
-    new_nodes["Boolean Math.001"] = node
+    node.operation = "AND"
+    new_nodes["Boolean Math"] = node
 
     node = tree_nodes.new(type="FunctionNodeBooleanMath")
     node.location = (160, -260)
-    node.operation = 'AND'
-    new_nodes["Boolean Math"] = node
+    node.operation = "AND"
+    new_nodes["Boolean Math.001"] = node
 
     node = tree_nodes.new(type="ShaderNodeVectorMath")
     node.location = (-380, -600)
     node.operation = "LENGTH"
+    node.inputs[1].default_value = (0.0, 0.0, 0.0)
+    node.inputs[2].default_value = (0.0, 0.0, 0.0)
+    node.inputs[3].default_value = 1.000000
     new_nodes["Vector Math"] = node
-
-    node = tree_nodes.new(type="NodeGroupInput")
-    node.location = (-760, -200)
-    new_nodes["Group Input"] = node
 
     node = tree_nodes.new(type="NodeGroupOutput")
     node.location = (700, -120)
     new_nodes["Group Output"] = node
 
+    node = tree_nodes.new(type="ShaderNodeMath")
+    node.location = (-20, -180)
+    node.operation = "GREATER_THAN"
+    node.use_clamp = False
+    node.inputs[2].default_value = 0.500000
+    new_nodes["Math.003"] = node
+
+    node = tree_nodes.new(type="GeometryNodeInputMeshVertexNeighbors")
+    node.location = (-200, -220)
+    new_nodes["Vertex Neighbors"] = node
+
+    node = tree_nodes.new(type="NodeGroupInput")
+    node.location = (-760, -200)
+    new_nodes["Group Input"] = node
+
     # create links
     tree_links = new_node_group.links
     tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Separate Geometry"].inputs[0])
-    tree_links.new(new_nodes["Math.003"].outputs[0], new_nodes["Separate Geometry"].inputs[1])
+    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Separate Geometry"].inputs[1])
     tree_links.new(new_nodes["Set Position"].outputs[0], new_nodes["Group Output"].inputs[0])
     tree_links.new(new_nodes["Separate Geometry"].outputs[0], new_nodes["Geometry Proximity"].inputs[0])
     tree_links.new(new_nodes["Position"].outputs[0], new_nodes["Geometry Proximity"].inputs[1])
     tree_links.new(new_nodes["Geometry Proximity"].outputs[0], new_nodes["Set Position"].inputs[2])
     tree_links.new(new_nodes["Group Input"].outputs[0], new_nodes["Set Position"].inputs[0])
     tree_links.new(new_nodes["Position.001"].outputs[0], new_nodes["Vector Math"].inputs[0])
-    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Math"].inputs[1])
-    tree_links.new(new_nodes["Vector Math"].outputs[1], new_nodes["Math.002"].inputs[0])
+    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Math"].inputs[1])
+    tree_links.new(new_nodes["Vector Math"].outputs[1], new_nodes["Math.001"].inputs[0])
     tree_links.new(new_nodes["Geometry Proximity"].outputs[1], new_nodes["Math"].inputs[0])
-    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Boolean Math"].inputs[1])
-    tree_links.new(new_nodes["Math.001"].outputs[0], new_nodes["Boolean Math"].inputs[0])
-    tree_links.new(new_nodes["Boolean Math.001"].outputs[0], new_nodes["Set Position"].inputs[1])
-    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.003"].inputs[0])
-    tree_links.new(new_nodes["Group Input"].outputs[2], new_nodes["Math.001"].inputs[0])
-    tree_links.new(new_nodes["Domain Size"].outputs[0], new_nodes["Math.004"].inputs[0])
+    tree_links.new(new_nodes["Math"].outputs[0], new_nodes["Boolean Math.001"].inputs[1])
+    tree_links.new(new_nodes["Math.003"].outputs[0], new_nodes["Boolean Math.001"].inputs[0])
+    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Set Position"].inputs[1])
+    tree_links.new(new_nodes["Group Input"].outputs[1], new_nodes["Math.004"].inputs[0])
+    tree_links.new(new_nodes["Domain Size"].outputs[0], new_nodes["Math.002"].inputs[0])
     tree_links.new(new_nodes["Separate Geometry"].outputs[0], new_nodes["Domain Size"].inputs[0])
-    tree_links.new(new_nodes["Boolean Math"].outputs[0], new_nodes["Boolean Math.001"].inputs[1])
-    tree_links.new(new_nodes["Math.004"].outputs[0], new_nodes["Boolean Math.001"].inputs[0])
+    tree_links.new(new_nodes["Boolean Math.001"].outputs[0], new_nodes["Boolean Math"].inputs[1])
+    tree_links.new(new_nodes["Math.002"].outputs[0], new_nodes["Boolean Math"].inputs[0])
+    tree_links.new(new_nodes["Vertex Neighbors"].outputs[1], new_nodes["Math.003"].inputs[1])
+    tree_links.new(new_nodes["Vertex Neighbors"].outputs[0], new_nodes["Math.003"].inputs[0])
 
     # deselect all new nodes
     for n in new_nodes.values(): n.select = False

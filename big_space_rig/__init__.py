@@ -23,7 +23,7 @@ bl_info = {
         ", per Place) to create 'condensed space' for viewing large objects that are separated by very large " \
         "distances, at correct scale (e.g. planets, moons, stars).",
     "author": "Dave",
-    "version": (0, 3, 0),
+    "version": (0, 3, 1),
     "blender": (2, 80, 0),
     "location": "View 3D -> Tools -> BigSpaceRig",
     "category": "Shader/Geometry Nodes, Other",
