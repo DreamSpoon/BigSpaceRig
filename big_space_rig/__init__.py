@@ -37,8 +37,8 @@ from bpy.props import PointerProperty
 
 from .rig import (OBJ_PROP_FP_POWER, OBJ_PROP_FP_MIN_DIST, OBJ_PROP_FP_MIN_SCALE, OBJ_PROP_BONE_SCL_MULT,
     OBJ_PROP_BONE_PLACE)
-from .rig import (is_big_space_rig, BSR_CreateBigSpaceRig, BSR_QuickSelectObserver6e, BSR_QuickSelectObserver0e,
-    BSR_QuickSelectObserverFocus, BSR_QuickSelectPlace6e,
+from .rig import (is_big_space_rig, get_big_space_rig_observer_location_full, BSR_CreateBigSpaceRig,
+    BSR_QuickSelectObserver6e, BSR_QuickSelectObserver0e, BSR_QuickSelectObserverFocus, BSR_QuickSelectPlace6e,
     BSR_QuickSelectPlace0e, BSR_QuickSelectPlaceProxy)
 from .observer import (ANGLE_TYPE_ITEMS, ANGLE_TYPE_DEG_MIN_SEC_FRAC, ANGLE_TYPE_DEGREES, ANGLE_TYPE_RADIANS)
 from .observer import (BSR_ObserveMegaSphere, BSR_ObservePlace, BSR_AddObsFocusDrivers)
@@ -80,7 +80,14 @@ class BSR_PT_ActiveRig(bpy.types.Panel):
             return
         layout = self.layout
         box = layout.box()
-        box.label(text="Active Rig: " + active_ob.name)
+        box.label(text="Active Rig")
+        box.label(text="Name: " + active_ob.name)
+        box.label(text="Observer Location:")
+        loc_full = get_big_space_rig_observer_location_full(active_ob)
+        box.label(text="X: " + str(int(loc_full[0][1])) + " km + %.3f m" % loc_full[0][0])
+        box.label(text="Y: " + str(int(loc_full[1][1])) + " km + %.3f m" % loc_full[1][0])
+        box.label(text="Z: " + str(int(loc_full[2][1])) + " km + %.3f m" % loc_full[2][0])
+        box = layout.box()
         box.prop(active_ob, '["'+OBJ_PROP_FP_POWER+'"]')
         box.prop(active_ob, '["'+OBJ_PROP_FP_MIN_DIST+'"]')
         box.prop(active_ob, '["'+OBJ_PROP_FP_MIN_SCALE+'"]')

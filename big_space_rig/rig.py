@@ -125,11 +125,36 @@ def is_big_space_rig(ob):
         return False
     return True
 
+# returns 3 tuples of ( m, km ) based on current location of rig's observer
+def get_big_space_rig_observer_location_full(rig):
+    bone_0e = rig.pose.bones.get(PROXY_OBSERVER_0E_BNAME)
+    bone_6e = rig.pose.bones.get(PROXY_OBSERVER_6E_BNAME)
+# simple
+#    return [ (bone_0e.location[d], bone_6e.location[d] * 1000.0) for d in range(3) ]
+
+    # move location values above 1000 from the 0e bone to the 6e bone
+    the_ret = []
+    for d in range(3):
+        carry_up = math.floor( abs(bone_0e.location[d]) / 1000.0 )
+        if bone_0e.location[d] < 0.0:
+            carry_up = -1 * carry_up
+        keep_below = abs(bone_0e.location[d]) - carry_up * 1000.0
+        if bone_0e.location[d] < 0.0:
+            keep_below = -1 * keep_below
+        m = keep_below
+        # carry location values to the 6e bone, then multiply result by 1000.0 to get values in kilo-meters instead of
+        # mega-meters
+        km = carry_up + bone_6e.location[d] * 1000.0
+        # store tuple of ( m, km )
+        the_ret.append( (m, km) )
+    # return tuples of ( m, km )
+    return the_ret
+
 # if a Big Space Rig is found in the parent-hierarchy of ob, then return the rig and the associated 'Place' bone,
-# otherwise return None
+# otherwise return (None, None)
 def get_parent_big_space_rig(ob):
     if ob.parent is None:
-        return None, None
+        return (None, None)
     if is_big_space_rig(ob.parent):
         return ob.parent, ob.parent_bone
     # recursively search parent(s) for Big Space Rig
